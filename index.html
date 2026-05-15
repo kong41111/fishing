@@ -293,19 +293,85 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .btn-print-modern{background:#fff;color:var(--primary);border:2px solid var(--primary);border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;width:54px;display:grid;place-items:center}
 .btn-print-modern:hover{background:var(--primary);color:#fff}
 
+/* ===== MOBILE CART FAB + DRAWER ===== */
+.mobile-cart-fab{display:none;position:fixed;right:16px;bottom:80px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 6px 20px rgba(3,105,161,.4);z-index:80;align-items:center;justify-content:center}
+.mobile-cart-fab:hover{transform:scale(1.05)}
+.mobile-cart-fab .fab-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;font-size:11px;font-weight:800;border-radius:99px;min-width:22px;height:22px;padding:0 6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.mobile-cart-fab .fab-amt{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);background:#0c4a6e;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+
+.cart-overlay-mobile{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200}
+.cart-overlay-mobile.show{display:block}
+
 @media(max-width:1100px){
   .pos-layout{grid-template-columns:1fr}
   .cart-panel{position:relative;top:0;max-height:none}
   .pos-grid-modern{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:768px){
-  .pos-stats{grid-template-columns:1fr 1fr;}
+  .cart-close-mobile{display:inline-flex!important;background:rgba(255,255,255,.25)!important}
+  /* POS layout */
+  .pos-stats{grid-template-columns:1fr 1fr;gap:8px}
   .pos-stat:nth-child(3){grid-column:span 2}
-  .pos-grid-modern{grid-template-columns:repeat(3,1fr)}
+  .pos-stat{padding:10px 12px}
+  .pos-stat-val{font-size:16px}
+  .pos-grid-modern{grid-template-columns:repeat(2,1fr);gap:8px}
+  .pos-search-card{padding:10px 12px;gap:8px;border-radius:12px}
+  .pos-search-card input{padding:9px 12px;font-size:13px}
+  .pos-search-card .scan-btn{padding:8px 12px;font-size:12px}
+  .cat-modern{min-width:68px;padding:8px 10px}
+  .cat-modern-icon{font-size:20px}
+
+  /* Cart becomes mobile drawer */
+  .mobile-cart-fab{display:flex}
+  .cart-panel{position:fixed;left:0;right:0;bottom:-100%;top:auto;max-height:85vh;z-index:201;border-radius:18px 18px 0 0;transition:bottom .3s ease;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+  .cart-panel.open{bottom:0}
+  .cart-panel::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:50px;height:5px;background:rgba(255,255,255,.4);border-radius:99px}
+  .cart-panel-header{padding:22px 16px 14px}
+
+  /* Modals full-screen */
+  .modal{width:100vw!important;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;padding:18px;overflow-y:auto}
+  .modal-overlay{align-items:flex-start}
+  .modal[style*="380"]{height:auto;min-height:80vh;border-radius:14px 14px 0 0;align-self:flex-end}
+
+  /* Product page */
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi-card{padding:12px}
+  .kpi-icon{font-size:20px}
+  .kpi-value{font-size:16px}
+  .kpi-label{font-size:10px}
+
+  /* Quick search hidden, replaced by icon */
+  .mobile-search-icon{display:flex!important}
+
+  /* Bigger touch targets */
+  .nav-item{padding:12px 14px;font-size:14px}
+  .btn-primary,.btn-danger,.btn-outline{padding:11px 18px;min-height:42px}
+  .cat-tab{padding:8px 14px;font-size:12.5px}
+
+  /* Tables: scroll horizontally */
+  .data-table{font-size:11.5px;min-width:600px}
+  .data-table th,.data-table td{padding:7px 6px}
+  .product-thumb{width:36px;height:36px}
+
+  /* Receipt */
+  .receipt{padding:14px;font-size:11.5px}
 }
 @media(max-width:480px){
   .pos-grid-modern{grid-template-columns:repeat(2,1fr)}
-  .payment-methods{grid-template-columns:repeat(3,1fr)}
+  .payment-methods{grid-template-columns:repeat(3,1fr);gap:5px;padding:10px}
+  .pay-btn{padding:8px 6px;font-size:10px}
+  .pay-btn-icon{font-size:18px}
+  .content{padding:12px;padding-bottom:90px}
+  .topbar-title{font-size:14px}
+  .pos-search-card{flex-wrap:wrap}
+  .pos-search-card .scan-btn{width:100%;justify-content:center}
+  .cart-action-buttons{padding:10px}
+  .btn-pay-modern{padding:13px;font-size:13px}
+  .btn-pay-modern .amt{font-size:11px}
+  .alert-item{flex-direction:column;align-items:flex-start}
+  .supplier-card{padding:14px}
+  .receipt-actions{flex-direction:column}
+  .receipt-actions button{width:100%}
 }
 
 /* ===== POS IMPROVEMENTS ===== */
@@ -623,14 +689,17 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         </div>
 
         <!-- RIGHT: Cart Panel -->
-        <div class="cart-panel">
+        <div class="cart-panel" id="cartPanel">
           <div class="cart-panel-header">
             <div class="cart-panel-title">
               <span>🛒</span>
               <span>ตะกร้าสินค้า</span>
               <span class="cart-count-badge" id="cartCountBadge">0</span>
             </div>
-            <button class="cart-clear-btn" onclick="clearCart()" id="clearCartBtn" style="display:none">ล้าง</button>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="cart-clear-btn" onclick="clearCart()" id="clearCartBtn" style="display:none">ล้าง</button>
+              <button class="cart-clear-btn cart-close-mobile" onclick="toggleMobileCart()" style="display:none">✕</button>
+            </div>
           </div>
 
           <div class="cart-body" id="cartList">
@@ -841,6 +910,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
 <!-- SIDEBAR OVERLAY (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- MOBILE CART FAB (POS page only) -->
+<button class="mobile-cart-fab" id="cartFab" onclick="toggleMobileCart()" style="display:none">
+  🛒
+  <span class="fab-badge" id="cartFabBadge">0</span>
+  <span class="fab-amt" id="cartFabAmt">฿0</span>
+</button>
+<div class="cart-overlay-mobile" id="cartOverlay" onclick="toggleMobileCart()"></div>
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
@@ -1182,6 +1259,10 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     if(page==='dashboard') setTimeout(drawChart,50);
     if(page==='products') renderProducts();
     if(page==='sales') renderCatModern();
+    // close mobile cart when changing page
+    document.getElementById('cartPanel')?.classList.remove('open');
+    document.getElementById('cartOverlay')?.classList.remove('show');
+    updateCartFab();
     // close mobile sidebar
     if(window.innerWidth<=768){
       document.getElementById('sidebar').classList.remove('open');
@@ -1527,6 +1608,29 @@ function setPay(method,btn){
   document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
+
+function toggleMobileCart(){
+  const panel = document.getElementById('cartPanel');
+  const ov = document.getElementById('cartOverlay');
+  panel.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+
+function updateCartFab(){
+  const fab = document.getElementById('cartFab');
+  const isPOS = document.getElementById('page-sales').classList.contains('active');
+  const isMobile = window.innerWidth <= 768;
+  if(fab) fab.style.display = (isPOS && isMobile && cart.length>0) ? 'flex' : 'none';
+
+  const badge = document.getElementById('cartFabBadge');
+  const amt = document.getElementById('cartFabAmt');
+  const totalItems = cart.reduce((s,c)=>s+c.qty,0);
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const disc = +document.getElementById('discount')?.value||0;
+  const net = Math.max(0,total-disc);
+  if(badge) badge.textContent = totalItems;
+  if(amt) amt.textContent = '฿'+net.toLocaleString();
+}
 function qty(i,d){
   const c = cart[i];
   if(d>0){
@@ -1546,6 +1650,7 @@ function updateTotal(){
   document.getElementById('cartNet').textContent='฿'+net.toLocaleString();
   const payAmt=document.getElementById('payBtnAmt');
   if(payAmt) payAmt.textContent='฿'+net.toLocaleString();
+  updateCartFab();
 }
 function buildReceipt(forcedBillNo){
   const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
@@ -1617,6 +1722,9 @@ function checkout(){
   cart=[];document.getElementById('discount').value='';
   renderCart();
   refreshAllViews();
+  // close mobile cart drawer
+  document.getElementById('cartPanel')?.classList.remove('open');
+  document.getElementById('cartOverlay')?.classList.remove('show');
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -1702,7 +1810,7 @@ function showToast(msg){
 refreshAllViews();
 renderPOS(posItems);
 setTimeout(drawChart,150);
-window.addEventListener('resize',()=>setTimeout(drawChart,50));
+window.addEventListener('resize',()=>{setTimeout(drawChart,50);updateCartFab();});
 </script>
 
 </body>
