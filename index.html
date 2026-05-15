@@ -181,8 +181,91 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+/* ===== POS IMPROVEMENTS ===== */
+.pos-toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.scan-box{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border-radius:10px;padding:8px 14px;box-shadow:0 4px 12px rgba(3,105,161,.25)}
+.scan-icon{font-size:22px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.scan-box input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:14px;font-family:inherit}
+.scan-box input::placeholder{color:rgba(255,255,255,.7)}
+.cat-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.cat-tab{padding:6px 14px;border-radius:99px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--text-muted);transition:all .15s}
+.cat-tab:hover{border-color:var(--primary);color:var(--primary)}
+.cat-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.scan-anim{position:fixed;inset:0;background:rgba(3,105,161,.85);z-index:300;display:none;place-items:center;flex-direction:column;color:#fff}
+.scan-anim.show{display:grid}
+.scan-frame{width:280px;height:180px;border:3px solid #fff;border-radius:14px;position:relative;margin-bottom:20px;overflow:hidden}
+.scan-line{position:absolute;left:0;right:0;height:3px;background:#22d3ee;box-shadow:0 0 10px #22d3ee;top:0;animation:scanMove 1.5s ease-in-out infinite}
+@keyframes scanMove{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}
+.scan-anim-text{font-size:18px;font-weight:700;margin-bottom:8px}
+.scan-anim-sub{font-size:13px;opacity:.85;margin-bottom:18px}
+.btn-cancel-scan{background:#fff;color:var(--primary);border:none;border-radius:8px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* ===== RECEIPT ===== */
+.receipt{font-family:'Courier New',monospace;background:#fff;color:#000;padding:18px;max-width:320px;margin:0 auto;font-size:12.5px;line-height:1.6}
+.receipt-header{text-align:center;border-bottom:2px dashed #000;padding-bottom:10px;margin-bottom:10px}
+.receipt-shop{font-size:16px;font-weight:700;margin-bottom:2px}
+.receipt-addr{font-size:11px}
+.receipt-meta{display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px}
+.receipt-items{border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}
+.receipt-item{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11.5px}
+.receipt-item-name{flex:1}
+.receipt-totals{font-size:12px}
+.receipt-totals .receipt-row{display:flex;justify-content:space-between;margin-bottom:2px}
+.receipt-totals .grand{font-size:14px;font-weight:700;border-top:2px solid #000;padding-top:6px;margin-top:6px}
+.receipt-footer{text-align:center;font-size:11px;margin-top:14px;border-top:2px dashed #000;padding-top:10px}
+.receipt-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+@media print{
+  body * { visibility: hidden; }
+  #receiptModal, #receiptModal * { visibility: visible; }
+  #receiptModal { position: absolute; inset: 0; background: #fff; display: block; }
+  .modal { box-shadow: none; padding: 0; width: 100%; max-width: none; }
+  .modal-header, .receipt-actions, .modal-close { display: none !important; }
+}
+
+/* ===== MOBILE BOTTOM NAV ===== */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:8px 4px 12px;z-index:90;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+.mobile-nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:8px;cursor:pointer;color:var(--text-muted);text-decoration:none}
+.mobile-nav-item.active{color:var(--primary)}
+.mobile-nav-icon{font-size:20px}
+.mobile-nav-label{font-size:10px;font-weight:600}
+.menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
+
 @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:900px){.row-2col,.settings-grid{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.row-2col,.settings-grid{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s;width:260px}
+  .sidebar.open{transform:none;box-shadow:0 0 30px rgba(0,0,0,.3)}
+  .main-wrap{margin-left:0}
+  .menu-toggle{display:inline-flex}
+  .content{padding:16px;padding-bottom:90px}
+  .topbar{padding:0 16px}
+  .topbar-date{display:none}
+  .mobile-nav{display:block}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi-card{padding:14px}
+  .kpi-value{font-size:18px}
+  .kpi-icon{font-size:22px}
+  .card{padding:16px}
+  .pos-grid{grid-template-columns:repeat(2,1fr)}
+  .data-table{font-size:12px}
+  .data-table th,.data-table td{padding:8px 6px}
+  .product-thumb{width:40px;height:40px}
+  .page-actions{flex-direction:column;align-items:stretch}
+  .search-box{max-width:none}
+  .supplier-card{flex-direction:column;align-items:flex-start;text-align:left}
+  .supplier-stats{width:100%;justify-content:space-around}
+  .supplier-actions{width:100%}
+  .supplier-actions button{flex:1}
+  .form-row{grid-template-columns:1fr}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+  .sidebar-overlay.show{display:block}
+}
+@media(max-width:480px){
+  .pos-grid{grid-template-columns:1fr 1fr}
+  .alert-item{flex-direction:column;align-items:flex-start;gap:6px}
+}
 </style>
 </head>
 <body>
@@ -217,6 +300,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
 <div class="main-wrap">
   <header class="topbar">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
     <div class="topbar-title" id="pageTitle">แดชบอร์ด</div>
     <div class="topbar-right">
       <div class="alert-badge" title="แจ้งเตือน">🔔 <span class="badge">3</span></div>
@@ -358,19 +442,46 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <section class="page" id="page-sales">
       <div class="row-2col" style="align-items:flex-start">
         <div class="card">
-          <div class="card-header"><span class="card-title">🛒 บันทึกการขาย (POS)</span></div>
-          <div class="pos-search"><input type="text" class="form-control" placeholder="🔍 ค้นหาสินค้า หรือสแกนบาร์โค้ด..." oninput="posFilter(this.value)" /></div>
+          <div class="card-header">
+            <span class="card-title">🛒 บันทึกการขาย (POS)</span>
+            <button class="btn-outline" style="padding:6px 12px;font-size:12px" onclick="startScan()">📷 สแกนกล้อง</button>
+          </div>
+
+          <div class="pos-toolbar">
+            <div class="scan-box">
+              <span class="scan-icon">📡</span>
+              <input type="text" id="scanInput" placeholder="สแกนบาร์โค้ด หรือพิมพ์ค้นหา..." oninput="posSearch(this.value)" onkeydown="handleScanKey(event)" />
+            </div>
+          </div>
+
+          <div class="cat-tabs" id="catTabs">
+            <button class="cat-tab active" onclick="filterCat('',this)">🎣 ทั้งหมด</button>
+            <button class="cat-tab" onclick="filterCat('รอก',this)">🎣 รอก</button>
+            <button class="cat-tab" onclick="filterCat('คัน',this)">🪝 คัน</button>
+            <button class="cat-tab" onclick="filterCat('สาย',this)">🧵 สาย</button>
+            <button class="cat-tab" onclick="filterCat('เบ็ด',this)">📌 เบ็ด</button>
+            <button class="cat-tab" onclick="filterCat('เหยื่อ',this)">🐛 เหยื่อ</button>
+            <button class="cat-tab" onclick="filterCat('อื่นๆ',this)">🎒 อื่นๆ</button>
+          </div>
+
           <div class="pos-grid" id="posGrid"></div>
         </div>
+
         <div class="card">
-          <div class="card-header"><span class="card-title">🧾 ตะกร้าสินค้า</span></div>
-          <div class="cart-list" id="cartList"><div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div></div>
+          <div class="card-header">
+            <span class="card-title">🧾 ตะกร้าสินค้า</span>
+            <button class="btn-link" onclick="clearCart()" id="clearCartBtn" style="display:none">ล้างตะกร้า</button>
+          </div>
+          <div class="cart-list" id="cartList"><div class="cart-empty">ยังไม่มีสินค้าในตะกร้า<br/><span style="font-size:11px">สแกนบาร์โค้ดหรือคลิกสินค้าด้านซ้าย</span></div></div>
           <div class="cart-summary">
             <div class="summary-row"><span>รวมทั้งหมด</span><span id="cartTotal">฿0</span></div>
             <div class="summary-row"><span>ส่วนลด</span><input type="number" id="discount" class="discount-input" placeholder="0" oninput="updateTotal()" /></div>
             <div class="summary-row summary-net"><span>ยอดสุทธิ</span><span id="cartNet">฿0</span></div>
           </div>
-          <button class="btn-primary btn-full" onclick="checkout()" style="margin-top:12px">💳 ชำระเงิน</button>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn-outline" style="flex:1" onclick="printReceipt()">🖨️ พิมพ์</button>
+            <button class="btn-primary" style="flex:2" onclick="checkout()">💳 ชำระเงิน</button>
+          </div>
         </div>
       </div>
     </section>
@@ -526,6 +637,53 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   </div>
 </div>
 
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal" style="width:380px;padding:20px">
+    <div class="modal-header">
+      <span class="modal-title">🧾 ใบเสร็จรับเงิน</span>
+      <button class="modal-close" onclick="closeModal('receiptModal')">✕</button>
+    </div>
+    <div class="receipt" id="receiptContent"></div>
+    <div class="receipt-actions">
+      <button class="btn-outline" onclick="closeModal('receiptModal')">ปิด</button>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ใบเสร็จ</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN ANIMATION -->
+<div class="scan-anim" id="scanAnim">
+  <div class="scan-frame"><div class="scan-line"></div></div>
+  <div class="scan-anim-text">📷 กำลังสแกน...</div>
+  <div class="scan-anim-sub">วางบาร์โค้ดให้อยู่ในกรอบ</div>
+  <button class="btn-cancel-scan" onclick="cancelScan()">ยกเลิก</button>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-grid">
+    <a class="mobile-nav-item active" data-page="dashboard" onclick="navMobile('dashboard',this)">
+      <span class="mobile-nav-icon">📊</span><span class="mobile-nav-label">หน้าหลัก</span>
+    </a>
+    <a class="mobile-nav-item" data-page="products" onclick="navMobile('products',this)">
+      <span class="mobile-nav-icon">📦</span><span class="mobile-nav-label">สินค้า</span>
+    </a>
+    <a class="mobile-nav-item" data-page="sales" onclick="navMobile('sales',this)">
+      <span class="mobile-nav-icon">🛒</span><span class="mobile-nav-label">ขาย</span>
+    </a>
+    <a class="mobile-nav-item" data-page="stock" onclick="navMobile('stock',this)">
+      <span class="mobile-nav-icon">🏭</span><span class="mobile-nav-label">สต็อก</span>
+    </a>
+    <a class="mobile-nav-item" data-page="reports" onclick="navMobile('reports',this)">
+      <span class="mobile-nav-icon">📈</span><span class="mobile-nav-label">รายงาน</span>
+    </a>
+  </div>
+</nav>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -546,33 +704,21 @@ const IMG = {
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e0f2fe"/><text x="50" y="62" font-size="42" text-anchor="middle">🎣</text></svg>';
 
 const products = [
-  {code:'SKU-001',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:IMG.reel},
-  {code:'SKU-002',name:'คันตกปลา Okuma 6ft',cat:'คัน',cost:900,price:1500,qty:45,img:IMG.rod},
-  {code:'SKU-003',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:IMG.line},
-  {code:'SKU-004',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:IMG.hook},
-  {code:'SKU-005',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:IMG.lure},
-  {code:'SKU-006',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:IMG.float},
-  {code:'SKU-007',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:IMG.hook},
-  {code:'SKU-008',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:IMG.bait},
-  {code:'SKU-009',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:IMG.reel2},
-  {code:'SKU-010',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:IMG.box},
-  {code:'SKU-011',name:'คันตกปลา Penn Pursuit 7ft',cat:'คัน',cost:1200,price:2100,qty:11,img:IMG.rod2},
-  {code:'SKU-012',name:'เหยื่อปลอม Spinner Set',cat:'เหยื่อ',cost:280,price:480,qty:13,img:IMG.lure2},
+  {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:IMG.reel},
+  {code:'SKU-002',barcode:'8851234500028',name:'คันตกปลา Okuma 6ft',cat:'คัน',cost:900,price:1500,qty:45,img:IMG.rod},
+  {code:'SKU-003',barcode:'8851234500035',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:IMG.line},
+  {code:'SKU-004',barcode:'8851234500042',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:IMG.hook},
+  {code:'SKU-005',barcode:'8851234500059',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:IMG.lure},
+  {code:'SKU-006',barcode:'8851234500066',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:IMG.float},
+  {code:'SKU-007',barcode:'8851234500073',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:IMG.hook},
+  {code:'SKU-008',barcode:'8851234500080',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:IMG.bait},
+  {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:IMG.reel2},
+  {code:'SKU-010',barcode:'8851234500103',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:IMG.box},
+  {code:'SKU-011',barcode:'8851234500110',name:'คันตกปลา Penn Pursuit 7ft',cat:'คัน',cost:1200,price:2100,qty:11,img:IMG.rod2},
+  {code:'SKU-012',barcode:'8851234500127',name:'เหยื่อปลอม Spinner Set',cat:'เหยื่อ',cost:280,price:480,qty:13,img:IMG.lure2},
 ];
-const posItems = [
-  {img:IMG.reel,name:'รอก Shimano 2500',price:1290},
-  {img:IMG.rod,name:'คันตกปลา Okuma 6ft',price:1500},
-  {img:IMG.line,name:'สายเอ็น 0.4mm',price:290},
-  {img:IMG.hook,name:'เบ็ด #6 (แพ็ค)',price:100},
-  {img:IMG.lure,name:'เหยื่อปลอม (แดง)',price:590},
-  {img:IMG.float,name:'ลูกลอยโฟม',price:90},
-  {img:IMG.bait,name:'เหยื่อหนอน',price:180},
-  {img:IMG.reel2,name:'Penn Battle 3000',price:2990},
-  {img:IMG.box,name:'กระป๋องเก็บเหยื่อ',price:220},
-  {img:IMG.rod2,name:'Penn Pursuit 7ft',price:2100},
-  {img:IMG.lure2,name:'Spinner Set',price:480},
-  {img:IMG.hook,name:'ตะขอ 3 ง่าม #4',price:60},
-];
+// POS items derived from products
+const posItems = products.map(p=>({img:p.img,name:p.name,price:p.price,barcode:p.barcode,cat:p.cat,code:p.code}));
 let cart = [];
 const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
@@ -581,9 +727,15 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     e.preventDefault();
     const page = item.dataset.page;
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+    document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
     document.getElementById('pageTitle').textContent = pageTitles[page]||page;
     if(page==='dashboard') setTimeout(drawChart,50);
+    // close mobile sidebar
+    if(window.innerWidth<=768){
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    }
   });
 });
 
@@ -649,7 +801,52 @@ function renderPOS(items){
       <div class="pos-item-price">฿${p.price.toLocaleString()}</div>
     </div>`).join('');
 }
-function posFilter(q){renderPOS(q?posItems.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())):posItems);}
+let currentCat = '';
+let currentSearch = '';
+function applyPosFilter(){
+  let list = posItems;
+  if(currentCat) list = list.filter(p=>p.cat===currentCat);
+  if(currentSearch){
+    const q = currentSearch.toLowerCase();
+    list = list.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.code||'').toLowerCase().includes(q));
+  }
+  renderPOS(list);
+}
+function posSearch(q){currentSearch=q;applyPosFilter();}
+function posFilter(q){posSearch(q);}
+function filterCat(cat,btn){
+  currentCat=cat;
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  applyPosFilter();
+}
+function handleScanKey(e){
+  if(e.key==='Enter'){
+    const v=e.target.value.trim();
+    if(!v)return;
+    const found = posItems.find(p=>p.barcode===v||p.code.toLowerCase()===v.toLowerCase());
+    if(found){
+      addToCart(posItems.indexOf(found));
+      e.target.value='';currentSearch='';applyPosFilter();
+      showToast(`✅ สแกน: ${found.name}`);
+    } else {
+      showToast('❌ ไม่พบสินค้านี้');
+    }
+  }
+}
+function startScan(){
+  document.getElementById('scanAnim').classList.add('show');
+  // จำลองการสแกน 2 วินาที สุ่มสินค้า
+  setTimeout(()=>{
+    if(!document.getElementById('scanAnim').classList.contains('show'))return;
+    const random = posItems[Math.floor(Math.random()*posItems.length)];
+    cancelScan();
+    addToCart(posItems.indexOf(random));
+    showToast(`📷 สแกนเจอ: ${random.name}`);
+  },2000);
+}
+function cancelScan(){document.getElementById('scanAnim').classList.remove('show');}
+function clearCart(){if(cart.length&&confirm('ล้างตะกร้าทั้งหมด?')){cart=[];renderCart();}}
 function addToCart(i){
   const it=posItems[i];const f=cart.find(c=>c.name===it.name);
   if(f)f.qty++;else cart.push({...it,qty:1});
@@ -657,7 +854,9 @@ function addToCart(i){
 }
 function renderCart(){
   const list=document.getElementById('cartList');
-  if(cart.length===0){list.innerHTML='<div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div>';updateTotal();return;}
+  const clearBtn=document.getElementById('clearCartBtn');
+  if(clearBtn)clearBtn.style.display=cart.length?'inline':'none';
+  if(cart.length===0){list.innerHTML='<div class="cart-empty">ยังไม่มีสินค้าในตะกร้า<br/><span style="font-size:11px">สแกนบาร์โค้ดหรือคลิกสินค้าด้านซ้าย</span></div>';updateTotal();return;}
   list.innerHTML = cart.map((c,i)=>`
     <div class="cart-row">
       <img class="cart-thumb" src="${c.img}" alt="${c.name}" onerror="this.src='${FALLBACK_IMG}'"/>
@@ -676,11 +875,62 @@ function updateTotal(){
   document.getElementById('cartTotal').textContent='฿'+t.toLocaleString();
   document.getElementById('cartNet').textContent='฿'+Math.max(0,t-dc).toLocaleString();
 }
+function buildReceipt(){
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const disc = +document.getElementById('discount').value||0;
+  const net = Math.max(0,total-disc);
+  const d = new Date();
+  const dateStr = d.toLocaleDateString('th-TH')+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const billNo = 'B'+Date.now().toString().slice(-8);
+  return `
+    <div class="receipt-header">
+      <div class="receipt-shop">🎣 ร้านอุปกรณ์ตกปลา สมชาย</div>
+      <div class="receipt-addr">123 ถ.สุขุมวิท กรุงเทพฯ</div>
+      <div class="receipt-addr">โทร. 081-234-5678</div>
+    </div>
+    <div class="receipt-meta">
+      <span>เลขที่: ${billNo}</span>
+      <span>${dateStr}</span>
+    </div>
+    <div class="receipt-items">
+      ${cart.map(c=>`
+        <div class="receipt-item">
+          <div class="receipt-item-name">${c.name}<br/>&nbsp;&nbsp;${c.qty} × ฿${c.price.toLocaleString()}</div>
+          <div>฿${(c.price*c.qty).toLocaleString()}</div>
+        </div>`).join('')}
+    </div>
+    <div class="receipt-totals">
+      <div class="receipt-row"><span>จำนวน</span><span>${cart.reduce((s,c)=>s+c.qty,0)} ชิ้น</span></div>
+      <div class="receipt-row"><span>รวม</span><span>฿${total.toLocaleString()}</span></div>
+      ${disc?`<div class="receipt-row"><span>ส่วนลด</span><span>-฿${disc.toLocaleString()}</span></div>`:''}
+      <div class="receipt-row grand"><span>ยอดสุทธิ</span><span>฿${net.toLocaleString()}</span></div>
+    </div>
+    <div class="receipt-footer">
+      *** ขอบคุณที่ใช้บริการ ***<br/>
+      ติดตามเรา IG: @fishstock_shop
+    </div>`;
+}
+function printReceipt(){
+  if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
+  document.getElementById('receiptContent').innerHTML = buildReceipt();
+  openModal('receiptModal');
+}
 function checkout(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
+  document.getElementById('receiptContent').innerHTML = buildReceipt();
+  openModal('receiptModal');
   const net=document.getElementById('cartNet').textContent;
-  cart=[];renderCart();document.getElementById('discount').value='';
   showToast(`✅ ชำระเงิน ${net}`);
+  cart=[];renderCart();document.getElementById('discount').value='';
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function navMobile(page,el){
+  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelector(`.nav-item[data-page="${page}"]`).click();
 }
 
 function drawChart(){
