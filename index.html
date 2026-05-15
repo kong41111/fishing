@@ -750,18 +750,46 @@ const PIMG = {
     <text x="150" y="270" font-size="13" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
   `,'#fdf2f8'),
 
-  // ไก่ชน (metal vibration lure): body color + label
+  // ไก่ชน / กระดี่ไก่ชน (blade vibration lure): body color + label
+  // shape: metallic blade on top + painted body at bottom + treble hook
   metal: (color,label)=>svgIMG(`
-    <path d="M 90 150 L 210 105 L 210 195 Z" fill="${color}" stroke="#1e293b" stroke-width="2"/>
-    <path d="M 100 150 L 200 120 L 200 180 Z" fill="${color}" opacity="0.5"/>
-    <circle cx="105" cy="150" r="8" fill="#1e293b"/>
-    <circle cx="105" cy="150" r="3" fill="#fff"/>
-    <circle cx="160" cy="115" r="3" fill="#fff" opacity="0.7"/>
-    <circle cx="180" cy="125" r="2" fill="#fff" opacity="0.7"/>
-    <line x1="210" y1="150" x2="245" y2="170" stroke="#475569" stroke-width="2"/>
-    <path d="M 240 162 L 252 174 M 240 174 L 252 162" stroke="#facc15" stroke-width="2.5" fill="none"/>
-    <text x="150" y="260" font-size="14" fill="#134e4a" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
-  `,'#f0fdfa'),
+    <defs>
+      <linearGradient id="blade-${label.replace(/[^a-zA-Z0-9]/g,'')}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f8fafc"/>
+        <stop offset="0.5" stop-color="#cbd5e1"/>
+        <stop offset="1" stop-color="#94a3b8"/>
+      </linearGradient>
+    </defs>
+    <!-- top attachment ring -->
+    <circle cx="155" cy="65" r="6" fill="none" stroke="#475569" stroke-width="2"/>
+    <!-- main blade (silver metallic, tilted) -->
+    <path d="M 155 75 L 215 110 L 220 175 L 180 195 L 130 175 L 105 130 Z"
+      fill="url(#blade-${label.replace(/[^a-zA-Z0-9]/g,'')})" stroke="#475569" stroke-width="2"/>
+    <!-- glitter dots on blade -->
+    <circle cx="175" cy="115" r="2" fill="#fff" opacity="0.9"/>
+    <circle cx="195" cy="140" r="1.5" fill="#fff" opacity="0.8"/>
+    <circle cx="155" cy="135" r="1.5" fill="#fff" opacity="0.8"/>
+    <circle cx="180" cy="160" r="1.8" fill="#fff" opacity="0.7"/>
+    <!-- painted body (bottom, colored) -->
+    <path d="M 130 175 L 180 195 L 195 220 L 165 235 L 130 225 L 115 200 Z"
+      fill="${color}" stroke="#1e293b" stroke-width="2"/>
+    <!-- body highlight -->
+    <path d="M 130 180 Q 160 195 190 200" stroke="#fff" stroke-width="2" fill="none" opacity="0.4"/>
+    <!-- eye on body -->
+    <circle cx="140" cy="210" r="6" fill="#fff"/>
+    <circle cx="140" cy="210" r="3" fill="#1e293b"/>
+    <!-- treble hook (gold, 3 prongs hanging bottom-right) -->
+    <line x1="195" y1="220" x2="220" y2="245" stroke="#d4af37" stroke-width="2.5"/>
+    <circle cx="222" cy="245" r="4" fill="none" stroke="#d4af37" stroke-width="2"/>
+    <!-- 3 hook prongs -->
+    <path d="M 222 249 Q 225 270 215 275 Q 207 277 205 268" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 226 249 Q 240 265 235 278 Q 230 282 222 275" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 218 249 Q 210 270 220 280 Q 232 282 235 270" stroke="#d4af37" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- hook barbs -->
+    <path d="M 205 268 L 200 263 M 205 268 L 211 264" stroke="#d4af37" stroke-width="2" fill="none"/>
+    <path d="M 222 275 L 217 271 M 222 275 L 226 270" stroke="#d4af37" stroke-width="2" fill="none"/>
+    <text x="150" y="290" font-size="13" fill="#134e4a" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#fef2f2'),
 
   // Audi กิ้งก่า (lizard-shape soft lure): body + accent + label
   lizard: (body,accent,label)=>svgIMG(`
