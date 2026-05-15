@@ -704,8 +704,38 @@ const IMG = {
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e0f2fe"/><text x="50" y="62" font-size="42" text-anchor="middle">🎣</text></svg>';
 
 const products = [
+  // ===== คันชิงหลิว — หลิวมังกรทอง (แพคสั้น) =====
+  {code:'SH-MKT-27',barcode:'8851111100271',name:'หลิวมังกรทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:25,img:IMG.rod},
+  {code:'SH-MKT-36',barcode:'8851111100365',name:'หลิวมังกรทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:22,img:IMG.rod},
+  {code:'SH-MKT-45',barcode:'8851111100456',name:'หลิวมังกรทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:18,img:IMG.rod},
+  {code:'SH-MKT-54',barcode:'8851111100548',name:'หลิวมังกรทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:12,img:IMG.rod},
+
+  // ===== คันชิงหลิว BLUE DRAGON (สีฟ้า) =====
+  {code:'SH-BD-36',barcode:'8851111200369',name:'คันชิงหลิว BLUE DRAGON 3.6m (สีฟ้า)',cat:'คัน',cost:235,price:320,qty:15,img:IMG.rod2},
+  {code:'SH-BD-45',barcode:'8851111200451',name:'คันชิงหลิว BLUE DRAGON 4.5m (สีฟ้า)',cat:'คัน',cost:300,price:405,qty:14,img:IMG.rod2},
+  {code:'SH-BD-54',barcode:'8851111200543',name:'คันชิงหลิว BLUE DRAGON 5.4m (สีฟ้า)',cat:'คัน',cost:370,price:500,qty:10,img:IMG.rod2},
+  {code:'SH-BD-63',barcode:'8851111200635',name:'คันชิงหลิว BLUE DRAGON 6.3m (สีฟ้า)',cat:'คัน',cost:435,price:590,qty:8,img:IMG.rod2},
+
+  // ===== คันชิงหลิว — หลิวไผ่ทอง (แพคสั้น) =====
+  {code:'SH-PT-27',barcode:'8851111300278',name:'หลิวไผ่ทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:30,img:IMG.rod},
+  {code:'SH-PT-36',barcode:'8851111300360',name:'หลิวไผ่ทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:28,img:IMG.rod},
+  {code:'SH-PT-45',barcode:'8851111300452',name:'หลิวไผ่ทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:20,img:IMG.rod},
+  {code:'SH-PT-54',barcode:'8851111300544',name:'หลิวไผ่ทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:15,img:IMG.rod},
+
+  // ===== คันชิงหลิว GOLD DRAGON (สีทอง) =====
+  {code:'SH-GD-36',barcode:'8851111400367',name:'คันชิงหลิว GOLD DRAGON 3.6m (สีทอง)',cat:'คัน',cost:235,price:320,qty:13,img:IMG.rod2},
+  {code:'SH-GD-45',barcode:'8851111400459',name:'คันชิงหลิว GOLD DRAGON 4.5m (สีทอง)',cat:'คัน',cost:300,price:405,qty:11,img:IMG.rod2},
+  {code:'SH-GD-54',barcode:'8851111400541',name:'คันชิงหลิว GOLD DRAGON 5.4m (สีทอง)',cat:'คัน',cost:370,price:500,qty:9,img:IMG.rod2},
+  {code:'SH-GD-63',barcode:'8851111400633',name:'คันชิงหลิว GOLD DRAGON 6.3m (สีทอง)',cat:'คัน',cost:435,price:590,qty:6,img:IMG.rod2},
+
+  // ===== คันชิงหลิวนิลมังกร =====
+  {code:'SH-NM-36',barcode:'8851111500364',name:'คันชิงหลิวนิลมังกร 3.6m',cat:'คัน',cost:210,price:285,qty:16,img:IMG.rod2},
+  {code:'SH-NM-45',barcode:'8851111500456',name:'คันชิงหลิวนิลมังกร 4.5m',cat:'คัน',cost:260,price:350,qty:12,img:IMG.rod2},
+  {code:'SH-NM-54',barcode:'8851111500548',name:'คันชิงหลิวนิลมังกร 5.4m',cat:'คัน',cost:310,price:420,qty:9,img:IMG.rod2},
+  {code:'SH-NM-63',barcode:'8851111500630',name:'คันชิงหลิวนิลมังกร 6.3m',cat:'คัน',cost:360,price:485,qty:5,img:IMG.rod2},
+
+  // ===== สินค้าอื่นๆ (เดิม) =====
   {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:IMG.reel},
-  {code:'SKU-002',barcode:'8851234500028',name:'คันตกปลา Okuma 6ft',cat:'คัน',cost:900,price:1500,qty:45,img:IMG.rod},
   {code:'SKU-003',barcode:'8851234500035',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:IMG.line},
   {code:'SKU-004',barcode:'8851234500042',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:IMG.hook},
   {code:'SKU-005',barcode:'8851234500059',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:IMG.lure},
@@ -714,8 +744,6 @@ const products = [
   {code:'SKU-008',barcode:'8851234500080',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:IMG.bait},
   {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:IMG.reel2},
   {code:'SKU-010',barcode:'8851234500103',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:IMG.box},
-  {code:'SKU-011',barcode:'8851234500110',name:'คันตกปลา Penn Pursuit 7ft',cat:'คัน',cost:1200,price:2100,qty:11,img:IMG.rod2},
-  {code:'SKU-012',barcode:'8851234500127',name:'เหยื่อปลอม Spinner Set',cat:'เหยื่อ',cost:280,price:480,qty:13,img:IMG.lure2},
 ];
 // POS items derived from products
 const posItems = products.map(p=>({img:p.img,name:p.name,price:p.price,barcode:p.barcode,cat:p.cat,code:p.code}));
