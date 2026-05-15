@@ -703,80 +703,190 @@ const IMG = {
 };
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e0f2fe"/><text x="50" y="62" font-size="42" text-anchor="middle">🎣</text></svg>';
 
+// ===== Product-specific SVG image generators =====
+function svgIMG(content,bg='#f0f9ff'){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="${bg}"/>${content}</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+const PIMG = {
+  // ชิงหลิว (telescopic rod): main color + grip color + label
+  rod: (c1,c2,label)=>svgIMG(`
+    <g transform="rotate(-30 150 150)">
+      <rect x="30" y="142" width="240" height="14" rx="7" fill="${c1}"/>
+      <rect x="30" y="142" width="55" height="14" rx="7" fill="${c2}"/>
+      <rect x="85" y="142" width="6" height="14" fill="#1e293b"/>
+      <rect x="240" y="144" width="30" height="10" rx="5" fill="${c2}"/>
+      <circle cx="272" cy="149" r="5" fill="#1e293b"/>
+      <line x1="135" y1="149" x2="165" y2="149" stroke="#dc2626" stroke-width="2"/>
+    </g>
+    <text x="150" y="260" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#e0f2fe'),
+
+  // กบยาง SPEED (frog lure with spinner): body + stripe + label
+  frog: (body,stripe,label)=>svgIMG(`
+    <ellipse cx="120" cy="155" rx="75" ry="50" fill="${body}"/>
+    <ellipse cx="120" cy="155" rx="75" ry="50" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+    <path d="M 55 155 Q 120 115 185 155" stroke="${stripe}" stroke-width="6" fill="none" opacity="0.85"/>
+    <path d="M 55 155 Q 120 195 185 155" stroke="${stripe}" stroke-width="6" fill="none" opacity="0.85"/>
+    <line x1="60" y1="155" x2="180" y2="155" stroke="${stripe}" stroke-width="3" opacity="0.7"/>
+    <circle cx="92" cy="138" r="10" fill="#fff"/>
+    <circle cx="92" cy="138" r="6" fill="#1e293b"/>
+    <circle cx="92" cy="138" r="2" fill="#fff"/>
+    <line x1="195" y1="155" x2="225" y2="170" stroke="#475569" stroke-width="2.5"/>
+    <ellipse cx="240" cy="172" rx="14" ry="10" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+    <ellipse cx="240" cy="172" rx="6" ry="4" fill="#94a3b8"/>
+    <text x="150" y="265" font-size="13" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#ecfeff'),
+
+  // ไก่ชน (metal vibration lure): body color + label
+  metal: (color,label)=>svgIMG(`
+    <path d="M 90 150 L 210 105 L 210 195 Z" fill="${color}" stroke="#1e293b" stroke-width="2"/>
+    <path d="M 100 150 L 200 120 L 200 180 Z" fill="${color}" opacity="0.5"/>
+    <circle cx="105" cy="150" r="8" fill="#1e293b"/>
+    <circle cx="105" cy="150" r="3" fill="#fff"/>
+    <circle cx="160" cy="115" r="3" fill="#fff" opacity="0.7"/>
+    <circle cx="180" cy="125" r="2" fill="#fff" opacity="0.7"/>
+    <line x1="210" y1="150" x2="245" y2="170" stroke="#475569" stroke-width="2"/>
+    <path d="M 240 162 L 252 174 M 240 174 L 252 162" stroke="#facc15" stroke-width="2.5" fill="none"/>
+    <text x="150" y="260" font-size="14" fill="#134e4a" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#f0fdfa'),
+
+  // Audi กิ้งก่า (lizard-shape soft lure): body + accent + label
+  lizard: (body,accent,label)=>svgIMG(`
+    <path d="M 60 158 Q 75 140 110 145 L 135 138 Q 170 142 195 138 Q 215 140 215 158 Q 215 172 195 175 Q 170 172 135 178 L 110 170 Q 75 178 60 158 Z" fill="${body}" stroke="#1e293b" stroke-width="1.5"/>
+    <path d="M 80 158 Q 140 148 200 158" stroke="${accent}" stroke-width="3" fill="none"/>
+    <path d="M 80 162 Q 140 172 200 162" stroke="${accent}" stroke-width="2" fill="none" opacity="0.7"/>
+    <circle cx="200" cy="152" r="6" fill="#fff"/>
+    <circle cx="200" cy="152" r="3" fill="#1e293b"/>
+    <line x1="215" y1="158" x2="245" y2="172" stroke="#475569" stroke-width="2"/>
+    <ellipse cx="258" cy="174" rx="12" ry="9" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+    <text x="150" y="265" font-size="13" fill="#78350f" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#fef3c7'),
+
+  // รอก spinning reel
+  reel: (label)=>svgIMG(`
+    <rect x="100" y="120" width="100" height="55" rx="8" fill="#475569"/>
+    <circle cx="150" cy="180" r="48" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/>
+    <circle cx="150" cy="180" r="30" fill="#475569"/>
+    <circle cx="150" cy="180" r="6" fill="#94a3b8"/>
+    <line x1="220" y1="180" x2="245" y2="180" stroke="#1e293b" stroke-width="4"/>
+    <circle cx="248" cy="180" r="6" fill="#475569"/>
+    <text x="150" y="265" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#e0f2fe'),
+
+  // สายเอ็น line spool
+  line: (color,label)=>svgIMG(`
+    <circle cx="150" cy="150" r="80" fill="${color}" stroke="#1e293b" stroke-width="3"/>
+    <circle cx="150" cy="150" r="60" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="150" cy="150" r="45" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="150" cy="150" r="25" fill="#f8fafc"/>
+    <circle cx="150" cy="150" r="6" fill="#1e293b"/>
+    <text x="150" y="270" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#e0f2fe'),
+
+  // เบ็ด/ตะขอ hook
+  hook: (label)=>svgIMG(`
+    <path d="M 150 70 L 150 180 Q 150 220 110 220 Q 80 220 75 195" stroke="#94a3b8" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 75 195 L 65 205 L 80 205 Z" fill="#dc2626"/>
+    <rect x="140" y="60" width="20" height="14" rx="3" fill="#475569"/>
+    <text x="150" y="265" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#fef9c3'),
+
+  // ลูกลอย float
+  float: (label)=>svgIMG(`
+    <ellipse cx="150" cy="150" rx="35" ry="80" fill="#dc2626"/>
+    <ellipse cx="150" cy="150" rx="35" ry="80" fill="none" stroke="#1e293b" stroke-width="2"/>
+    <rect x="148" y="60" width="4" height="40" fill="#1e293b"/>
+    <rect x="148" y="200" width="4" height="50" fill="#1e293b"/>
+    <ellipse cx="150" cy="125" rx="35" ry="10" fill="#fff" opacity="0.4"/>
+    <text x="150" y="285" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#e0f2fe'),
+
+  // กระป๋อง box
+  box: (label)=>svgIMG(`
+    <rect x="70" y="100" width="160" height="120" rx="6" fill="#475569" stroke="#1e293b" stroke-width="2"/>
+    <rect x="70" y="100" width="160" height="20" fill="#1e293b"/>
+    <circle cx="150" cy="110" r="4" fill="#94a3b8"/>
+    <rect x="100" y="140" width="100" height="6" fill="#94a3b8" opacity="0.5"/>
+    <rect x="100" y="160" width="100" height="6" fill="#94a3b8" opacity="0.5"/>
+    <text x="150" y="265" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#e0f2fe'),
+};
+
 const products = [
-  // ===== คันชิงหลิว — หลิวมังกรทอง (แพคสั้น) =====
-  {code:'SH-MKT-27',barcode:'8851111100271',name:'หลิวมังกรทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:25,img:IMG.rod},
-  {code:'SH-MKT-36',barcode:'8851111100365',name:'หลิวมังกรทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:22,img:IMG.rod},
-  {code:'SH-MKT-45',barcode:'8851111100456',name:'หลิวมังกรทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:18,img:IMG.rod},
-  {code:'SH-MKT-54',barcode:'8851111100548',name:'หลิวมังกรทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:12,img:IMG.rod},
+  // ===== หลิวมังกรทอง (แพคสั้น) — gold rod with red band =====
+  {code:'SH-MKT-27',barcode:'8851111100271',name:'หลิวมังกรทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:25,img:PIMG.rod('#fbbf24','#1e293b','หลิวมังกรทอง 2.7m')},
+  {code:'SH-MKT-36',barcode:'8851111100365',name:'หลิวมังกรทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:22,img:PIMG.rod('#fbbf24','#1e293b','หลิวมังกรทอง 3.6m')},
+  {code:'SH-MKT-45',barcode:'8851111100456',name:'หลิวมังกรทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:18,img:PIMG.rod('#fbbf24','#1e293b','หลิวมังกรทอง 4.5m')},
+  {code:'SH-MKT-54',barcode:'8851111100548',name:'หลิวมังกรทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:12,img:PIMG.rod('#fbbf24','#1e293b','หลิวมังกรทอง 5.4m')},
 
-  // ===== คันชิงหลิว BLUE DRAGON (สีฟ้า) =====
-  {code:'SH-BD-36',barcode:'8851111200369',name:'คันชิงหลิว BLUE DRAGON 3.6m (สีฟ้า)',cat:'คัน',cost:235,price:320,qty:15,img:IMG.rod2},
-  {code:'SH-BD-45',barcode:'8851111200451',name:'คันชิงหลิว BLUE DRAGON 4.5m (สีฟ้า)',cat:'คัน',cost:300,price:405,qty:14,img:IMG.rod2},
-  {code:'SH-BD-54',barcode:'8851111200543',name:'คันชิงหลิว BLUE DRAGON 5.4m (สีฟ้า)',cat:'คัน',cost:370,price:500,qty:10,img:IMG.rod2},
-  {code:'SH-BD-63',barcode:'8851111200635',name:'คันชิงหลิว BLUE DRAGON 6.3m (สีฟ้า)',cat:'คัน',cost:435,price:590,qty:8,img:IMG.rod2},
+  // ===== BLUE DRAGON (สีฟ้า) =====
+  {code:'SH-BD-36',barcode:'8851111200369',name:'คันชิงหลิว BLUE DRAGON 3.6m (สีฟ้า)',cat:'คัน',cost:235,price:320,qty:15,img:PIMG.rod('#3b82f6','#0c4a6e','BLUE DRAGON 3.6m')},
+  {code:'SH-BD-45',barcode:'8851111200451',name:'คันชิงหลิว BLUE DRAGON 4.5m (สีฟ้า)',cat:'คัน',cost:300,price:405,qty:14,img:PIMG.rod('#3b82f6','#0c4a6e','BLUE DRAGON 4.5m')},
+  {code:'SH-BD-54',barcode:'8851111200543',name:'คันชิงหลิว BLUE DRAGON 5.4m (สีฟ้า)',cat:'คัน',cost:370,price:500,qty:10,img:PIMG.rod('#3b82f6','#0c4a6e','BLUE DRAGON 5.4m')},
+  {code:'SH-BD-63',barcode:'8851111200635',name:'คันชิงหลิว BLUE DRAGON 6.3m (สีฟ้า)',cat:'คัน',cost:435,price:590,qty:8,img:PIMG.rod('#3b82f6','#0c4a6e','BLUE DRAGON 6.3m')},
 
-  // ===== คันชิงหลิว — หลิวไผ่ทอง (แพคสั้น) =====
-  {code:'SH-PT-27',barcode:'8851111300278',name:'หลิวไผ่ทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:30,img:IMG.rod},
-  {code:'SH-PT-36',barcode:'8851111300360',name:'หลิวไผ่ทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:28,img:IMG.rod},
-  {code:'SH-PT-45',barcode:'8851111300452',name:'หลิวไผ่ทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:20,img:IMG.rod},
-  {code:'SH-PT-54',barcode:'8851111300544',name:'หลิวไผ่ทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:15,img:IMG.rod},
+  // ===== หลิวไผ่ทอง (แพคสั้น) — bamboo yellow/brown =====
+  {code:'SH-PT-27',barcode:'8851111300278',name:'หลิวไผ่ทอง 2.7m (แพคสั้น)',cat:'คัน',cost:100,price:135,qty:30,img:PIMG.rod('#eab308','#78350f','หลิวไผ่ทอง 2.7m')},
+  {code:'SH-PT-36',barcode:'8851111300360',name:'หลิวไผ่ทอง 3.6m (แพคสั้น)',cat:'คัน',cost:110,price:150,qty:28,img:PIMG.rod('#eab308','#78350f','หลิวไผ่ทอง 3.6m')},
+  {code:'SH-PT-45',barcode:'8851111300452',name:'หลิวไผ่ทอง 4.5m (แพคสั้น)',cat:'คัน',cost:125,price:170,qty:20,img:PIMG.rod('#eab308','#78350f','หลิวไผ่ทอง 4.5m')},
+  {code:'SH-PT-54',barcode:'8851111300544',name:'หลิวไผ่ทอง 5.4m (แพคสั้น)',cat:'คัน',cost:155,price:210,qty:15,img:PIMG.rod('#eab308','#78350f','หลิวไผ่ทอง 5.4m')},
 
-  // ===== คันชิงหลิว GOLD DRAGON (สีทอง) =====
-  {code:'SH-GD-36',barcode:'8851111400367',name:'คันชิงหลิว GOLD DRAGON 3.6m (สีทอง)',cat:'คัน',cost:235,price:320,qty:13,img:IMG.rod2},
-  {code:'SH-GD-45',barcode:'8851111400459',name:'คันชิงหลิว GOLD DRAGON 4.5m (สีทอง)',cat:'คัน',cost:300,price:405,qty:11,img:IMG.rod2},
-  {code:'SH-GD-54',barcode:'8851111400541',name:'คันชิงหลิว GOLD DRAGON 5.4m (สีทอง)',cat:'คัน',cost:370,price:500,qty:9,img:IMG.rod2},
-  {code:'SH-GD-63',barcode:'8851111400633',name:'คันชิงหลิว GOLD DRAGON 6.3m (สีทอง)',cat:'คัน',cost:435,price:590,qty:6,img:IMG.rod2},
+  // ===== GOLD DRAGON (สีทอง) =====
+  {code:'SH-GD-36',barcode:'8851111400367',name:'คันชิงหลิว GOLD DRAGON 3.6m (สีทอง)',cat:'คัน',cost:235,price:320,qty:13,img:PIMG.rod('#d4af37','#1e293b','GOLD DRAGON 3.6m')},
+  {code:'SH-GD-45',barcode:'8851111400459',name:'คันชิงหลิว GOLD DRAGON 4.5m (สีทอง)',cat:'คัน',cost:300,price:405,qty:11,img:PIMG.rod('#d4af37','#1e293b','GOLD DRAGON 4.5m')},
+  {code:'SH-GD-54',barcode:'8851111400541',name:'คันชิงหลิว GOLD DRAGON 5.4m (สีทอง)',cat:'คัน',cost:370,price:500,qty:9,img:PIMG.rod('#d4af37','#1e293b','GOLD DRAGON 5.4m')},
+  {code:'SH-GD-63',barcode:'8851111400633',name:'คันชิงหลิว GOLD DRAGON 6.3m (สีทอง)',cat:'คัน',cost:435,price:590,qty:6,img:PIMG.rod('#d4af37','#1e293b','GOLD DRAGON 6.3m')},
 
-  // ===== คันชิงหลิวนิลมังกร =====
-  {code:'SH-NM-36',barcode:'8851111500364',name:'คันชิงหลิวนิลมังกร 3.6m',cat:'คัน',cost:210,price:285,qty:16,img:IMG.rod2},
-  {code:'SH-NM-45',barcode:'8851111500456',name:'คันชิงหลิวนิลมังกร 4.5m',cat:'คัน',cost:260,price:350,qty:12,img:IMG.rod2},
-  {code:'SH-NM-54',barcode:'8851111500548',name:'คันชิงหลิวนิลมังกร 5.4m',cat:'คัน',cost:310,price:420,qty:9,img:IMG.rod2},
-  {code:'SH-NM-63',barcode:'8851111500630',name:'คันชิงหลิวนิลมังกร 6.3m',cat:'คัน',cost:360,price:485,qty:5,img:IMG.rod2},
+  // ===== นิลมังกร — black with silver =====
+  {code:'SH-NM-36',barcode:'8851111500364',name:'คันชิงหลิวนิลมังกร 3.6m',cat:'คัน',cost:210,price:285,qty:16,img:PIMG.rod('#1e293b','#94a3b8','นิลมังกร 3.6m')},
+  {code:'SH-NM-45',barcode:'8851111500456',name:'คันชิงหลิวนิลมังกร 4.5m',cat:'คัน',cost:260,price:350,qty:12,img:PIMG.rod('#1e293b','#94a3b8','นิลมังกร 4.5m')},
+  {code:'SH-NM-54',barcode:'8851111500548',name:'คันชิงหลิวนิลมังกร 5.4m',cat:'คัน',cost:310,price:420,qty:9,img:PIMG.rod('#1e293b','#94a3b8','นิลมังกร 5.4m')},
+  {code:'SH-NM-63',barcode:'8851111500630',name:'คันชิงหลิวนิลมังกร 6.3m',cat:'คัน',cost:360,price:485,qty:5,img:PIMG.rod('#1e293b','#94a3b8','นิลมังกร 6.3m')},
 
-  // ===== กบยาง SPEED รุ่น MARK I (6 สี) — 30mm Top Water =====
-  {code:'SP-MK1-01',barcode:'8852222100013',name:'กบยาง SPEED MARK I สี 01',cat:'เหยื่อ',cost:29,price:45,qty:30,img:IMG.lure},
-  {code:'SP-MK1-02',barcode:'8852222100020',name:'กบยาง SPEED MARK I สี 02',cat:'เหยื่อ',cost:29,price:45,qty:30,img:IMG.lure},
-  {code:'SP-MK1-03',barcode:'8852222100037',name:'กบยาง SPEED MARK I สี 03',cat:'เหยื่อ',cost:29,price:45,qty:25,img:IMG.lure},
-  {code:'SP-MK1-04',barcode:'8852222100044',name:'กบยาง SPEED MARK I สี 04',cat:'เหยื่อ',cost:29,price:45,qty:28,img:IMG.lure},
-  {code:'SP-MK1-05',barcode:'8852222100051',name:'กบยาง SPEED MARK I สี 05',cat:'เหยื่อ',cost:29,price:45,qty:22,img:IMG.lure},
-  {code:'SP-MK1-06',barcode:'8852222100068',name:'กบยาง SPEED MARK I สี 06',cat:'เหยื่อ',cost:29,price:45,qty:18,img:IMG.lure},
+  // ===== กบยาง SPEED MARK I (6 สี) =====
+  {code:'SP-MK1-01',barcode:'8852222100013',name:'กบยาง SPEED MARK I สี 01',cat:'เหยื่อ',cost:29,price:45,qty:30,img:PIMG.frog('#65a30d','#7c2d12','SPEED 01 เขียวม่วง')},
+  {code:'SP-MK1-02',barcode:'8852222100020',name:'กบยาง SPEED MARK I สี 02',cat:'เหยื่อ',cost:29,price:45,qty:30,img:PIMG.frog('#ca8a04','#dc2626','SPEED 02 เหลืองส้ม')},
+  {code:'SP-MK1-03',barcode:'8852222100037',name:'กบยาง SPEED MARK I สี 03',cat:'เหยื่อ',cost:29,price:45,qty:25,img:PIMG.frog('#84cc16','#dc2626','SPEED 03 เขียวมะนาว')},
+  {code:'SP-MK1-04',barcode:'8852222100044',name:'กบยาง SPEED MARK I สี 04',cat:'เหยื่อ',cost:29,price:45,qty:28,img:PIMG.frog('#dc2626','#1d4ed8','SPEED 04 แดงน้ำเงิน')},
+  {code:'SP-MK1-05',barcode:'8852222100051',name:'กบยาง SPEED MARK I สี 05',cat:'เหยื่อ',cost:29,price:45,qty:22,img:PIMG.frog('#a855f7','#16a34a','SPEED 05 ม่วงเขียว')},
+  {code:'SP-MK1-06',barcode:'8852222100068',name:'กบยาง SPEED MARK I สี 06',cat:'เหยื่อ',cost:29,price:45,qty:18,img:PIMG.frog('#64748b','#dc2626','SPEED 06 เทาแดง')},
 
   // ===== กระดี่ไก่ชน ตัวเล็ก (3 สี) =====
-  {code:'KC-SM-PK',barcode:'8852222200010',name:'กระดี่ไก่ชน ตัวเล็ก (ชมพู)',cat:'เหยื่อ',cost:19,price:30,qty:40,img:IMG.lure2},
-  {code:'KC-SM-RD',barcode:'8852222200027',name:'กระดี่ไก่ชน ตัวเล็ก (แดง)',cat:'เหยื่อ',cost:19,price:30,qty:35,img:IMG.lure2},
-  {code:'KC-SM-GD',barcode:'8852222200034',name:'กระดี่ไก่ชน ตัวเล็ก (ทอง)',cat:'เหยื่อ',cost:19,price:30,qty:38,img:IMG.lure2},
+  {code:'KC-SM-PK',barcode:'8852222200010',name:'กระดี่ไก่ชน ตัวเล็ก (ชมพู)',cat:'เหยื่อ',cost:19,price:30,qty:40,img:PIMG.metal('#ec4899','กระดี่ไก่ชน ชมพู')},
+  {code:'KC-SM-RD',barcode:'8852222200027',name:'กระดี่ไก่ชน ตัวเล็ก (แดง)',cat:'เหยื่อ',cost:19,price:30,qty:35,img:PIMG.metal('#dc2626','กระดี่ไก่ชน แดง')},
+  {code:'KC-SM-GD',barcode:'8852222200034',name:'กระดี่ไก่ชน ตัวเล็ก (ทอง)',cat:'เหยื่อ',cost:19,price:30,qty:38,img:PIMG.metal('#d4af37','กระดี่ไก่ชน ทอง')},
 
-  // ===== ไก่ชน TITANIUM (New Colour 2019) =====
-  {code:'KC-TI-19',barcode:'8852222300017',name:'ไก่ชน TITANIUM สีฟ้า (New 2019)',cat:'เหยื่อ',cost:29,price:45,qty:25,img:IMG.lure2},
+  // ===== ไก่ชน TITANIUM (New 2019) =====
+  {code:'KC-TI-19',barcode:'8852222300017',name:'ไก่ชน TITANIUM สีฟ้า (New 2019)',cat:'เหยื่อ',cost:29,price:45,qty:25,img:PIMG.metal('#0ea5e9','ไก่ชน TITANIUM ฟ้า')},
 
-  // ===== ไก่ชน 14g (7 สีที่มีจำหน่าย) =====
-  {code:'KC-14-BR',barcode:'8852222400014',name:'ไก่ชน 14g (น้ำตาล)',cat:'เหยื่อ',cost:20,price:30,qty:30,img:IMG.lure2},
-  {code:'KC-14-BK',barcode:'8852222400021',name:'ไก่ชน 14g (ดำ)',cat:'เหยื่อ',cost:20,price:30,qty:28,img:IMG.lure2},
-  {code:'KC-14-YL',barcode:'8852222400038',name:'ไก่ชน 14g (เหลือง)',cat:'เหยื่อ',cost:20,price:30,qty:32,img:IMG.lure2},
-  {code:'KC-14-WH',barcode:'8852222400045',name:'ไก่ชน 14g (ขาว)',cat:'เหยื่อ',cost:20,price:30,qty:25,img:IMG.lure2},
-  {code:'KC-14-BL',barcode:'8852222400052',name:'ไก่ชน 14g (น้ำเงิน)',cat:'เหยื่อ',cost:20,price:30,qty:20,img:IMG.lure2},
-  {code:'KC-14-RW',barcode:'8852222400069',name:'ไก่ชน 14g (แดง-ขาว)',cat:'เหยื่อ',cost:20,price:30,qty:18,img:IMG.lure2},
-  {code:'KC-14-RD',barcode:'8852222400076',name:'ไก่ชน 14g (แดง)',cat:'เหยื่อ',cost:20,price:30,qty:22,img:IMG.lure2},
+  // ===== ไก่ชน 14g (7 สี) =====
+  {code:'KC-14-BR',barcode:'8852222400014',name:'ไก่ชน 14g (น้ำตาล)',cat:'เหยื่อ',cost:20,price:30,qty:30,img:PIMG.metal('#92400e','ไก่ชน 14g น้ำตาล')},
+  {code:'KC-14-BK',barcode:'8852222400021',name:'ไก่ชน 14g (ดำ)',cat:'เหยื่อ',cost:20,price:30,qty:28,img:PIMG.metal('#1e293b','ไก่ชน 14g ดำ')},
+  {code:'KC-14-YL',barcode:'8852222400038',name:'ไก่ชน 14g (เหลือง)',cat:'เหยื่อ',cost:20,price:30,qty:32,img:PIMG.metal('#facc15','ไก่ชน 14g เหลือง')},
+  {code:'KC-14-WH',barcode:'8852222400045',name:'ไก่ชน 14g (ขาว)',cat:'เหยื่อ',cost:20,price:30,qty:25,img:PIMG.metal('#f1f5f9','ไก่ชน 14g ขาว')},
+  {code:'KC-14-BL',barcode:'8852222400052',name:'ไก่ชน 14g (น้ำเงิน)',cat:'เหยื่อ',cost:20,price:30,qty:20,img:PIMG.metal('#1d4ed8','ไก่ชน 14g น้ำเงิน')},
+  {code:'KC-14-RW',barcode:'8852222400069',name:'ไก่ชน 14g (แดง-ขาว)',cat:'เหยื่อ',cost:20,price:30,qty:18,img:PIMG.metal('#fca5a5','ไก่ชน 14g แดง-ขาว')},
+  {code:'KC-14-RD',barcode:'8852222400076',name:'ไก่ชน 14g (แดง)',cat:'เหยื่อ',cost:20,price:30,qty:22,img:PIMG.metal('#dc2626','ไก่ชน 14g แดง')},
 
-  // ===== กบยาง Audi กิ้งก่าล่าซะโด BPO (6cm/15g, 6 สี) =====
-  {code:'AD-6CM-01',barcode:'8852222500011',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 01',cat:'เหยื่อ',cost:115,price:155,qty:15,img:IMG.lure},
-  {code:'AD-6CM-02',barcode:'8852222500028',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 02',cat:'เหยื่อ',cost:115,price:155,qty:14,img:IMG.lure},
-  {code:'AD-6CM-03',barcode:'8852222500035',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 03',cat:'เหยื่อ',cost:115,price:155,qty:12,img:IMG.lure},
-  {code:'AD-6CM-04',barcode:'8852222500042',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 04',cat:'เหยื่อ',cost:115,price:155,qty:10,img:IMG.lure},
-  {code:'AD-6CM-05',barcode:'8852222500059',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 05',cat:'เหยื่อ',cost:115,price:155,qty:8,img:IMG.lure},
-  {code:'AD-6CM-06',barcode:'8852222500066',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 06',cat:'เหยื่อ',cost:115,price:155,qty:7,img:IMG.lure},
+  // ===== กบยาง Audi กิ้งก่าล่าซะโด BPO =====
+  {code:'AD-6CM-01',barcode:'8852222500011',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 01',cat:'เหยื่อ',cost:115,price:155,qty:15,img:PIMG.lizard('#06b6d4','#fbbf24','Audi 01 ฟ้า-เหลือง')},
+  {code:'AD-6CM-02',barcode:'8852222500028',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 02',cat:'เหยื่อ',cost:115,price:155,qty:14,img:PIMG.lizard('#dc2626','#fbbf24','Audi 02 แดง-เหลือง')},
+  {code:'AD-6CM-03',barcode:'8852222500035',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 03',cat:'เหยื่อ',cost:115,price:155,qty:12,img:PIMG.lizard('#a855f7','#22d3ee','Audi 03 ม่วง-ฟ้า')},
+  {code:'AD-6CM-04',barcode:'8852222500042',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 04',cat:'เหยื่อ',cost:115,price:155,qty:10,img:PIMG.lizard('#84cc16','#dc2626','Audi 04 เขียว-แดง')},
+  {code:'AD-6CM-05',barcode:'8852222500059',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 05',cat:'เหยื่อ',cost:115,price:155,qty:8,img:PIMG.lizard('#f97316','#1e293b','Audi 05 ส้ม-ดำ')},
+  {code:'AD-6CM-06',barcode:'8852222500066',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 06',cat:'เหยื่อ',cost:115,price:155,qty:7,img:PIMG.lizard('#1e293b','#f59e0b','Audi 06 ดำ-ส้ม')},
 
-  // ===== สินค้าอื่นๆ (เดิม) =====
-  {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:IMG.reel},
-  {code:'SKU-003',barcode:'8851234500035',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:IMG.line},
-  {code:'SKU-004',barcode:'8851234500042',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:IMG.hook},
-  {code:'SKU-005',barcode:'8851234500059',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:IMG.lure},
-  {code:'SKU-006',barcode:'8851234500066',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:IMG.float},
-  {code:'SKU-007',barcode:'8851234500073',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:IMG.hook},
-  {code:'SKU-008',barcode:'8851234500080',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:IMG.bait},
-  {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:IMG.reel2},
-  {code:'SKU-010',barcode:'8851234500103',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:IMG.box},
+  // ===== สินค้าอื่นๆ =====
+  {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:PIMG.reel('Shimano Sienna 2500')},
+  {code:'SKU-003',barcode:'8851234500035',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:PIMG.line('#e0f2fe','สายเอ็น 0.4mm')},
+  {code:'SKU-004',barcode:'8851234500042',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:PIMG.hook('เบ็ด #6 (100 ชิ้น)')},
+  {code:'SKU-005',barcode:'8851234500059',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:PIMG.frog('#dc2626','#fbbf24','เหยื่อปลอม สีแดง')},
+  {code:'SKU-006',barcode:'8851234500066',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:PIMG.float('ลูกลอยโฟม')},
+  {code:'SKU-007',barcode:'8851234500073',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:PIMG.hook('ตะขอสามง่าม #4')},
+  {code:'SKU-008',barcode:'8851234500080',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:PIMG.lizard('#a16207','#84cc16','เหยื่อหนอน')},
+  {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:PIMG.reel('Penn Battle III 3000')},
+  {code:'SKU-010',barcode:'8851234500103',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:PIMG.box('กระป๋องเก็บเหยื่อ')},
 ];
 // POS items derived from products
 const posItems = products.map(p=>({img:p.img,name:p.name,price:p.price,barcode:p.barcode,cat:p.cat,code:p.code}));
