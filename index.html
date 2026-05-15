@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FishStock — ระบบจัดการคลังสินค้าอุปกรณ์ตกปลา</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-w:230px;--topbar-h:60px;
+  --primary:#0369a1;--primary-dark:#075985;--primary-light:#e0f2fe;
+  --green:#059669;--orange:#d97706;--red:#dc2626;--teal:#0d9488;
+  --bg:#f0f9ff;--surface:#ffffff;--border:#e2e8f0;
+  --text:#1e293b;--text-muted:#64748b;
+  --radius:12px;--shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);background:linear-gradient(160deg,#0c4a6e 0%,#0369a1 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
+.logo-icon{font-size:26px}.logo-text{font-size:18px;font-weight:700;letter-spacing:.5px}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-group-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:rgba(255,255,255,.8);text-decoration:none;font-size:13.5px;font-weight:500;transition:background .15s;margin-bottom:2px;cursor:pointer}
+.nav-item:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{border-top:1px solid rgba(255,255,255,.15);padding:14px 16px}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-weight:700;font-size:15px}
+.user-name{font-weight:600;font-size:13px}
+.user-role{font-size:11px;color:rgba(255,255,255,.6)}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.topbar-title{font-size:16px;font-weight:700;flex:1}
+.topbar-right{display:flex;align-items:center;gap:18px}
+.alert-badge{position:relative;cursor:pointer;font-size:18px}
+.badge{position:absolute;top:-4px;right:-6px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:16px;text-align:center}
+.topbar-date{font-size:12px;color:var(--text-muted)}
+.content{flex:1;padding:24px}
+.page{display:none}.page.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border-left:4px solid transparent}
+.kpi-blue{border-left-color:var(--primary)}
+.kpi-green{border-left-color:var(--green)}
+.kpi-orange{border-left-color:var(--orange)}
+.kpi-teal{border-left-color:var(--teal)}
+.kpi-icon{font-size:28px}
+.kpi-value{font-size:22px;font-weight:800;line-height:1.1}
+.kpi-label{font-size:12px;color:var(--text-muted);margin-top:2px}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700}
+.card-subtitle{font-size:12px;color:var(--text-muted)}
+.row-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-wrap{height:220px;position:relative}
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;border-left:3px solid transparent}
+.alert-critical{background:#fef2f2;border-left-color:var(--red)}
+.alert-warn{background:#fffbeb;border-left-color:var(--orange)}
+.alert-name{font-weight:600;font-size:13px;flex:1}
+.alert-meta{font-size:12px;color:var(--text-muted);flex:1}
+.btn-order{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:600}
+.btn-order:hover{background:var(--primary-dark)}
+.table-wrap{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{background:#f8fafc;color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:11px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.data-table tbody tr:hover{background:#f8fafc}
+.data-table tbody tr:last-child td{border-bottom:none}
+.table-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;font-size:12px;color:var(--text-muted)}
+.pagination{display:flex;gap:4px}
+.btn-page{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:none;font-size:12px;cursor:pointer;font-weight:500}
+.btn-page.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-page:hover:not(.active){background:var(--primary-light)}
+.tag{display:inline-block;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.tag-sale{background:#dbeafe;color:#1d4ed8}
+.tag-in{background:#dcfce7;color:#15803d}
+.status{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.status-done{background:#dcfce7;color:#15803d}
+.status-pending{background:#fef9c3;color:#a16207}
+.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-danger{background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-danger:hover{background:#b91c1c}
+.btn-outline{background:none;color:var(--primary);border:1.5px solid var(--primary);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-full{width:100%}
+.btn-link{background:none;border:none;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer}
+.stock-form{display:flex;flex-direction:column;gap:14px}
+.stock-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--text)}
+.form-control{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.page-actions{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;flex:1;max-width:320px}
+.search-box input{border:none;outline:none;font-size:13px;flex:1;font-family:inherit}
+.search-icon{color:var(--text-muted)}
+.select-filter{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);cursor:pointer}
+.tbl-actions{display:flex;gap:6px}
+.btn-edit,.btn-del{border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600}
+.btn-edit{background:#dbeafe;color:#1d4ed8}
+.btn-del{background:#fee2e2;color:var(--red)}
+.pos-search{margin-bottom:14px}
+.pos-search input{width:100%}
+.pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:380px;overflow-y:auto;padding-right:4px}
+.pos-item{border:1.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;background:#fff;overflow:hidden}
+.pos-item:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(3,105,161,.15);transform:translateY(-2px)}
+.pos-item-img{width:100%;aspect-ratio:1/1;border-radius:8px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);object-fit:cover;margin-bottom:8px;display:block}
+.pos-item-name{font-size:11.5px;font-weight:600;line-height:1.3;height:30px;display:flex;align-items:center;justify-content:center}
+.pos-item-price{font-size:13px;color:var(--primary);font-weight:700;margin-top:4px}
+.product-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;background:linear-gradient(135deg,#e0f2fe,#bae6fd);display:block}
+.product-cell{display:flex;align-items:center;gap:10px}
+.product-cell-name{font-weight:700;font-size:13px}
+.product-cell-code{font-family:monospace;font-size:11px;color:var(--text-muted)}
+.cart-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#e0f2fe}
+.product-img-preview{width:100%;aspect-ratio:1/1;border-radius:8px;background:#f0f9ff;object-fit:cover;border:1.5px dashed var(--border);display:block;margin-bottom:8px}
+.img-url-row{display:flex;gap:8px;align-items:center}
+.img-url-row input{flex:1}
+.btn-find-img{background:var(--primary-light);color:var(--primary);border:1.5px solid var(--primary);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-find-img:hover{background:var(--primary);color:#fff}
+.cart-list{min-height:160px;max-height:300px;overflow-y:auto}
+.cart-empty{text-align:center;color:var(--text-muted);padding:40px 0;font-size:13px}
+.cart-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.cart-name{flex:1;font-size:13px;font-weight:600}
+.cart-qty{display:flex;align-items:center;gap:6px}
+.qty-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:#f8fafc;font-size:14px;cursor:pointer;display:grid;place-items:center;font-weight:700}
+.qty-btn:hover{background:var(--primary-light);border-color:var(--primary)}
+.qty-num{font-size:13px;font-weight:600;width:22px;text-align:center}
+.cart-subtotal{font-size:13px;font-weight:700;color:var(--primary);width:60px;text-align:right}
+.cart-remove{background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-muted)}
+.cart-summary{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
+.summary-net{font-size:18px;font-weight:800;color:var(--primary)}
+.discount-input{width:80px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;text-align:right;font-size:13px;font-family:inherit}
+.top-products{display:flex;flex-direction:column;gap:14px}
+.top-item{display:flex;align-items:center;gap:10px}
+.rank{width:26px;height:26px;border-radius:50%;background:#e2e8f0;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.rank-1{background:#fbbf24;color:#fff}
+.rank-2{background:#94a3b8;color:#fff}
+.rank-3{background:#b45309;color:#fff}
+.top-name{font-size:13px;font-weight:600;width:170px;flex-shrink:0}
+.top-bar-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden}
+.top-bar{height:100%;background:linear-gradient(90deg,var(--primary),#38bdf8);border-radius:99px}
+.top-val{font-size:13px;font-weight:700;color:var(--primary);width:70px;text-align:right}
+.cat-stats{display:flex;flex-direction:column;gap:16px}
+.cat-row{display:flex;align-items:center;gap:10px}
+.cat-name{width:100px;font-size:13px;font-weight:600;flex-shrink:0}
+.cat-bar-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden}
+.cat-bar{height:100%;border-radius:99px}
+.supplier-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.supplier-logo{width:48px;height:48px;border-radius:12px;background:var(--primary);color:#fff;font-size:20px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.supplier-info{flex:1;min-width:180px}
+.supplier-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.supplier-contact{font-size:12px;color:var(--text-muted);margin-bottom:2px}
+.supplier-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.supplier-stats{display:flex;gap:20px}
+.s-stat{text-align:center}
+.s-val{font-size:18px;font-weight:800;color:var(--primary)}
+.s-lbl{font-size:11px;color:var(--text-muted)}
+.supplier-actions{display:flex;gap:8px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.toggle-label{flex-direction:row!important;justify-content:space-between;align-items:center}
+.toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;cursor:pointer;background:#cbd5e1;border-radius:99px;transition:.25s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
+.toggle input:checked + .toggle-slider{background:var(--primary)}
+.toggle input:checked + .toggle-slider::before{transform:translateX(18px)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;place-items:center}
+.modal-overlay.open{display:grid}
+.modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:520px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s ease;z-index:999;pointer-events:none}
+.toast.show{transform:none;opacity:1}
+.qty-low{color:var(--red);font-weight:700}
+.qty-ok{color:var(--green);font-weight:700}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.row-2col,.settings-grid{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🎣</span>
+    <span class="logo-text">FishStock</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group-label">เมนูหลัก</div>
+    <a class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>แดชบอร์ด</span></a>
+    <a class="nav-item" data-page="products"><span class="nav-icon">📦</span><span>สินค้า</span></a>
+    <a class="nav-item" data-page="stock"><span class="nav-icon">🏭</span><span>รับ/จ่ายสินค้า</span></a>
+    <a class="nav-item" data-page="sales"><span class="nav-icon">🛒</span><span>การขาย (POS)</span></a>
+    <div class="nav-group-label">รายงาน</div>
+    <a class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span>รายงานสรุป</span></a>
+    <a class="nav-item" data-page="suppliers"><span class="nav-icon">🤝</span><span>ซัพพลายเออร์</span></a>
+    <div class="nav-group-label">ตั้งค่า</div>
+    <a class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>ตั้งค่าระบบ</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">ส</div>
+      <div>
+        <div class="user-name">สมชาย ชาวเรือ</div>
+        <div class="user-role">ผู้ดูแลระบบ</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-title" id="pageTitle">แดชบอร์ด</div>
+    <div class="topbar-right">
+      <div class="alert-badge" title="แจ้งเตือน">🔔 <span class="badge">3</span></div>
+      <div class="topbar-date" id="currentDate"></div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">📦</div><div><div class="kpi-value">247</div><div class="kpi-label">รายการสินค้าทั้งหมด</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">💰</div><div><div class="kpi-value">฿84,320</div><div class="kpi-label">มูลค่าสต็อกรวม</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value">3</div><div class="kpi-label">สินค้าใกล้หมด</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value">฿12,850</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
+      </div>
+
+      <div class="row-2col">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📈 ยอดขาย 7 วันล่าสุด</span>
+            <span class="card-subtitle">หน่วย: บาท</span>
+          </div>
+          <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">⚠️ สินค้าใกล้หมด</span></div>
+          <div class="alert-list">
+            <div class="alert-item alert-critical">
+              <div class="alert-name">เบ็ดตกปลา #6 (100 ชิ้น/แพ็ค)</div>
+              <div class="alert-meta">เหลือ <strong>2 แพ็ค</strong> · ต้องการ 10</div>
+              <button class="btn-order">สั่งซื้อ</button>
+            </div>
+            <div class="alert-item alert-warn">
+              <div class="alert-name">เหยื่อปลอม (ชุดสีแดง)</div>
+              <div class="alert-meta">เหลือ <strong>5 ชุด</strong> · ต้องการ 15</div>
+              <button class="btn-order">สั่งซื้อ</button>
+            </div>
+            <div class="alert-item alert-warn">
+              <div class="alert-name">สายเอ็น 0.4mm (500m)</div>
+              <div class="alert-meta">เหลือ <strong>8 ม้วน</strong> · ต้องการ 20</div>
+              <button class="btn-order">สั่งซื้อ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🧾 รายการล่าสุด</span>
+          <button class="btn-link">ดูทั้งหมด →</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>เวลา</th><th>รายการ</th><th>ประเภท</th><th>จำนวน</th><th>ราคา</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td>10:32</td><td>รอก Shimano Sienna 2500</td><td><span class="tag tag-sale">ขาย</span></td><td>1</td><td>฿1,290</td><td><span class="status status-done">เสร็จสิ้น</span></td></tr>
+              <tr><td>10:15</td><td>คันตกปลา Okuma 6ft (รับเข้า)</td><td><span class="tag tag-in">รับเข้า</span></td><td>20</td><td>฿24,000</td><td><span class="status status-done">เสร็จสิ้น</span></td></tr>
+              <tr><td>09:50</td><td>เหยื่อหนอน (แพ็ค 50)</td><td><span class="tag tag-sale">ขาย</span></td><td>3</td><td>฿450</td><td><span class="status status-done">เสร็จสิ้น</span></td></tr>
+              <tr><td>09:20</td><td>ตะขอสามง่าม #4</td><td><span class="tag tag-sale">ขาย</span></td><td>5</td><td>฿250</td><td><span class="status status-done">เสร็จสิ้น</span></td></tr>
+              <tr><td>08:45</td><td>ลูกลอยโฟม (ชุด 10)</td><td><span class="tag tag-sale">ขาย</span></td><td>2</td><td>฿180</td><td><span class="status status-done">เสร็จสิ้น</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="page" id="page-products">
+      <div class="page-actions">
+        <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหาสินค้า..." id="searchInput" /></div>
+        <select class="select-filter" id="categoryFilter">
+          <option value="">ทุกหมวดหมู่</option>
+          <option value="คัน">คันตกปลา</option><option value="รอก">รอก</option>
+          <option value="เบ็ด">เบ็ด/ตะขอ</option><option value="สาย">สายเอ็น</option>
+          <option value="เหยื่อ">เหยื่อ</option><option value="อื่นๆ">อื่นๆ</option>
+        </select>
+        <button class="btn-primary" onclick="openModal('addProductModal')">+ เพิ่มสินค้าใหม่</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>รูป</th><th>สินค้า</th><th>หมวด</th><th>ทุน</th><th>ราคาขาย</th><th>คงเหลือ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+            <tbody id="productBody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="productCount"></span>
+          <div class="pagination"><button class="btn-page active">1</button><button class="btn-page">2</button><button class="btn-page">3</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STOCK -->
+    <section class="page" id="page-stock">
+      <div class="row-2col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📥 รับสินค้าเข้า</span></div>
+          <form class="stock-form" onsubmit="submitStock(event,'in')">
+            <label>สินค้า<select class="form-control"><option>รอก Shimano Sienna 2500</option><option>คันตกปลา Okuma 6ft</option><option>สายเอ็น 0.4mm (500m)</option><option>เบ็ดตกปลา #6</option></select></label>
+            <label>จำนวนที่รับเข้า<input type="number" class="form-control" min="1" placeholder="0" /></label>
+            <label>ราคาทุนต่อหน่วย (฿)<input type="number" class="form-control" placeholder="0.00" /></label>
+            <label>ซัพพลายเออร์<select class="form-control"><option>บริษัท ชิมาโน่ไทย จำกัด</option><option>ห้างหุ้นส่วน โอกุมา</option><option>ร้านค้าส่งอุปกรณ์ตกปลา</option></select></label>
+            <label>วันที่รับ<input type="date" class="form-control" /></label>
+            <button type="submit" class="btn-primary btn-full">✅ บันทึกการรับสินค้า</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📤 จ่ายสินค้าออก</span></div>
+          <form class="stock-form" onsubmit="submitStock(event,'out')">
+            <label>สินค้า<select class="form-control"><option>รอก Shimano Sienna 2500</option><option>คันตกปลา Okuma 6ft</option><option>สายเอ็น 0.4mm (500m)</option><option>เบ็ดตกปลา #6</option></select></label>
+            <label>จำนวนที่จ่ายออก<input type="number" class="form-control" min="1" placeholder="0" /></label>
+            <label>เหตุผล<select class="form-control"><option>ขายให้ลูกค้า</option><option>สินค้าเสียหาย/ตัดบัญชี</option><option>คืนซัพพลายเออร์</option><option>อื่นๆ</option></select></label>
+            <label>วันที่จ่าย<input type="date" class="form-control" /></label>
+            <label>หมายเหตุ<input type="text" class="form-control" placeholder="ระบุหมายเหตุ (ถ้ามี)" /></label>
+            <button type="submit" class="btn-danger btn-full">📤 บันทึกการจ่ายสินค้า</button>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📋 ประวัติการเคลื่อนไหวสต็อก</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>วันที่</th><th>สินค้า</th><th>ประเภท</th><th>จำนวน</th><th>คงเหลือ</th><th>ผู้บันทึก</th></tr></thead>
+            <tbody>
+              <tr><td>15/05/2026</td><td>คันตกปลา Okuma 6ft</td><td><span class="tag tag-in">รับเข้า</span></td><td>+20</td><td>45</td><td>สมชาย</td></tr>
+              <tr><td>15/05/2026</td><td>รอก Shimano Sienna 2500</td><td><span class="tag tag-sale">จ่ายออก</span></td><td>-1</td><td>14</td><td>สมชาย</td></tr>
+              <tr><td>14/05/2026</td><td>สายเอ็น 0.4mm</td><td><span class="tag tag-in">รับเข้า</span></td><td>+30</td><td>38</td><td>สมชาย</td></tr>
+              <tr><td>14/05/2026</td><td>เหยื่อปลอม (ชุดสีแดง)</td><td><span class="tag tag-sale">จ่ายออก</span></td><td>-3</td><td>5</td><td>สมหญิง</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES POS -->
+    <section class="page" id="page-sales">
+      <div class="row-2col" style="align-items:flex-start">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🛒 บันทึกการขาย (POS)</span></div>
+          <div class="pos-search"><input type="text" class="form-control" placeholder="🔍 ค้นหาสินค้า หรือสแกนบาร์โค้ด..." oninput="posFilter(this.value)" /></div>
+          <div class="pos-grid" id="posGrid"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🧾 ตะกร้าสินค้า</span></div>
+          <div class="cart-list" id="cartList"><div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div></div>
+          <div class="cart-summary">
+            <div class="summary-row"><span>รวมทั้งหมด</span><span id="cartTotal">฿0</span></div>
+            <div class="summary-row"><span>ส่วนลด</span><input type="number" id="discount" class="discount-input" placeholder="0" oninput="updateTotal()" /></div>
+            <div class="summary-row summary-net"><span>ยอดสุทธิ</span><span id="cartNet">฿0</span></div>
+          </div>
+          <button class="btn-primary btn-full" onclick="checkout()" style="margin-top:12px">💳 ชำระเงิน</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="page" id="page-reports">
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">📅</div><div><div class="kpi-value">฿12,850</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">📆</div><div><div class="kpi-value">฿67,420</div><div class="kpi-label">ยอดขายเดือนนี้</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">💹</div><div><div class="kpi-value">฿24,180</div><div class="kpi-label">กำไรเดือนนี้</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">🏆</div><div><div class="kpi-value" style="font-size:16px">รอก Shimano</div><div class="kpi-label">สินค้าขายดีที่สุด</div></div></div>
+      </div>
+      <div class="row-2col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🏆 สินค้าขายดี 5 อันดับ</span></div>
+          <div class="top-products">
+            <div class="top-item"><span class="rank rank-1">1</span><div class="top-name">รอก Shimano Sienna</div><div class="top-bar-wrap"><div class="top-bar" style="width:90%"></div></div><span class="top-val">฿18,060</span></div>
+            <div class="top-item"><span class="rank rank-2">2</span><div class="top-name">คันตกปลา Okuma 6ft</div><div class="top-bar-wrap"><div class="top-bar" style="width:72%"></div></div><span class="top-val">฿14,400</span></div>
+            <div class="top-item"><span class="rank rank-3">3</span><div class="top-name">สายเอ็น 0.4mm</div><div class="top-bar-wrap"><div class="top-bar" style="width:55%"></div></div><span class="top-val">฿11,000</span></div>
+            <div class="top-item"><span class="rank">4</span><div class="top-name">เหยื่อปลอม สีแดง</div><div class="top-bar-wrap"><div class="top-bar" style="width:38%"></div></div><span class="top-val">฿7,600</span></div>
+            <div class="top-item"><span class="rank">5</span><div class="top-name">เบ็ดตกปลา #6</div><div class="top-bar-wrap"><div class="top-bar" style="width:25%"></div></div><span class="top-val">฿5,000</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 ยอดขายรายหมวดหมู่</span></div>
+          <div class="cat-stats">
+            <div class="cat-row"><span class="cat-name">🎣 รอก</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:85%;background:#3b82f6"></div></div><span>35%</span></div>
+            <div class="cat-row"><span class="cat-name">🪝 คัน</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:60%;background:#10b981"></div></div><span>25%</span></div>
+            <div class="cat-row"><span class="cat-name">🧵 สาย</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:45%;background:#f59e0b"></div></div><span>18%</span></div>
+            <div class="cat-row"><span class="cat-name">🐛 เหยื่อ</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:30%;background:#8b5cf6"></div></div><span>12%</span></div>
+            <div class="cat-row"><span class="cat-name">📌 เบ็ด</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:20%;background:#ec4899"></div></div><span>8%</span></div>
+            <div class="cat-row"><span class="cat-name">🎒 อื่นๆ</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:8%;background:#6b7280"></div></div><span>2%</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUPPLIERS -->
+    <section class="page" id="page-suppliers">
+      <div class="page-actions">
+        <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหาซัพพลายเออร์..." /></div>
+        <button class="btn-primary">+ เพิ่มซัพพลายเออร์</button>
+      </div>
+      <div class="supplier-card">
+        <div class="supplier-logo">S</div>
+        <div class="supplier-info">
+          <div class="supplier-name">บริษัท ชิมาโน่ไทย จำกัด</div>
+          <div class="supplier-contact">📞 02-123-4567</div>
+          <div class="supplier-contact">✉️ shimano.th@example.com</div>
+          <div class="supplier-tags"><span class="tag tag-in">รอก</span><span class="tag tag-in">คัน</span></div>
+        </div>
+        <div class="supplier-stats">
+          <div class="s-stat"><div class="s-val">42</div><div class="s-lbl">คำสั่งซื้อ</div></div>
+          <div class="s-stat"><div class="s-val">฿156K</div><div class="s-lbl">ยอดรวม</div></div>
+        </div>
+        <div class="supplier-actions"><button class="btn-outline">ดูประวัติ</button><button class="btn-primary">สั่งซื้อ</button></div>
+      </div>
+      <div class="supplier-card">
+        <div class="supplier-logo" style="background:#10b981">O</div>
+        <div class="supplier-info">
+          <div class="supplier-name">ห้างหุ้นส่วน โอกุมา เทรดดิ้ง</div>
+          <div class="supplier-contact">📞 02-987-6543</div>
+          <div class="supplier-contact">✉️ okuma@example.com</div>
+          <div class="supplier-tags"><span class="tag tag-in">รอก</span><span class="tag tag-sale">สาย</span></div>
+        </div>
+        <div class="supplier-stats">
+          <div class="s-stat"><div class="s-val">28</div><div class="s-lbl">คำสั่งซื้อ</div></div>
+          <div class="s-stat"><div class="s-val">฿98K</div><div class="s-lbl">ยอดรวม</div></div>
+        </div>
+        <div class="supplier-actions"><button class="btn-outline">ดูประวัติ</button><button class="btn-primary">สั่งซื้อ</button></div>
+      </div>
+      <div class="supplier-card">
+        <div class="supplier-logo" style="background:#f59e0b">ท</div>
+        <div class="supplier-info">
+          <div class="supplier-name">ร้านค้าส่งอุปกรณ์ตกปลาไทย</div>
+          <div class="supplier-contact">📞 081-234-5678</div>
+          <div class="supplier-contact">✉️ thaifishing@example.com</div>
+          <div class="supplier-tags"><span class="tag tag-in">เหยื่อ</span><span class="tag tag-sale">เบ็ด</span><span class="tag tag-in">อื่นๆ</span></div>
+        </div>
+        <div class="supplier-stats">
+          <div class="s-stat"><div class="s-val">65</div><div class="s-lbl">คำสั่งซื้อ</div></div>
+          <div class="s-stat"><div class="s-val">฿43K</div><div class="s-lbl">ยอดรวม</div></div>
+        </div>
+        <div class="supplier-actions"><button class="btn-outline">ดูประวัติ</button><button class="btn-primary">สั่งซื้อ</button></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="settings-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">⚙️ ตั้งค่าทั่วไป</span></div>
+          <form class="stock-form">
+            <label>ชื่อร้าน<input class="form-control" value="ร้านอุปกรณ์ตกปลา สมชาย" /></label>
+            <label>เบอร์โทรศัพท์<input class="form-control" value="081-234-5678" /></label>
+            <label>ที่อยู่<input class="form-control" value="123 ถ.สุขุมวิท กรุงเทพฯ" /></label>
+            <label>สกุลเงิน<select class="form-control"><option>THB (฿)</option></select></label>
+            <button type="button" class="btn-primary">บันทึก</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔔 ตั้งค่าการแจ้งเตือน</span></div>
+          <form class="stock-form">
+            <label>แจ้งเตือนเมื่อสต็อกต่ำกว่า (หน่วย)<input class="form-control" type="number" value="10" /></label>
+            <label class="toggle-label"><span>แจ้งเตือนผ่านหน้าจอ</span><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></label>
+            <label class="toggle-label"><span>แจ้งเตือนทางอีเมล</span><label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label></label>
+            <label>อีเมลสำหรับแจ้งเตือน<input class="form-control" placeholder="example@email.com" /></label>
+            <button type="button" class="btn-primary">บันทึก</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">+ เพิ่มสินค้าใหม่</span>
+      <button class="modal-close" onclick="closeModal('addProductModal')">✕</button>
+    </div>
+    <form class="stock-form" onsubmit="addProduct(event)">
+      <div class="form-row" style="grid-template-columns:140px 1fr">
+        <div>
+          <img id="newImgPreview" class="product-img-preview" src="" onerror="this.src='${FALLBACK_IMG||''}'" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label>URL รูปภาพ
+            <div class="img-url-row">
+              <input class="form-control" id="newImg" placeholder="วาง URL รูปภาพ หรือกดหารูป" oninput="document.getElementById('newImgPreview').src=this.value||'data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;%23e0f2fe&quot;/><text x=&quot;50&quot; y=&quot;62&quot; font-size=&quot;42&quot; text-anchor=&quot;middle&quot;>🎣</text></svg>'"/>
+              <button type="button" class="btn-find-img" onclick="findImg()">🔍 หารูป</button>
+            </div>
+          </label>
+          <label>ชื่อสินค้า<input class="form-control" id="newName" required placeholder="ชื่อสินค้า" /></label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>รหัสสินค้า<input class="form-control" id="newCode" placeholder="SKU-001" /></label>
+        <label>หมวดหมู่<select class="form-control" id="newCategory" onchange="findImg()"><option>คัน</option><option>รอก</option><option>เบ็ด</option><option>สาย</option><option>เหยื่อ</option><option>อื่นๆ</option></select></label>
+      </div>
+      <div class="form-row">
+        <label>จำนวนเริ่มต้น<input class="form-control" type="number" id="newQty" value="0" /></label>
+        <label>ราคาทุน (฿)<input class="form-control" type="number" id="newCost" placeholder="0.00" /></label>
+        <label>ราคาขาย (฿)<input class="form-control" type="number" id="newPrice" placeholder="0.00" /></label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" onclick="closeModal('addProductModal')">ยกเลิก</button>
+        <button type="submit" class="btn-primary">บันทึกสินค้า</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const IMG = {
+  reel:    'https://images.unsplash.com/photo-1564731071754-001b53a86b95?w=300&h=300&fit=crop',
+  reel2:   'https://images.unsplash.com/photo-1611080541599-8c6dbde6ed28?w=300&h=300&fit=crop',
+  rod:     'https://images.unsplash.com/photo-1516214104703-d870798883c5?w=300&h=300&fit=crop',
+  rod2:    'https://images.unsplash.com/photo-1545486332-9e0999c535b2?w=300&h=300&fit=crop',
+  line:    'https://images.unsplash.com/photo-1499415479124-43c32433a620?w=300&h=300&fit=crop',
+  hook:    'https://images.unsplash.com/photo-1565299543923-37dd37887442?w=300&h=300&fit=crop',
+  lure:    'https://images.unsplash.com/photo-1542736667-069246bdbc6d?w=300&h=300&fit=crop',
+  lure2:   'https://images.unsplash.com/photo-1516406742981-2b7d67ec4ae1?w=300&h=300&fit=crop',
+  bait:    'https://images.unsplash.com/photo-1568727349464-89bf45a18908?w=300&h=300&fit=crop',
+  float:   'https://images.unsplash.com/photo-1559825481-12a05cc00344?w=300&h=300&fit=crop',
+  box:     'https://images.unsplash.com/photo-1495704907664-81f74a7efd9b?w=300&h=300&fit=crop',
+  tackle:  'https://images.unsplash.com/photo-1559825481-c97abe6c8b48?w=300&h=300&fit=crop',
+};
+const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e0f2fe"/><text x="50" y="62" font-size="42" text-anchor="middle">🎣</text></svg>';
+
+const products = [
+  {code:'SKU-001',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:IMG.reel},
+  {code:'SKU-002',name:'คันตกปลา Okuma 6ft',cat:'คัน',cost:900,price:1500,qty:45,img:IMG.rod},
+  {code:'SKU-003',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:IMG.line},
+  {code:'SKU-004',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:IMG.hook},
+  {code:'SKU-005',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:IMG.lure},
+  {code:'SKU-006',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:IMG.float},
+  {code:'SKU-007',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:IMG.hook},
+  {code:'SKU-008',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:IMG.bait},
+  {code:'SKU-009',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:IMG.reel2},
+  {code:'SKU-010',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:IMG.box},
+  {code:'SKU-011',name:'คันตกปลา Penn Pursuit 7ft',cat:'คัน',cost:1200,price:2100,qty:11,img:IMG.rod2},
+  {code:'SKU-012',name:'เหยื่อปลอม Spinner Set',cat:'เหยื่อ',cost:280,price:480,qty:13,img:IMG.lure2},
+];
+const posItems = [
+  {img:IMG.reel,name:'รอก Shimano 2500',price:1290},
+  {img:IMG.rod,name:'คันตกปลา Okuma 6ft',price:1500},
+  {img:IMG.line,name:'สายเอ็น 0.4mm',price:290},
+  {img:IMG.hook,name:'เบ็ด #6 (แพ็ค)',price:100},
+  {img:IMG.lure,name:'เหยื่อปลอม (แดง)',price:590},
+  {img:IMG.float,name:'ลูกลอยโฟม',price:90},
+  {img:IMG.bait,name:'เหยื่อหนอน',price:180},
+  {img:IMG.reel2,name:'Penn Battle 3000',price:2990},
+  {img:IMG.box,name:'กระป๋องเก็บเหยื่อ',price:220},
+  {img:IMG.rod2,name:'Penn Pursuit 7ft',price:2100},
+  {img:IMG.lure2,name:'Spinner Set',price:480},
+  {img:IMG.hook,name:'ตะขอ 3 ง่าม #4',price:60},
+];
+let cart = [];
+const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',e=>{
+    e.preventDefault();
+    const page = item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+    document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
+    document.getElementById('pageTitle').textContent = pageTitles[page]||page;
+    if(page==='dashboard') setTimeout(drawChart,50);
+  });
+});
+
+const d = new Date();
+document.getElementById('currentDate').textContent = d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+
+function renderProducts(){
+  const search = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const cat = document.getElementById('categoryFilter')?.value||'';
+  const list = products.filter(p=>(p.name.toLowerCase().includes(search)||p.code.toLowerCase().includes(search))&&(cat===''||p.cat===cat));
+  document.getElementById('productBody').innerHTML = list.map((p,i)=>`
+    <tr>
+      <td><img class="product-thumb" src="${p.img||FALLBACK_IMG}" alt="${p.name}" onerror="this.src='${FALLBACK_IMG}'"/></td>
+      <td><div class="product-cell-name">${p.name}</div><div class="product-cell-code">${p.code}</div></td>
+      <td><span class="tag tag-in">${p.cat}</span></td>
+      <td>฿${p.cost.toLocaleString()}</td>
+      <td>฿${p.price.toLocaleString()}</td>
+      <td class="${p.qty<=5?'qty-low':'qty-ok'}">${p.qty} ${p.qty<=5?'⚠️':''}</td>
+      <td>${p.qty===0?'<span class="status status-pending">หมดสต็อก</span>':'<span class="status status-done">มีสินค้า</span>'}</td>
+      <td><div class="tbl-actions"><button class="btn-edit" onclick="showToast('✏️ แก้ไข: ${p.name}')">✏️</button><button class="btn-del" onclick="delProduct(${i})">🗑️</button></div></td>
+    </tr>`).join('');
+  document.getElementById('productCount').textContent = `แสดง ${list.length} จาก ${products.length} รายการ`;
+}
+document.getElementById('searchInput').addEventListener('input',renderProducts);
+document.getElementById('categoryFilter').addEventListener('change',renderProducts);
+
+function delProduct(i){if(confirm(`ลบ "${products[i].name}"?`)){products.splice(i,1);renderProducts();showToast('🗑️ ลบเรียบร้อย');}}
+
+const CAT_IMG_MAP = {
+  'คัน':[IMG.rod,IMG.rod2],
+  'รอก':[IMG.reel,IMG.reel2],
+  'เบ็ด':[IMG.hook],
+  'สาย':[IMG.line],
+  'เหยื่อ':[IMG.lure,IMG.lure2,IMG.bait],
+  'อื่นๆ':[IMG.box,IMG.float,IMG.tackle],
+};
+function findImg(){
+  const cat = document.getElementById('newCategory').value;
+  const pool = CAT_IMG_MAP[cat]||[IMG.tackle];
+  const url = pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('newImg').value = url;
+  document.getElementById('newImgPreview').src = url;
+  showToast('🔍 หารูปจาก Unsplash เรียบร้อย');
+}
+
+function addProduct(e){
+  e.preventDefault();
+  const name=document.getElementById('newName').value.trim();
+  const code=document.getElementById('newCode').value.trim()||`SKU-${String(products.length+1).padStart(3,'0')}`;
+  const img=document.getElementById('newImg').value.trim()||FALLBACK_IMG;
+  products.unshift({code,name,cat:document.getElementById('newCategory').value,qty:+document.getElementById('newQty').value||0,cost:+document.getElementById('newCost').value||0,price:+document.getElementById('newPrice').value||0,img});
+  renderProducts();closeModal('addProductModal');showToast('✅ เพิ่มสินค้าเรียบร้อย');
+  e.target.reset();
+  document.getElementById('newImgPreview').src=FALLBACK_IMG;
+}
+function submitStock(e,t){e.preventDefault();showToast(t==='in'?'📥 รับสินค้าเข้าเรียบร้อย':'📤 จ่ายสินค้าออกเรียบร้อย');e.target.reset();}
+
+function renderPOS(items){
+  document.getElementById('posGrid').innerHTML = items.map(p=>`
+    <div class="pos-item" onclick="addToCart(${posItems.indexOf(p)})">
+      <img class="pos-item-img" src="${p.img}" alt="${p.name}" onerror="this.src='${FALLBACK_IMG}'"/>
+      <div class="pos-item-name">${p.name}</div>
+      <div class="pos-item-price">฿${p.price.toLocaleString()}</div>
+    </div>`).join('');
+}
+function posFilter(q){renderPOS(q?posItems.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())):posItems);}
+function addToCart(i){
+  const it=posItems[i];const f=cart.find(c=>c.name===it.name);
+  if(f)f.qty++;else cart.push({...it,qty:1});
+  renderCart();showToast(`🛒 ${it.name}`);
+}
+function renderCart(){
+  const list=document.getElementById('cartList');
+  if(cart.length===0){list.innerHTML='<div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div>';updateTotal();return;}
+  list.innerHTML = cart.map((c,i)=>`
+    <div class="cart-row">
+      <img class="cart-thumb" src="${c.img}" alt="${c.name}" onerror="this.src='${FALLBACK_IMG}'"/>
+      <div class="cart-name">${c.name}</div>
+      <div class="cart-qty"><button class="qty-btn" onclick="qty(${i},-1)">−</button><span class="qty-num">${c.qty}</span><button class="qty-btn" onclick="qty(${i},1)">+</button></div>
+      <div class="cart-subtotal">฿${(c.price*c.qty).toLocaleString()}</div>
+      <button class="cart-remove" onclick="rmCart(${i})">✕</button>
+    </div>`).join('');
+  updateTotal();
+}
+function qty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();}
+function rmCart(i){cart.splice(i,1);renderCart();}
+function updateTotal(){
+  const t=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const dc=+document.getElementById('discount')?.value||0;
+  document.getElementById('cartTotal').textContent='฿'+t.toLocaleString();
+  document.getElementById('cartNet').textContent='฿'+Math.max(0,t-dc).toLocaleString();
+}
+function checkout(){
+  if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
+  const net=document.getElementById('cartNet').textContent;
+  cart=[];renderCart();document.getElementById('discount').value='';
+  showToast(`✅ ชำระเงิน ${net}`);
+}
+
+function drawChart(){
+  const canvas=document.getElementById('salesChart');
+  if(!canvas||!canvas.offsetWidth)return;
+  const ctx=canvas.getContext('2d');
+  const data=[8200,11500,9800,14300,10200,15600,12850];
+  const labels=['9 พ.ค.','10 พ.ค.','11 พ.ค.','12 พ.ค.','13 พ.ค.','14 พ.ค.','15 พ.ค.'];
+  const w=canvas.offsetWidth,h=canvas.offsetHeight;
+  canvas.width=w*devicePixelRatio;canvas.height=h*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  const pad={top:20,right:20,bottom:36,left:54};
+  const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
+  const max=Math.max(...data)*1.15;
+  const step=cw/(data.length-1);
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.top+ch-(ch/4)*i;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();
+    ctx.fillStyle='#94a3b8';ctx.font='11px Segoe UI';ctx.textAlign='right';
+    ctx.fillText('฿'+Math.round((max/4*i)/1000)+'K',pad.left-6,y+4);
+  }
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
+  grad.addColorStop(0,'rgba(3,105,161,.3)');grad.addColorStop(1,'rgba(3,105,161,.02)');
+  const pts=data.map((v,i)=>({x:pad.left+i*step,y:pad.top+ch-(v/max)*ch}));
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const c1x=pts[i-1].x+step*.45,c1y=pts[i-1].y;
+    const c2x=pts[i].x-step*.45,c2y=pts[i].y;
+    ctx.bezierCurveTo(c1x,c1y,c2x,c2y,pts[i].x,pts[i].y);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pad.top+ch);ctx.lineTo(pts[0].x,pad.top+ch);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const c1x=pts[i-1].x+step*.45,c1y=pts[i-1].y;
+    const c2x=pts[i].x-step*.45,c2y=pts[i].y;
+    ctx.bezierCurveTo(c1x,c1y,c2x,c2y,pts[i].x,pts[i].y);
+  }
+  ctx.strokeStyle='#0369a1';ctx.lineWidth=2.5;ctx.stroke();
+  pts.forEach((pt,i)=>{
+    ctx.beginPath();ctx.arc(pt.x,pt.y,4.5,0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.strokeStyle='#0369a1';ctx.lineWidth=2.5;ctx.fill();ctx.stroke();
+    ctx.fillStyle='#475569';ctx.font='11px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(labels[i],pt.x,pad.top+ch+22);
+  });
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+renderProducts();renderPOS(posItems);
+setTimeout(drawChart,150);
+window.addEventListener('resize',()=>setTimeout(drawChart,50));
+</script>
+
+</body>
+</html>
