@@ -841,8 +841,8 @@ const PIMG = {
     <text x="150" y="265" font-size="13" fill="#78350f" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
   `,'#fef3c7'),
 
-  // รอก spinning reel (Shimano-style)
-  reel: (label)=>svgIMG(`
+  // รอก spinning reel — accent color customizable (red=Shimano, gold=Penn)
+  reel: (label,accent='#dc2626',spoolColor='#dc2626')=>svgIMG(`
     <defs>
       <linearGradient id="body-${label.replace(/[^a-zA-Z0-9]/g,'')}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#475569"/>
@@ -863,12 +863,12 @@ const PIMG = {
     <!-- main body (rotor housing) -->
     <ellipse cx="150" cy="170" rx="55" ry="40" fill="url(#body-${label.replace(/[^a-zA-Z0-9]/g,'')})"/>
     <ellipse cx="150" cy="170" rx="55" ry="40" fill="none" stroke="#0f172a" stroke-width="2"/>
-    <!-- red accent ring on body -->
-    <ellipse cx="150" cy="170" rx="48" ry="34" fill="none" stroke="#dc2626" stroke-width="2"/>
+    <!-- accent ring on body -->
+    <ellipse cx="150" cy="170" rx="48" ry="34" fill="none" stroke="${accent}" stroke-width="2"/>
     <!-- spool (top) -->
     <ellipse cx="150" cy="120" rx="48" ry="14" fill="url(#spool-${label.replace(/[^a-zA-Z0-9]/g,'')})"/>
     <ellipse cx="150" cy="118" rx="48" ry="14" fill="none" stroke="#0f172a" stroke-width="2"/>
-    <ellipse cx="150" cy="118" rx="42" ry="10" fill="#dc2626"/>
+    <ellipse cx="150" cy="118" rx="42" ry="10" fill="${spoolColor}"/>
     <ellipse cx="150" cy="118" rx="38" ry="8" fill="#1e293b"/>
     <ellipse cx="150" cy="118" rx="6" ry="2" fill="#94a3b8"/>
     <!-- bail wire arching over spool -->
@@ -882,7 +882,7 @@ const PIMG = {
     <ellipse cx="252" cy="192" rx="10" ry="6" fill="#1e293b" transform="rotate(20 252 192)"/>
     <ellipse cx="252" cy="192" rx="6" ry="3" fill="#475569" transform="rotate(20 252 192)"/>
     <!-- anti-reverse switch -->
-    <circle cx="115" cy="200" r="5" fill="#dc2626" stroke="#1e293b" stroke-width="1.5"/>
+    <circle cx="115" cy="200" r="5" fill="${accent}" stroke="#1e293b" stroke-width="1.5"/>
     <text x="150" y="270" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
   `,'#e0f2fe'),
 
@@ -990,14 +990,14 @@ const products = [
   {code:'AD-6CM-06',barcode:'8852222500066',name:'กบยาง Audi กิ้งก่าล่าซะโด 6cm สี 06',cat:'เหยื่อ',cost:115,price:155,qty:7,img:PIMG.lizard('#1e293b','#f59e0b','Audi 06 ดำ-ส้ม')},
 
   // ===== สินค้าอื่นๆ =====
-  {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:PIMG.reel('Shimano Sienna 2500')},
+  {code:'SKU-001',barcode:'8851234500011',name:'รอก Shimano Sienna 2500',cat:'รอก',cost:800,price:1290,qty:14,img:PIMG.reel('Shimano Sienna 2500','#dc2626','#dc2626')},
   {code:'SKU-003',barcode:'8851234500035',name:'สายเอ็น 0.4mm (500m)',cat:'สาย',cost:180,price:290,qty:8,img:PIMG.line('#e0f2fe','สายเอ็น 0.4mm')},
   {code:'SKU-004',barcode:'8851234500042',name:'เบ็ดตกปลา #6 (แพ็ค 100)',cat:'เบ็ด',cost:60,price:100,qty:2,img:PIMG.hook('เบ็ด #6 (100 ชิ้น)')},
   {code:'SKU-005',barcode:'8851234500059',name:'เหยื่อปลอม ชุดสีแดง',cat:'เหยื่อ',cost:350,price:590,qty:5,img:PIMG.frog('#dc2626','#fbbf24','เหยื่อปลอม สีแดง')},
   {code:'SKU-006',barcode:'8851234500066',name:'ลูกลอยโฟม (ชุด 10)',cat:'อื่นๆ',cost:40,price:90,qty:32,img:PIMG.float('ลูกลอยโฟม')},
   {code:'SKU-007',barcode:'8851234500073',name:'ตะขอสามง่าม #4 (แพ็ค 20)',cat:'เบ็ด',cost:30,price:60,qty:55,img:PIMG.hook('ตะขอสามง่าม #4')},
   {code:'SKU-008',barcode:'8851234500080',name:'เหยื่อหนอน (แพ็ค 50)',cat:'เหยื่อ',cost:100,price:180,qty:20,img:PIMG.lizard('#a16207','#84cc16','เหยื่อหนอน')},
-  {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:PIMG.reel('Penn Battle III 3000')},
+  {code:'SKU-009',barcode:'8851234500097',name:'รอก Penn Battle III 3000',cat:'รอก',cost:1800,price:2990,qty:7,img:PIMG.reel('Penn Battle III 3000','#d4af37','#d4af37')},
   {code:'SKU-010',barcode:'8851234500103',name:'กระป๋องเก็บเหยื่อสด',cat:'อื่นๆ',cost:120,price:220,qty:18,img:PIMG.box('กระป๋องเก็บเหยื่อ')},
 ];
 // POS items derived from products
