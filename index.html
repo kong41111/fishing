@@ -36,6 +36,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .alert-badge{position:relative;cursor:pointer;font-size:18px}
 .badge{position:absolute;top:-4px;right:-6px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:16px;text-align:center}
 .topbar-date{font-size:12px;color:var(--text-muted)}
+.topbar-quicksearch{position:relative;flex:1;max-width:420px;margin:0 12px}
+.topbar-quicksearch input{width:100%;padding:8px 14px 8px 36px;border:1.5px solid var(--border);border-radius:99px;font-size:13px;font-family:inherit;background:#f8fafc;outline:none;transition:all .15s}
+.topbar-quicksearch input:focus{background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.qs-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-muted);pointer-events:none;z-index:1}
+.qs-results{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12);max-height:420px;overflow-y:auto;z-index:60}
+.qs-results.show{display:block}
+.qs-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .1s}
+.qs-item:hover{background:var(--primary-light)}
+.qs-item:last-child{border-bottom:none}
+.qs-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e0f2fe}
+.qs-info{flex:1;min-width:0}
+.qs-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.qs-price{text-align:right;flex-shrink:0}
+.qs-price-val{font-size:14px;font-weight:700;color:var(--primary)}
+.qs-price-qty{font-size:11px;color:var(--text-muted)}
+.qs-empty{padding:24px 12px;text-align:center;color:var(--text-muted);font-size:13px}
+.qs-section{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);background:#f8fafc}
+@media(max-width:768px){
+  .topbar-quicksearch{display:none}
+}
 .content{flex:1;padding:24px}
 .page{display:none}.page.active{display:block}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
@@ -302,6 +323,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   <header class="topbar">
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
     <div class="topbar-title" id="pageTitle">แดชบอร์ด</div>
+    <div class="topbar-quicksearch">
+      <span class="qs-icon">🔍</span>
+      <input type="text" id="quickSearch" placeholder="ค้นหาสินค้าด่วน..." oninput="quickSearchHandle(this.value)" onfocus="quickSearchHandle(this.value)" onblur="setTimeout(()=>document.getElementById('quickResults').classList.remove('show'),200)" />
+      <div class="qs-results" id="quickResults"></div>
+    </div>
     <div class="topbar-right">
       <div class="alert-badge" title="แจ้งเตือน">🔔 <span class="badge">3</span></div>
       <div class="topbar-date" id="currentDate"></div>
@@ -954,6 +980,7 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
     document.getElementById('pageTitle').textContent = pageTitles[page]||page;
     if(page==='dashboard') setTimeout(drawChart,50);
+    if(page==='products') renderProducts();
     // close mobile sidebar
     if(window.innerWidth<=768){
       document.getElementById('sidebar').classList.remove('open');
@@ -1060,6 +1087,59 @@ function renderProducts(){
   renderCatChips();
 }
 function setPage(p){prodPage=p;renderProducts();window.scrollTo({top:0,behavior:'smooth'});}
+
+// ===== TOPBAR QUICK SEARCH =====
+function quickSearchHandle(q){
+  const box = document.getElementById('quickResults');
+  const query = (q||'').trim().toLowerCase();
+  if(!query){
+    // show top 5 low-stock items as suggestions
+    const low = [...products].filter(p=>p.qty<=5).sort((a,b)=>a.qty-b.qty).slice(0,5);
+    if(low.length===0){box.classList.remove('show');return;}
+    box.innerHTML = `<div class="qs-section">⚠️ สินค้าใกล้หมด</div>` + low.map(p=>qsItem(p,'low')).join('');
+    box.classList.add('show');
+    return;
+  }
+  const matches = products.filter(p=>
+    p.name.toLowerCase().includes(query) ||
+    p.code.toLowerCase().includes(query) ||
+    (p.barcode||'').includes(query) ||
+    p.cat.toLowerCase().includes(query)
+  ).slice(0,12);
+  if(matches.length===0){
+    box.innerHTML = `<div class="qs-empty">❌ ไม่พบสินค้าที่ค้นหา "${q}"</div>`;
+  } else {
+    box.innerHTML = `<div class="qs-section">📦 ผลการค้นหา (${matches.length})</div>` + matches.map(p=>qsItem(p)).join('');
+  }
+  box.classList.add('show');
+}
+function qsItem(p,mode){
+  const idx = products.indexOf(p);
+  return `<div class="qs-item" onclick="quickSelect(${idx})">
+    <img class="qs-thumb" src="${p.img||FALLBACK_IMG}" onerror="this.src='${FALLBACK_IMG}'"/>
+    <div class="qs-info">
+      <div class="qs-name">${p.name}</div>
+      <div class="qs-meta">${p.code} · ${p.cat} · 📊 ${p.barcode||'-'}</div>
+    </div>
+    <div class="qs-price">
+      <div class="qs-price-val">฿${p.price.toLocaleString()}</div>
+      <div class="qs-price-qty" style="color:${p.qty<=5?'var(--red)':'var(--green)'}">คงเหลือ ${p.qty}${p.qty<=5?' ⚠️':''}</div>
+    </div>
+  </div>`;
+}
+function quickSelect(idx){
+  const p = products[idx];
+  document.getElementById('quickResults').classList.remove('show');
+  document.getElementById('quickSearch').value = '';
+  // นำทางไปหน้าสินค้า + filter ให้ตรงกัน
+  document.querySelector('.nav-item[data-page="products"]').click();
+  prodCat = p.cat; prodPage = 1;
+  setTimeout(()=>{
+    const si = document.getElementById('searchInput');
+    si.value = p.code; renderProducts();
+    showToast(`📦 ${p.name}`);
+  },50);
+}
 
 document.getElementById('searchInput').addEventListener('input',()=>{prodPage=1;renderProducts();});
 document.getElementById('stockFilter').addEventListener('change',()=>{prodPage=1;renderProducts();});
