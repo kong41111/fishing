@@ -722,21 +722,33 @@ const PIMG = {
     <text x="150" y="260" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
   `,'#e0f2fe'),
 
-  // กบยาง SPEED (frog lure with spinner): body + stripe + label
-  frog: (body,stripe,label)=>svgIMG(`
-    <ellipse cx="120" cy="155" rx="75" ry="50" fill="${body}"/>
-    <ellipse cx="120" cy="155" rx="75" ry="50" fill="none" stroke="#1e293b" stroke-width="1.5"/>
-    <path d="M 55 155 Q 120 115 185 155" stroke="${stripe}" stroke-width="6" fill="none" opacity="0.85"/>
-    <path d="M 55 155 Q 120 195 185 155" stroke="${stripe}" stroke-width="6" fill="none" opacity="0.85"/>
-    <line x1="60" y1="155" x2="180" y2="155" stroke="${stripe}" stroke-width="3" opacity="0.7"/>
-    <circle cx="92" cy="138" r="10" fill="#fff"/>
-    <circle cx="92" cy="138" r="6" fill="#1e293b"/>
-    <circle cx="92" cy="138" r="2" fill="#fff"/>
-    <line x1="195" y1="155" x2="225" y2="170" stroke="#475569" stroke-width="2.5"/>
-    <ellipse cx="240" cy="172" rx="14" ry="10" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
-    <ellipse cx="240" cy="172" rx="6" ry="4" fill="#94a3b8"/>
-    <text x="150" y="265" font-size="13" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
-  `,'#ecfeff'),
+  // กบยาง (snakehead frog soft lure): body + accent + label
+  // shape: rounded puffy body facing left + two soft tail legs trailing right
+  frog: (body,accent,label)=>svgIMG(`
+    <!-- soft trailing tail legs -->
+    <path d="M 175 145 Q 215 130 245 115 Q 260 110 255 125 Q 240 140 215 152 Q 200 158 175 155 Z" fill="#1e293b" opacity="0.9"/>
+    <path d="M 175 165 Q 215 180 250 195 Q 265 200 258 185 Q 240 170 215 160 Q 200 156 175 158 Z" fill="#1e293b" opacity="0.9"/>
+    <!-- main puffy body -->
+    <path d="M 55 155 Q 55 105 110 100 Q 175 100 185 145 Q 185 165 175 170 Q 175 215 110 210 Q 55 205 55 155 Z" fill="${body}" stroke="#1e293b" stroke-width="2"/>
+    <!-- highlight -->
+    <ellipse cx="95" cy="125" rx="35" ry="14" fill="#fff" opacity="0.35"/>
+    <!-- darker shadow underneath -->
+    <path d="M 55 175 Q 110 215 175 175 Q 175 200 110 205 Q 55 200 55 175 Z" fill="#1e293b" opacity="0.15"/>
+    <!-- back pattern stripe -->
+    <path d="M 75 130 Q 120 115 165 135" stroke="${accent}" stroke-width="3" fill="none" opacity="0.7"/>
+    <path d="M 80 145 Q 120 135 160 150" stroke="${accent}" stroke-width="2" fill="none" opacity="0.6"/>
+    <!-- eye -->
+    <circle cx="80" cy="145" r="10" fill="#fff"/>
+    <circle cx="80" cy="147" r="6" fill="${accent}"/>
+    <circle cx="80" cy="147" r="3" fill="#1e293b"/>
+    <!-- weed-guard hook on top -->
+    <path d="M 130 100 Q 135 75 155 75 Q 175 75 175 95" stroke="#475569" stroke-width="2.5" fill="none"/>
+    <path d="M 175 95 L 172 88 L 180 90 Z" fill="#dc2626"/>
+    <!-- front swivel/snap -->
+    <circle cx="50" cy="155" r="5" fill="none" stroke="#475569" stroke-width="2"/>
+    <line x1="45" y1="155" x2="55" y2="155" stroke="#475569" stroke-width="1.5"/>
+    <text x="150" y="270" font-size="13" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
+  `,'#fdf2f8'),
 
   // ไก่ชน (metal vibration lure): body color + label
   metal: (color,label)=>svgIMG(`
