@@ -372,26 +372,38 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
     <!-- PRODUCTS -->
     <section class="page" id="page-products">
+      <!-- SUMMARY KPI -->
+      <div class="kpi-grid" id="productKpi"></div>
+
+      <!-- CATEGORY CHIPS -->
+      <div class="cat-tabs" id="prodCatTabs" style="margin-bottom:14px"></div>
+
       <div class="page-actions">
-        <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหาสินค้า..." id="searchInput" /></div>
-        <select class="select-filter" id="categoryFilter">
-          <option value="">ทุกหมวดหมู่</option>
-          <option value="คัน">คันตกปลา</option><option value="รอก">รอก</option>
-          <option value="เบ็ด">เบ็ด/ตะขอ</option><option value="สาย">สายเอ็น</option>
-          <option value="เหยื่อ">เหยื่อ</option><option value="อื่นๆ">อื่นๆ</option>
+        <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหาด้วยชื่อ, รหัส, หรือบาร์โค้ด..." id="searchInput" /></div>
+        <select class="select-filter" id="stockFilter">
+          <option value="">สถานะทั้งหมด</option>
+          <option value="low">ใกล้หมด (≤5)</option>
+          <option value="ok">มีสินค้า</option>
+          <option value="out">หมดสต็อก</option>
+        </select>
+        <select class="select-filter" id="pageSize">
+          <option value="10">10/หน้า</option>
+          <option value="25" selected>25/หน้า</option>
+          <option value="50">50/หน้า</option>
+          <option value="999">ทั้งหมด</option>
         </select>
         <button class="btn-primary" onclick="openModal('addProductModal')">+ เพิ่มสินค้าใหม่</button>
       </div>
       <div class="card">
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>รูป</th><th>สินค้า</th><th>หมวด</th><th>ทุน</th><th>ราคาขาย</th><th>คงเหลือ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+            <thead><tr><th>รูป</th><th>สินค้า / รหัส / บาร์โค้ด</th><th>หมวด</th><th>ทุน</th><th>ราคาขาย</th><th>กำไร</th><th>คงเหลือ</th><th>มูลค่า</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
             <tbody id="productBody"></tbody>
           </table>
         </div>
         <div class="table-footer">
           <span id="productCount"></span>
-          <div class="pagination"><button class="btn-page active">1</button><button class="btn-page">2</button><button class="btn-page">3</button></div>
+          <div class="pagination" id="pagination"></div>
         </div>
       </div>
     </section>
@@ -953,25 +965,105 @@ document.querySelectorAll('.nav-item').forEach(item=>{
 const d = new Date();
 document.getElementById('currentDate').textContent = d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
 
+let prodCat = '';
+let prodPage = 1;
+const CAT_ICONS = {'คัน':'🪝','รอก':'🎣','เบ็ด':'📌','สาย':'🧵','เหยื่อ':'🐛','อื่นๆ':'🎒'};
+
+function renderProductKPI(){
+  const totalItems = products.length;
+  const totalStock = products.reduce((s,p)=>s+p.qty,0);
+  const totalValue = products.reduce((s,p)=>s+p.qty*p.cost,0);
+  const lowStock = products.filter(p=>p.qty>0&&p.qty<=5).length;
+  const outStock = products.filter(p=>p.qty===0).length;
+  document.getElementById('productKpi').innerHTML = `
+    <div class="kpi-card kpi-blue"><div class="kpi-icon">📦</div><div><div class="kpi-value">${totalItems}</div><div class="kpi-label">รายการสินค้า (SKU)</div></div></div>
+    <div class="kpi-card kpi-teal"><div class="kpi-icon">🔢</div><div><div class="kpi-value">${totalStock.toLocaleString()}</div><div class="kpi-label">จำนวนรวมในคลัง</div></div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-icon">💰</div><div><div class="kpi-value">฿${totalValue.toLocaleString()}</div><div class="kpi-label">มูลค่าคลังรวม (ทุน)</div></div></div>
+    <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value">${lowStock}+${outStock}</div><div class="kpi-label">ใกล้หมด + หมดสต็อก</div></div></div>
+  `;
+}
+
+function renderCatChips(){
+  const cats = ['คัน','รอก','เบ็ด','สาย','เหยื่อ','อื่นๆ'];
+  const html = [`<button class="cat-tab ${prodCat===''?'active':''}" onclick="setProdCat('')">📦 ทั้งหมด (${products.length})</button>`]
+    .concat(cats.map(c=>{
+      const count = products.filter(p=>p.cat===c).length;
+      return `<button class="cat-tab ${prodCat===c?'active':''}" onclick="setProdCat('${c}')">${CAT_ICONS[c]||''} ${c} (${count})</button>`;
+    })).join('');
+  document.getElementById('prodCatTabs').innerHTML = html;
+}
+function setProdCat(c){prodCat=c;prodPage=1;renderProducts();}
+
 function renderProducts(){
   const search = (document.getElementById('searchInput')?.value||'').toLowerCase();
-  const cat = document.getElementById('categoryFilter')?.value||'';
-  const list = products.filter(p=>(p.name.toLowerCase().includes(search)||p.code.toLowerCase().includes(search))&&(cat===''||p.cat===cat));
-  document.getElementById('productBody').innerHTML = list.map((p,i)=>`
-    <tr>
-      <td><img class="product-thumb" src="${p.img||FALLBACK_IMG}" alt="${p.name}" onerror="this.src='${FALLBACK_IMG}'"/></td>
-      <td><div class="product-cell-name">${p.name}</div><div class="product-cell-code">${p.code}</div></td>
-      <td><span class="tag tag-in">${p.cat}</span></td>
-      <td>฿${p.cost.toLocaleString()}</td>
-      <td>฿${p.price.toLocaleString()}</td>
-      <td class="${p.qty<=5?'qty-low':'qty-ok'}">${p.qty} ${p.qty<=5?'⚠️':''}</td>
-      <td>${p.qty===0?'<span class="status status-pending">หมดสต็อก</span>':'<span class="status status-done">มีสินค้า</span>'}</td>
-      <td><div class="tbl-actions"><button class="btn-edit" onclick="showToast('✏️ แก้ไข: ${p.name}')">✏️</button><button class="btn-del" onclick="delProduct(${i})">🗑️</button></div></td>
-    </tr>`).join('');
-  document.getElementById('productCount').textContent = `แสดง ${list.length} จาก ${products.length} รายการ`;
+  const stockMode = document.getElementById('stockFilter')?.value||'';
+  const pageSize = +document.getElementById('pageSize')?.value||25;
+
+  let list = products.filter(p=>{
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || (p.barcode||'').includes(search);
+    const matchCat = !prodCat || p.cat===prodCat;
+    const matchStock = !stockMode ||
+      (stockMode==='low' && p.qty>0 && p.qty<=5) ||
+      (stockMode==='ok'  && p.qty>5) ||
+      (stockMode==='out' && p.qty===0);
+    return matchSearch && matchCat && matchStock;
+  });
+
+  const totalPages = Math.max(1,Math.ceil(list.length/pageSize));
+  if(prodPage>totalPages) prodPage=1;
+  const start = (prodPage-1)*pageSize;
+  const pageItems = list.slice(start,start+pageSize);
+
+  document.getElementById('productBody').innerHTML = pageItems.length===0
+    ? `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">ไม่พบสินค้าตามเงื่อนไข</td></tr>`
+    : pageItems.map(p=>{
+        const idx = products.indexOf(p);
+        const profit = p.price - p.cost;
+        const margin = p.cost?((profit/p.cost)*100).toFixed(0):0;
+        const value = p.qty * p.cost;
+        return `
+          <tr>
+            <td><img class="product-thumb" src="${p.img||FALLBACK_IMG}" alt="${p.name}" onerror="this.src='${FALLBACK_IMG}'"/></td>
+            <td>
+              <div class="product-cell-name">${p.name}</div>
+              <div class="product-cell-code">${p.code} · 📊 ${p.barcode||'-'}</div>
+            </td>
+            <td><span class="tag tag-in">${CAT_ICONS[p.cat]||''} ${p.cat}</span></td>
+            <td>฿${p.cost.toLocaleString()}</td>
+            <td><strong>฿${p.price.toLocaleString()}</strong></td>
+            <td style="color:var(--green);font-weight:700">+฿${profit.toLocaleString()}<div style="font-size:10px;color:var(--text-muted);font-weight:500">${margin}%</div></td>
+            <td class="${p.qty===0?'qty-low':p.qty<=5?'qty-low':'qty-ok'}">${p.qty} ${p.qty<=5?'⚠️':''}</td>
+            <td>฿${value.toLocaleString()}</td>
+            <td>${p.qty===0?'<span class="status status-pending">หมดสต็อก</span>':p.qty<=5?'<span class="status" style="background:#fef3c7;color:#a16207">ใกล้หมด</span>':'<span class="status status-done">มีสินค้า</span>'}</td>
+            <td><div class="tbl-actions"><button class="btn-edit" onclick="showToast('✏️ แก้ไข: ${p.name}')">✏️</button><button class="btn-del" onclick="delProduct(${idx})">🗑️</button></div></td>
+          </tr>`;
+      }).join('');
+
+  // Footer info
+  const sumValue = list.reduce((s,p)=>s+p.qty*p.cost,0);
+  const sumQty = list.reduce((s,p)=>s+p.qty,0);
+  document.getElementById('productCount').innerHTML = `แสดง <strong>${start+1}-${Math.min(start+pageSize,list.length)}</strong> จาก ${list.length} รายการ · รวม ${sumQty.toLocaleString()} ชิ้น · มูลค่า ฿${sumValue.toLocaleString()}`;
+
+  // Pagination
+  let pagHtml = `<button class="btn-page" onclick="setPage(${Math.max(1,prodPage-1)})" ${prodPage===1?'disabled':''}>‹</button>`;
+  const maxBtn = 5;
+  let startP = Math.max(1,prodPage-2);
+  let endP = Math.min(totalPages,startP+maxBtn-1);
+  if(endP-startP<maxBtn-1) startP = Math.max(1,endP-maxBtn+1);
+  for(let i=startP;i<=endP;i++){
+    pagHtml += `<button class="btn-page ${i===prodPage?'active':''}" onclick="setPage(${i})">${i}</button>`;
+  }
+  pagHtml += `<button class="btn-page" onclick="setPage(${Math.min(totalPages,prodPage+1)})" ${prodPage===totalPages?'disabled':''}>›</button>`;
+  document.getElementById('pagination').innerHTML = pagHtml;
+
+  renderProductKPI();
+  renderCatChips();
 }
-document.getElementById('searchInput').addEventListener('input',renderProducts);
-document.getElementById('categoryFilter').addEventListener('change',renderProducts);
+function setPage(p){prodPage=p;renderProducts();window.scrollTo({top:0,behavior:'smooth'});}
+
+document.getElementById('searchInput').addEventListener('input',()=>{prodPage=1;renderProducts();});
+document.getElementById('stockFilter').addEventListener('change',()=>{prodPage=1;renderProducts();});
+document.getElementById('pageSize').addEventListener('change',()=>{prodPage=1;renderProducts();});
 
 function delProduct(i){if(confirm(`ลบ "${products[i].name}"?`)){products.splice(i,1);renderProducts();showToast('🗑️ ลบเรียบร้อย');}}
 
