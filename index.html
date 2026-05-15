@@ -448,7 +448,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         <div class="kpi-card kpi-blue"><div class="kpi-icon">📦</div><div><div class="kpi-value">247</div><div class="kpi-label">รายการสินค้าทั้งหมด</div></div></div>
         <div class="kpi-card kpi-green"><div class="kpi-icon">💰</div><div><div class="kpi-value">฿84,320</div><div class="kpi-label">มูลค่าสต็อกรวม</div></div></div>
         <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value">3</div><div class="kpi-label">สินค้าใกล้หมด</div></div></div>
-        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value">฿12,850</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value" data-stat="today-total">฿0</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
       </div>
 
       <div class="row-2col">
@@ -593,15 +593,15 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <div class="pos-stats">
             <div class="pos-stat s1">
               <span class="pos-stat-icon">💰</span>
-              <div><div class="pos-stat-val">฿12,850</div><div class="pos-stat-lbl">ยอดขายวันนี้</div></div>
+              <div><div class="pos-stat-val" data-stat="today-total">฿0</div><div class="pos-stat-lbl">ยอดขายวันนี้</div></div>
             </div>
             <div class="pos-stat s2">
               <span class="pos-stat-icon">🧾</span>
-              <div><div class="pos-stat-val">18</div><div class="pos-stat-lbl">บิลวันนี้</div></div>
+              <div><div class="pos-stat-val" data-stat="today-count">0</div><div class="pos-stat-lbl">บิลวันนี้</div></div>
             </div>
             <div class="pos-stat s3">
               <span class="pos-stat-icon">⭐</span>
-              <div><div class="pos-stat-val">฿713</div><div class="pos-stat-lbl">เฉลี่ย/บิล</div></div>
+              <div><div class="pos-stat-val" data-stat="today-avg">฿0</div><div class="pos-stat-lbl">เฉลี่ย/บิล</div></div>
             </div>
           </div>
 
@@ -883,6 +883,8 @@ const IMG = {
 const FALLBACK_IMG = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#e0f2fe"/><text x="50" y="62" font-size="42" text-anchor="middle">🎣</text></svg>');
 
 // ===== Product-specific SVG image generators =====
+let _svgIdCounter = 0;
+function nextSvgId(){return 'g'+(++_svgIdCounter);}
 function svgIMG(content,bg='#f0f9ff'){
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="${bg}"/>${content}</svg>`;
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
@@ -931,9 +933,9 @@ const PIMG = {
 
   // ไก่ชน / กระดี่ไก่ชน (blade vibration lure): body color + label
   // shape: metallic blade on top + painted body at bottom + treble hook
-  metal: (color,label)=>svgIMG(`
+  metal: (color,label)=>{const gid=nextSvgId();return svgIMG(`
     <defs>
-      <linearGradient id="blade-${label.replace(/[^a-zA-Z0-9]/g,'')}" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="blade-${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#f8fafc"/>
         <stop offset="0.5" stop-color="#cbd5e1"/>
         <stop offset="1" stop-color="#94a3b8"/>
@@ -943,7 +945,7 @@ const PIMG = {
     <circle cx="155" cy="65" r="6" fill="none" stroke="#475569" stroke-width="2"/>
     <!-- main blade (silver metallic, tilted) -->
     <path d="M 155 75 L 215 110 L 220 175 L 180 195 L 130 175 L 105 130 Z"
-      fill="url(#blade-${label.replace(/[^a-zA-Z0-9]/g,'')})" stroke="#475569" stroke-width="2"/>
+      fill="url(#blade-${gid})" stroke="#475569" stroke-width="2"/>
     <!-- glitter dots on blade -->
     <circle cx="175" cy="115" r="2" fill="#fff" opacity="0.9"/>
     <circle cx="195" cy="140" r="1.5" fill="#fff" opacity="0.8"/>
@@ -968,7 +970,7 @@ const PIMG = {
     <path d="M 205 268 L 200 263 M 205 268 L 211 264" stroke="#d4af37" stroke-width="2" fill="none"/>
     <path d="M 222 275 L 217 271 M 222 275 L 226 270" stroke="#d4af37" stroke-width="2" fill="none"/>
     <text x="150" y="290" font-size="13" fill="#134e4a" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
-  `,'#fef2f2'),
+  `,'#fef2f2');},
 
   // Audi กิ้งก่า (lizard-shape soft lure): body + accent + label
   lizard: (body,accent,label)=>svgIMG(`
@@ -983,14 +985,14 @@ const PIMG = {
   `,'#fef3c7'),
 
   // รอก spinning reel — accent color customizable (red=Shimano, gold=Penn)
-  reel: (label,accent='#dc2626',spoolColor='#dc2626')=>svgIMG(`
+  reel: (label,accent='#dc2626',spoolColor='#dc2626')=>{const gid=nextSvgId();return svgIMG(`
     <defs>
-      <linearGradient id="body-${label.replace(/[^a-zA-Z0-9]/g,'')}" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="body-${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#475569"/>
         <stop offset="0.5" stop-color="#1e293b"/>
         <stop offset="1" stop-color="#0f172a"/>
       </linearGradient>
-      <radialGradient id="spool-${label.replace(/[^a-zA-Z0-9]/g,'')}" cx="0.5" cy="0.4">
+      <radialGradient id="spool-${gid}" cx="0.5" cy="0.4">
         <stop offset="0" stop-color="#94a3b8"/>
         <stop offset="0.7" stop-color="#475569"/>
         <stop offset="1" stop-color="#1e293b"/>
@@ -1002,12 +1004,12 @@ const PIMG = {
     <!-- stem (between foot and body) -->
     <rect x="140" y="195" width="20" height="30" fill="#1e293b"/>
     <!-- main body (rotor housing) -->
-    <ellipse cx="150" cy="170" rx="55" ry="40" fill="url(#body-${label.replace(/[^a-zA-Z0-9]/g,'')})"/>
+    <ellipse cx="150" cy="170" rx="55" ry="40" fill="url(#body-${gid})"/>
     <ellipse cx="150" cy="170" rx="55" ry="40" fill="none" stroke="#0f172a" stroke-width="2"/>
     <!-- accent ring on body -->
     <ellipse cx="150" cy="170" rx="48" ry="34" fill="none" stroke="${accent}" stroke-width="2"/>
     <!-- spool (top) -->
-    <ellipse cx="150" cy="120" rx="48" ry="14" fill="url(#spool-${label.replace(/[^a-zA-Z0-9]/g,'')})"/>
+    <ellipse cx="150" cy="120" rx="48" ry="14" fill="url(#spool-${gid})"/>
     <ellipse cx="150" cy="118" rx="48" ry="14" fill="none" stroke="#0f172a" stroke-width="2"/>
     <ellipse cx="150" cy="118" rx="42" ry="10" fill="${spoolColor}"/>
     <ellipse cx="150" cy="118" rx="38" ry="8" fill="#1e293b"/>
@@ -1025,7 +1027,7 @@ const PIMG = {
     <!-- anti-reverse switch -->
     <circle cx="115" cy="200" r="5" fill="${accent}" stroke="#1e293b" stroke-width="1.5"/>
     <text x="150" y="270" font-size="14" fill="#0c4a6e" text-anchor="middle" font-weight="bold" font-family="sans-serif">${label}</text>
-  `,'#e0f2fe'),
+  `,'#e0f2fe');},
 
   // สายเอ็น line spool
   line: (color,label)=>svgIMG(`
@@ -1144,6 +1146,29 @@ const products = [
 // POS items derived from products
 const posItems = products.map(p=>({img:p.img,name:p.name,price:p.price,barcode:p.barcode,cat:p.cat,code:p.code}));
 let cart = [];
+let salesHistory = []; // {billNo, items[], total, discount, net, payMethod, date}
+function syncPosItems(){
+  posItems.length = 0;
+  products.forEach(p=>posItems.push({img:p.img,name:p.name,price:p.price,barcode:p.barcode,cat:p.cat,code:p.code}));
+}
+function todaySalesStats(){
+  const today = new Date().toDateString();
+  const todays = salesHistory.filter(s=>new Date(s.date).toDateString()===today);
+  const total = todays.reduce((s,r)=>s+r.net,0);
+  const avg = todays.length?Math.round(total/todays.length):0;
+  return {total,count:todays.length,avg};
+}
+function refreshAllViews(){
+  syncPosItems();
+  applyPosFilter();
+  renderCatModern();
+  renderProducts();
+  // dashboard stats
+  const stats = todaySalesStats();
+  document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
+  document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
+  document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
+}
 const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -1321,7 +1346,7 @@ document.getElementById('searchInput').addEventListener('input',()=>{prodPage=1;
 document.getElementById('stockFilter').addEventListener('change',()=>{prodPage=1;renderProducts();});
 document.getElementById('pageSize').addEventListener('change',()=>{prodPage=1;renderProducts();});
 
-function delProduct(i){if(confirm(`ลบ "${products[i].name}"?`)){products.splice(i,1);renderProducts();showToast('🗑️ ลบเรียบร้อย');}}
+function delProduct(i){if(confirm(`ลบ "${products[i].name}"?`)){products.splice(i,1);refreshAllViews();showToast('🗑️ ลบเรียบร้อย');}}
 
 const CAT_IMG_MAP = {
   'คัน':[IMG.rod,IMG.rod2],
@@ -1344,9 +1369,13 @@ function addProduct(e){
   e.preventDefault();
   const name=document.getElementById('newName').value.trim();
   const code=document.getElementById('newCode').value.trim()||`SKU-${String(products.length+1).padStart(3,'0')}`;
+  // check duplicate code
+  if(products.some(p=>p.code===code)){showToast(`⚠️ รหัส ${code} ซ้ำ`);return;}
   const img=document.getElementById('newImg').value.trim()||FALLBACK_IMG;
-  products.unshift({code,name,cat:document.getElementById('newCategory').value,qty:+document.getElementById('newQty').value||0,cost:+document.getElementById('newCost').value||0,price:+document.getElementById('newPrice').value||0,img});
-  renderProducts();closeModal('addProductModal');showToast('✅ เพิ่มสินค้าเรียบร้อย');
+  const barcode='885'+Date.now().toString().slice(-10); // generate barcode
+  products.unshift({code,barcode,name,cat:document.getElementById('newCategory').value,qty:+document.getElementById('newQty').value||0,cost:+document.getElementById('newCost').value||0,price:+document.getElementById('newPrice').value||0,img});
+  refreshAllViews();
+  closeModal('addProductModal');showToast('✅ เพิ่มสินค้าเรียบร้อย');
   e.target.reset();
   document.getElementById('newImgPreview').src=FALLBACK_IMG;
 }
@@ -1447,7 +1476,12 @@ function startScan(){
 function cancelScan(){document.getElementById('scanAnim').classList.remove('show');}
 function clearCart(){if(cart.length&&confirm('ล้างตะกร้าทั้งหมด?')){cart=[];renderCart();}}
 function addToCart(i){
-  const it=posItems[i];const f=cart.find(c=>c.name===it.name);
+  const it=posItems[i];
+  const prod = products.find(p=>p.code===it.code);
+  if(!prod || prod.qty===0){showToast(`❌ ${it.name} หมดสต็อก`);return;}
+  const f=cart.find(c=>c.code===it.code);
+  const cartQty = f?f.qty:0;
+  if(cartQty>=prod.qty){showToast(`⚠️ สต็อก ${prod.name} เหลือ ${prod.qty} ชิ้น`);return;}
   if(f)f.qty++;else cart.push({...it,qty:1});
   renderCart();showToast(`🛒 ${it.name}`);
 }
@@ -1493,7 +1527,16 @@ function setPay(method,btn){
   document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-function qty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();}
+function qty(i,d){
+  const c = cart[i];
+  if(d>0){
+    const prod = products.find(p=>p.code===c.code);
+    if(prod && c.qty>=prod.qty){showToast(`⚠️ สต็อก ${prod.name} เหลือ ${prod.qty} ชิ้น`);return;}
+  }
+  c.qty+=d;
+  if(c.qty<=0)cart.splice(i,1);
+  renderCart();
+}
 function rmCart(i){cart.splice(i,1);renderCart();}
 function updateTotal(){
   const t=cart.reduce((s,c)=>s+c.price*c.qty,0);
@@ -1504,13 +1547,14 @@ function updateTotal(){
   const payAmt=document.getElementById('payBtnAmt');
   if(payAmt) payAmt.textContent='฿'+net.toLocaleString();
 }
-function buildReceipt(){
+function buildReceipt(forcedBillNo){
   const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
   const disc = +document.getElementById('discount').value||0;
   const net = Math.max(0,total-disc);
   const d = new Date();
   const dateStr = d.toLocaleDateString('th-TH')+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  const billNo = 'B'+Date.now().toString().slice(-8);
+  const billNo = forcedBillNo || ('B'+Date.now().toString().slice(-8));
+  const payLabel = {cash:'เงินสด 💵',qr:'QR Code 📱',card:'บัตร 💳'}[selectedPay]||'-';
   return `
     <div class="receipt-header">
       <div class="receipt-shop">🎣 ร้านอุปกรณ์ตกปลา สมชาย</div>
@@ -1533,6 +1577,7 @@ function buildReceipt(){
       <div class="receipt-row"><span>รวม</span><span>฿${total.toLocaleString()}</span></div>
       ${disc?`<div class="receipt-row"><span>ส่วนลด</span><span>-฿${disc.toLocaleString()}</span></div>`:''}
       <div class="receipt-row grand"><span>ยอดสุทธิ</span><span>฿${net.toLocaleString()}</span></div>
+      <div class="receipt-row" style="margin-top:6px"><span>ชำระโดย</span><span>${payLabel}</span></div>
     </div>
     <div class="receipt-footer">
       *** ขอบคุณที่ใช้บริการ ***<br/>
@@ -1546,11 +1591,32 @@ function printReceipt(){
 }
 function checkout(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
-  document.getElementById('receiptContent').innerHTML = buildReceipt();
+
+  // 1) deduct stock
+  cart.forEach(c=>{
+    const prod = products.find(p=>p.code===c.code);
+    if(prod) prod.qty = Math.max(0,prod.qty-c.qty);
+  });
+
+  // 2) record sale
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const disc = +document.getElementById('discount').value||0;
+  const net = Math.max(0,total-disc);
+  const billNo = 'B'+Date.now().toString().slice(-8);
+  salesHistory.push({
+    billNo, items: cart.map(c=>({...c})), total, discount: disc, net,
+    payMethod: selectedPay, date: new Date().toISOString()
+  });
+
+  // 3) build + show receipt BEFORE clearing cart
+  document.getElementById('receiptContent').innerHTML = buildReceipt(billNo);
   openModal('receiptModal');
-  const net=document.getElementById('cartNet').textContent;
-  showToast(`✅ ชำระเงิน ${net}`);
-  cart=[];renderCart();document.getElementById('discount').value='';
+  showToast(`✅ ชำระเงิน ฿${net.toLocaleString()} (${{cash:'เงินสด',qr:'QR',card:'บัตร'}[selectedPay]})`);
+
+  // 4) clear cart + refresh
+  cart=[];document.getElementById('discount').value='';
+  renderCart();
+  refreshAllViews();
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -1620,7 +1686,21 @@ function showToast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-renderProducts();renderPOS(posItems);renderCatModern();
+// ===== Data integrity check (run once at startup) =====
+(function dataCheck(){
+  const codes={},barcodes={};
+  const dupCode=[],dupBar=[];
+  products.forEach(p=>{
+    if(codes[p.code]) dupCode.push(p.code); else codes[p.code]=1;
+    if(p.barcode && barcodes[p.barcode]) dupBar.push(p.barcode); else if(p.barcode) barcodes[p.barcode]=1;
+  });
+  if(dupCode.length||dupBar.length){
+    console.warn('🚨 Data integrity:',{duplicateCodes:dupCode,duplicateBarcodes:dupBar});
+  }
+})();
+
+refreshAllViews();
+renderPOS(posItems);
 setTimeout(drawChart,150);
 window.addEventListener('resize',()=>setTimeout(drawChart,50));
 </script>
