@@ -287,6 +287,18 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   #zPrintArea{display:block!important;padding:20mm;font-family:'Courier New',monospace}
 }
 #zPrintArea{display:none}
+/* ===== DIALOG MODAL ===== */
+.dialog-header{padding:22px 22px 10px;text-align:center}
+.dialog-header.info{background:linear-gradient(135deg,#dbeafe,#eff6ff);border-bottom:1px solid #c7d2fe}
+.dialog-header.warn{background:linear-gradient(135deg,#fef3c7,#fffbeb);border-bottom:1px solid #fde68a}
+.dialog-header.danger{background:linear-gradient(135deg,#fee2e2,#fef2f2);border-bottom:1px solid #fca5a5}
+.dialog-header.success{background:linear-gradient(135deg,#d1fae5,#f0fdf4);border-bottom:1px solid #6ee7b7}
+.dialog-icon{font-size:42px;line-height:1;margin-bottom:8px}
+.dialog-title{font-size:17px;font-weight:800;color:var(--text)}
+.dialog-message{font-size:14px;line-height:1.6;color:var(--text);white-space:pre-line;text-align:center}
+.dialog-footer{padding:12px 22px 18px;border-top:none;gap:8px;justify-content:center}
+.dialog-footer .btn{min-width:100px;font-weight:600}
+#dialogModal .modal-content{box-shadow:0 20px 60px rgba(0,0,0,.25);border:none}
 /* ===== STOCK COUNT PAGE ===== */
 .sc-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .sc-status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700}
@@ -1741,6 +1753,28 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   </div>
 </div>
 
+<!-- DIALOG MODAL (custom confirm/prompt) -->
+<div class="modal fade" id="dialogModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+      <div class="dialog-header" id="dialogHeader">
+        <div class="dialog-icon" id="dialogIcon">❓</div>
+        <div class="dialog-title" id="dialogTitle">ยืนยัน</div>
+      </div>
+      <div class="modal-body" style="padding:18px 22px 8px">
+        <div class="dialog-message" id="dialogMessage"></div>
+        <div id="dialogInputWrap" style="display:none;margin-top:14px">
+          <input type="text" id="dialogInput" class="form-control" style="font-size:14px;padding:10px 12px" />
+        </div>
+      </div>
+      <div class="modal-footer dialog-footer">
+        <button type="button" class="btn btn-outline-secondary" id="dialogCancelBtn">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" id="dialogOkBtn">ตกลง</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PARKED SALES MODAL -->
 <div class="modal fade" id="parkedSalesModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -2481,7 +2515,11 @@ document.getElementById('searchInput').addEventListener('input',()=>{prodPage=1;
 document.getElementById('stockFilter').addEventListener('change',()=>{prodPage=1;renderProducts();});
 document.getElementById('pageSize').addEventListener('change',()=>{prodPage=1;renderProducts();});
 
-function delProduct(i){if(confirm(`ลบ "${products[i].name}"?`)){products.splice(i,1);refreshAllViews();showToast('🗑️ ลบเรียบร้อย');}}
+async function delProduct(i){
+  if(await dialogConfirm(`คุณต้องการลบสินค้า<br><strong>"${products[i].name}"</strong> ใช่หรือไม่?`,{level:'danger',title:'ลบสินค้า',okText:'🗑️ ลบ'})){
+    products.splice(i,1); refreshAllViews(); showToast('🗑️ ลบเรียบร้อย');
+  }
+}
 
 const CAT_IMG_MAP = {
   'คัน':[IMG.rod,IMG.rod2],
@@ -2626,10 +2664,10 @@ function saveSupplier(e){
   renderStockPage();
 }
 
-function delSupplier(id){
+async function delSupplier(id){
   const s = suppliers.find(x=>x.id===id);
   if(!s) return;
-  if(!confirm(`ลบ "${s.name}"?`)) return;
+  if(!await dialogConfirm(`คุณต้องการลบซัพพลายเออร์<br><strong>"${s.name}"</strong> ใช่หรือไม่?`,{level:'danger',title:'ลบซัพพลายเออร์',okText:'🗑️ ลบ'})) return;
   suppliers = suppliers.filter(x=>x.id!==id);
   renderSuppliers();
   renderStockPage();
@@ -2878,7 +2916,12 @@ function startScan(){
   },2000);
 }
 function cancelScan(){document.getElementById('scanAnim').classList.remove('show');}
-function clearCart(){if(cart.length&&confirm('ล้างตะกร้าทั้งหมด?')){cart=[];renderCart();}}
+async function clearCart(){
+  if(!cart.length) return;
+  if(await dialogConfirm('ล้างสินค้าทั้งหมดในตะกร้า?',{level:'warn',title:'ล้างตะกร้า',okText:'ล้าง'})){
+    cart=[]; renderCart();
+  }
+}
 function addToCart(i){
   const it=posItems[i];
   const prod = products.find(p=>p.code===it.code);
@@ -3237,12 +3280,72 @@ function renderSalesTable(){
   if(labelEl) labelEl.textContent = labelText;
 }
 
+/* ===== DIALOG (custom modal confirm/prompt) ===== */
+function dialogConfirm(message, opts={}){
+  return new Promise(resolve=>{
+    const modal = document.getElementById('dialogModal');
+    const header = document.getElementById('dialogHeader');
+    const level = opts.level || 'info'; // info|warn|danger|success
+    header.className = 'dialog-header '+level;
+    const defaultIcons = {info:'❓',warn:'⚠️',danger:'🗑️',success:'✅'};
+    document.getElementById('dialogIcon').textContent = opts.icon || defaultIcons[level];
+    document.getElementById('dialogTitle').textContent = opts.title || 'ยืนยัน';
+    document.getElementById('dialogMessage').innerHTML = message;
+    document.getElementById('dialogInputWrap').style.display = 'none';
+    const okBtn = document.getElementById('dialogOkBtn');
+    const cancelBtn = document.getElementById('dialogCancelBtn');
+    okBtn.textContent = opts.okText || 'ตกลง';
+    cancelBtn.textContent = opts.cancelText || 'ยกเลิก';
+    cancelBtn.style.display = '';
+    okBtn.className = level==='danger' ? 'btn btn-danger' : level==='warn' ? 'btn btn-warning' : 'btn btn-primary';
+    let resolved = false;
+    const finish = (val)=>{ if(resolved) return; resolved = true; resolve(val); };
+    const onHide = ()=>{ okBtn.onclick=null; cancelBtn.onclick=null; finish(false); };
+    okBtn.onclick = ()=>{ bootstrap.Modal.getInstance(modal)?.hide(); finish(true); };
+    cancelBtn.onclick = ()=>{ bootstrap.Modal.getInstance(modal)?.hide(); finish(false); };
+    modal.addEventListener('hidden.bs.modal', onHide, {once:true});
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+  });
+}
+function dialogPrompt(message, defaultValue='', opts={}){
+  return new Promise(resolve=>{
+    const modal = document.getElementById('dialogModal');
+    const header = document.getElementById('dialogHeader');
+    const level = opts.level || 'info';
+    header.className = 'dialog-header '+level;
+    document.getElementById('dialogIcon').textContent = opts.icon || '✏️';
+    document.getElementById('dialogTitle').textContent = opts.title || 'กรอกข้อมูล';
+    document.getElementById('dialogMessage').innerHTML = message;
+    const inputWrap = document.getElementById('dialogInputWrap');
+    const input = document.getElementById('dialogInput');
+    inputWrap.style.display = '';
+    input.value = defaultValue;
+    input.placeholder = opts.placeholder || '';
+    const okBtn = document.getElementById('dialogOkBtn');
+    const cancelBtn = document.getElementById('dialogCancelBtn');
+    okBtn.textContent = opts.okText || 'ตกลง';
+    cancelBtn.textContent = opts.cancelText || 'ยกเลิก';
+    cancelBtn.style.display = '';
+    okBtn.className = 'btn btn-primary';
+    let resolved = false;
+    const finish = (val)=>{ if(resolved) return; resolved = true; resolve(val); };
+    const onHide = ()=>{ okBtn.onclick=null; cancelBtn.onclick=null; input.onkeydown=null; finish(null); };
+    okBtn.onclick = ()=>{ const v=input.value; bootstrap.Modal.getInstance(modal)?.hide(); finish(v); };
+    cancelBtn.onclick = ()=>{ bootstrap.Modal.getInstance(modal)?.hide(); finish(null); };
+    input.onkeydown = (e)=>{ if(e.key==='Enter'){ e.preventDefault(); okBtn.click(); } };
+    modal.addEventListener('hidden.bs.modal', onHide, {once:true});
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+    setTimeout(()=>input.focus(), 250);
+  });
+}
+
 /* ===== PARK SALE (พักบิล) ===== */
 let parkedSales = []; // {id, label, items[], discount, parkedAt, payMethod}
 
-function parkSale(){
+async function parkSale(){
   if(!cart.length){ showToast('⚠️ ตะกร้าว่างเปล่า'); return; }
-  const label = prompt('ตั้งชื่อบิล (เช่น "ลูกค้าใส่หมวกแดง" หรือเว้นว่างไว้):', '');
+  const label = await dialogPrompt('ตั้งชื่อบิลเพื่อจำง่าย (หรือเว้นว่าง):',  '',
+    {title:'พักบิล',icon:'🅿️',placeholder:'เช่น ลูกค้าใส่หมวกแดง',okText:'พักบิล'});
   if(label === null) return; // user cancelled
   const disc = +document.getElementById('discount')?.value || 0;
   const total = cart.reduce((s,c)=>s+c.price*c.qty, 0);
@@ -3302,10 +3405,10 @@ function renderParkedSalesModal(){
   }).join('');
 }
 
-function resumeParkedSale(id){
+async function resumeParkedSale(id){
   const idx = parkedSales.findIndex(p=>p.id===id);
   if(idx<0) return;
-  if(cart.length && !confirm('ตะกร้าปัจจุบันยังมีของอยู่ — แทนที่ด้วยบิลที่พักไว้?')) return;
+  if(cart.length && !await dialogConfirm('ตะกร้าปัจจุบันยังมีของอยู่<br><strong>แทนที่ด้วยบิลที่พักไว้?</strong>',{level:'warn',title:'ดำเนินการบิลที่พักไว้'})) return;
   const p = parkedSales[idx];
   cart = p.items.map(c=>({...c}));
   document.getElementById('discount').value = p.discount || '';
@@ -3324,10 +3427,10 @@ function resumeParkedSale(id){
   showToast(`▶ ดำเนินการต่อ: ${p.label}`);
 }
 
-function deleteParkedSale(id){
+async function deleteParkedSale(id){
   const p = parkedSales.find(x=>x.id===id);
   if(!p) return;
-  if(!confirm(`ยกเลิกบิล "${p.label}"?`)) return;
+  if(!await dialogConfirm(`ยกเลิกบิล<br><strong>"${p.label}"</strong>?`,{level:'danger',title:'ยกเลิกบิลที่พักไว้',okText:'🗑️ ยกเลิกบิล'})) return;
   parkedSales = parkedSales.filter(x=>x.id!==id);
   renderParkedSalesModal();
   updateParkBtns();
@@ -3421,10 +3524,10 @@ function exportAll(){
   showToast('✅ Export ข้อมูลทั้งหมดเรียบร้อย');
 }
 
-function importAll(input){
+async function importAll(input){
   const file = input.files[0];
   if(!file) return;
-  if(!confirm('นำเข้าข้อมูลจากไฟล์นี้?\n\n⚠️ ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่')){
+  if(!await dialogConfirm(`นำเข้าข้อมูลจากไฟล์<br><strong>${file.name}</strong>?<br><br>⚠️ ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่`,{level:'warn',title:'Import ข้อมูล'})){
     input.value = ''; return;
   }
   const reader = new FileReader();
@@ -3449,9 +3552,9 @@ function importAll(input){
   reader.readAsText(file);
 }
 
-function clearAllData(){
-  if(!confirm('⚠️ คำเตือน!\n\nจะลบข้อมูลทั้งหมด: สินค้า, บิลขาย, สต็อก, ค่าใช้จ่าย, ซัพพลายเออร์, ประวัตินับสต็อก, Z-Report\n\nยืนยันการลบ?')) return;
-  if(!confirm('แน่ใจอีกครั้ง? การกระทำนี้ย้อนกลับไม่ได้!')) return;
+async function clearAllData(){
+  if(!await dialogConfirm('คำเตือน!<br>จะลบข้อมูลทั้งหมด:<br>สินค้า, บิลขาย, สต็อก, ค่าใช้จ่าย,<br>ซัพพลายเออร์, ประวัตินับสต็อก, Z-Report<br><br><strong>ยืนยันการลบ?</strong>',{level:'danger',title:'⚠️ ล้างข้อมูลทั้งหมด',okText:'🗑️ ลบทั้งหมด'})) return;
+  if(!await dialogConfirm('แน่ใจอีกครั้ง?<br><strong>การกระทำนี้ย้อนกลับไม่ได้!</strong>',{level:'danger',title:'ยืนยันครั้งสุดท้าย',okText:'🗑️ ลบเลย'})) return;
   products.length = 0;
   salesHistory.length = 0;
   stockHistory.length = 0;
@@ -3642,17 +3745,17 @@ function updateZCashCalc(){
   }
 }
 
-function closeZShift(){
+async function closeZShift(){
   const date = document.getElementById('zDate').value;
   if(!date){ showToast('⚠️ กรุณาเลือกวันที่'); return; }
   const opening = +document.getElementById('zOpeningCash').value||0;
   const counted = +document.getElementById('zCountedCash').value||0;
   if(counted<=0 && opening<=0){
-    if(!confirm('ยังไม่ได้กรอกจำนวนเงิน ต้องการบันทึกต่อหรือไม่?')) return;
+    if(!await dialogConfirm('ยังไม่ได้กรอกจำนวนเงิน<br>ต้องการบันทึกต่อหรือไม่?',{level:'warn',title:'ปิดยอดประจำวัน'})) return;
   }
   // ถ้าวันนี้เคยปิดยอดแล้ว ให้ overwrite
   const existing = zReports.find(r=>r.date===date);
-  if(existing && !confirm('วันนี้เคยปิดยอดแล้ว ต้องการบันทึกทับ?')) return;
+  if(existing && !await dialogConfirm('วันนี้เคยปิดยอดแล้ว<br><strong>ต้องการบันทึกทับ?</strong>',{level:'warn',title:'บันทึกทับ'})) return;
 
   const z = getZSnapshot(date);
   const expected = opening + z.cashSales;
@@ -3820,8 +3923,8 @@ function addExpense(e){
   renderAccounting();
 }
 
-function delExpense(id){
-  if(!confirm('ลบรายการนี้?')) return;
+async function delExpense(id){
+  if(!await dialogConfirm('ลบรายการค่าใช้จ่ายนี้?',{level:'danger',title:'ลบค่าใช้จ่าย',okText:'🗑️ ลบ'})) return;
   expenses = expenses.filter(e=>e.id!==id);
   renderAccounting();
   showToast('🗑️ ลบเรียบร้อย');
@@ -4106,8 +4209,8 @@ function scStart(){
   scUpdateSummary();
 }
 
-function scReset(){
-  if(!confirm('ล้างข้อมูลการนับทั้งหมด?')) return;
+async function scReset(){
+  if(!await dialogConfirm('ล้างข้อมูลการนับทั้งหมด<br>และเริ่มต้นใหม่?',{level:'warn',title:'เริ่มนับใหม่',okText:'🔄 เริ่มใหม่'})) return;
   scCounts = {}; scNotes = {};
   scActive = false;
   document.getElementById('scStatus').textContent = '⏸ ยังไม่เริ่มนับ';
@@ -4235,11 +4338,11 @@ function scUpdateFooter(){
   document.getElementById('scFootInfo').textContent = `นับแล้ว ${countedRows} / ${products.length} รายการ`;
 }
 
-function scConfirm(){
+async function scConfirm(){
   const toUpdate = Object.entries(scCounts).filter(([,v]) => v !== null && v !== '');
   if(!toUpdate.length){ showToast('⚠️ ยังไม่ได้กรอกจำนวนที่นับ'); return; }
   const diffItems = toUpdate.filter(([code,v]) => { const p=products.find(x=>x.code===code); return p && +v!==p.qty; });
-  if(!confirm(`บันทึกการนับสต็อก ${toUpdate.length} รายการ${diffItems.length?` (มีส่วนต่าง ${diffItems.length} รายการ)`:''}?\n\n*การนับนี้จะไม่ปรับสต็อกจริง เป็นเพียงการบันทึกข้อมูลเพื่อตรวจสอบ`)) return;
+  if(!await dialogConfirm(`บันทึกการนับสต็อก <strong>${toUpdate.length}</strong> รายการ${diffItems.length?` <br>(มีส่วนต่าง <strong>${diffItems.length}</strong> รายการ)`:''}?<br><br><span style="color:var(--text-muted);font-size:12px">*การนับนี้เป็นเพียงการบันทึก<br>ไม่ปรับสต็อกจริงในระบบ</span>`,{level:'info',title:'บันทึกการนับสต็อก',okText:'💾 บันทึก'})) return;
   const sessionDate = new Date().toISOString();
 
   // เก็บรายละเอียดสำหรับ session report (ไม่ปรับ products.qty / stockHistory)
