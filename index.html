@@ -827,6 +827,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <div class="nav-group-label">รายงาน</div>
     <a class="nav-item" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
     <a class="nav-item" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
+    <a class="nav-item" data-page="accounting"><i class="nav-icon bi bi-cash-coin"></i><span>บัญชี (กำไร/ขาดทุน)</span></a>
     <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
     <div class="nav-group-label">ตั้งค่า</div>
     <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
@@ -1334,6 +1335,119 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <tbody id="scHistoryBody">
               <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีประวัติการนับสต็อก</td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTING / P&L -->
+    <section class="page" id="page-accounting">
+      <!-- Date filter -->
+      <div class="card" style="padding:14px 16px;margin-bottom:16px">
+        <div class="rf-mode">
+          <button class="rf-mode-btn active" data-acmode="today" onclick="setAcMode('today',this)">📅 วันนี้</button>
+          <button class="rf-mode-btn" data-acmode="month" onclick="setAcMode('month',this)">เดือนนี้</button>
+          <button class="rf-mode-btn" data-acmode="year" onclick="setAcMode('year',this)">ปีนี้</button>
+          <button class="rf-mode-btn" data-acmode="range" onclick="setAcMode('range',this)">📆 ช่วงวัน</button>
+          <button class="rf-mode-btn" data-acmode="all" onclick="setAcMode('all',this)">ทั้งหมด</button>
+        </div>
+        <div class="rf-inputs" id="acRangeDates" style="display:none">
+          <label>ตั้งแต่: <input type="date" id="acFrom" class="form-control" style="width:auto;display:inline-block" onchange="renderAccounting()" /></label>
+          <label>ถึง: <input type="date" id="acTo" class="form-control" style="width:auto;display:inline-block" onchange="renderAccounting()" /></label>
+        </div>
+        <div id="acSummaryLabel" style="margin-top:10px;font-size:12px;color:var(--text-muted)"></div>
+      </div>
+
+      <!-- KPI: P&L summary -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">💰</div><div><div class="kpi-value" id="acRevenue">฿0</div><div class="kpi-label">รายรับ (ยอดขาย)</div></div></div>
+        <div class="kpi-card" style="border-left-color:#f97316"><div class="kpi-icon">📦</div><div><div class="kpi-value" id="acCogs" style="color:#f97316">฿0</div><div class="kpi-label">ต้นทุนสินค้าที่ขาย (COGS)</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">💹</div><div><div class="kpi-value" id="acGrossProfit">฿0</div><div class="kpi-label">กำไรขั้นต้น</div></div></div>
+        <div class="kpi-card" style="border-left-color:#dc2626"><div class="kpi-icon">💸</div><div><div class="kpi-value" id="acOpex" style="color:#dc2626">฿0</div><div class="kpi-label">ค่าใช้จ่ายดำเนินงาน</div></div></div>
+      </div>
+
+      <!-- Net profit highlight -->
+      <div class="card" id="acNetCard" style="background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;padding:20px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:13px;opacity:.85;font-weight:600;letter-spacing:.5px">กำไรสุทธิ (NET PROFIT)</div>
+            <div id="acNet" style="font-size:34px;font-weight:800;margin-top:4px">฿0</div>
+            <div id="acMargin" style="font-size:12px;opacity:.85;margin-top:2px">อัตรากำไรสุทธิ: 0%</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;opacity:.7">กำไรขั้นต้น</div>
+            <div id="acGrossInfo" style="font-size:15px;font-weight:700">฿0</div>
+            <div style="font-size:11px;opacity:.7;margin-top:6px">ค่าใช้จ่าย</div>
+            <div id="acOpexInfo" style="font-size:15px;font-weight:700">฿0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense form + breakdown -->
+      <div class="row-2col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">💸 บันทึกค่าใช้จ่าย</span></div>
+          <form class="stock-form" id="expenseForm" onsubmit="addExpense(event)">
+            <div class="form-row">
+              <label>หมวดค่าใช้จ่าย
+                <select class="form-select" id="expCategory" required>
+                  <option value="ค่าน้ำ">💧 ค่าน้ำ</option>
+                  <option value="ค่าไฟ">💡 ค่าไฟ</option>
+                  <option value="ค่าอินเทอร์เน็ต">🌐 ค่าอินเทอร์เน็ต/โทรศัพท์</option>
+                  <option value="ค่าเช่า">🏠 ค่าเช่าร้าน</option>
+                  <option value="ค่าพนักงาน">👤 ค่าพนักงาน/เงินเดือน</option>
+                  <option value="ค่าวัสดุสำนักงาน">📋 วัสดุ/อุปกรณ์</option>
+                  <option value="ค่าการตลาด">📢 การตลาด/โฆษณา</option>
+                  <option value="ค่าขนส่ง">🚚 ค่าขนส่ง</option>
+                  <option value="ค่าซ่อมแซม">🔧 ค่าซ่อมแซม</option>
+                  <option value="อื่นๆ">📌 อื่นๆ</option>
+                </select>
+              </label>
+              <label>จำนวนเงิน (฿)<input type="number" class="form-control" id="expAmount" min="0" step="0.01" placeholder="0.00" required /></label>
+            </div>
+            <div class="form-row">
+              <label>วันที่<input type="date" class="form-control" id="expDate" required /></label>
+              <label>หมายเหตุ<input type="text" class="form-control" id="expNote" placeholder="เช่น ค่าไฟเดือนพฤษภา" /></label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">💾 บันทึกค่าใช้จ่าย</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 สัดส่วนค่าใช้จ่าย</span></div>
+          <div id="expBreakdown" class="cat-stats">
+            <div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีรายการ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense list -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 รายการค่าใช้จ่าย</span>
+          <span id="expCount" style="font-size:12px;color:var(--text-muted);font-weight:600"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:50px;text-align:center">#</th>
+                <th>วันที่</th>
+                <th>หมวด</th>
+                <th>หมายเหตุ</th>
+                <th style="text-align:right">จำนวน (฿)</th>
+                <th style="text-align:center;width:60px"></th>
+              </tr>
+            </thead>
+            <tbody id="expenseListBody">
+              <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีรายการ</td></tr>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="4" style="text-align:right;font-weight:700;color:var(--text-muted)">รวม</td>
+                <td style="text-align:right;font-weight:800;color:#dc2626" id="expTotalFoot">฿0</td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -1904,13 +2018,14 @@ function refreshAllViews(){
   renderStockPage();
   renderReports();
   renderScHistory();
+  renderAccounting();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -2708,6 +2823,153 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== ACCOUNTING / P&L ===== */
+let expenses = []; // {id, date, category, amount, note}
+let acMode = 'today';
+const EXP_COLORS = {'ค่าน้ำ':'#06b6d4','ค่าไฟ':'#f59e0b','ค่าอินเทอร์เน็ต':'#8b5cf6','ค่าเช่า':'#10b981','ค่าพนักงาน':'#3b82f6','ค่าวัสดุสำนักงาน':'#6b7280','ค่าการตลาด':'#ec4899','ค่าขนส่ง':'#14b8a6','ค่าซ่อมแซม':'#f97316','อื่นๆ':'#64748b'};
+const EXP_ICONS  = {'ค่าน้ำ':'💧','ค่าไฟ':'💡','ค่าอินเทอร์เน็ต':'🌐','ค่าเช่า':'🏠','ค่าพนักงาน':'👤','ค่าวัสดุสำนักงาน':'📋','ค่าการตลาด':'📢','ค่าขนส่ง':'🚚','ค่าซ่อมแซม':'🔧','อื่นๆ':'📌'};
+
+function setAcMode(mode, btn){
+  acMode = mode;
+  document.querySelectorAll('[data-acmode]').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('acRangeDates').style.display = mode==='range' ? 'flex' : 'none';
+  const today = new Date().toISOString().slice(0,10);
+  if(mode==='range'){
+    if(!document.getElementById('acFrom').value) document.getElementById('acFrom').value = today;
+    if(!document.getElementById('acTo').value)   document.getElementById('acTo').value   = today;
+  }
+  renderAccounting();
+}
+
+function getAcDateFilter(){
+  const now = new Date();
+  return (isoDate)=>{
+    const d = new Date(isoDate);
+    if(acMode==='all') return true;
+    if(acMode==='today') return d.toDateString()===now.toDateString();
+    if(acMode==='month') return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    if(acMode==='year')  return d.getFullYear()===now.getFullYear();
+    if(acMode==='range'){
+      const from = document.getElementById('acFrom')?.value;
+      const to   = document.getElementById('acTo')?.value;
+      const ds = d.toISOString().slice(0,10);
+      return (!from||ds>=from) && (!to||ds<=to);
+    }
+    return true;
+  };
+}
+
+function formatAcLabel(){
+  const fmt = (d)=> new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+  if(acMode==='today') return 'ช่วง: วันนี้ ('+fmt(new Date())+')';
+  if(acMode==='month') return 'ช่วง: เดือนนี้';
+  if(acMode==='year')  return 'ช่วง: ปีนี้';
+  if(acMode==='range'){const f=document.getElementById('acFrom')?.value;const t=document.getElementById('acTo')?.value;return 'ช่วง: '+(f?fmt(f):'-')+' ถึง '+(t?fmt(t):'-');}
+  return 'ช่วง: ทั้งหมด';
+}
+
+function addExpense(e){
+  e.preventDefault();
+  const cat = document.getElementById('expCategory').value;
+  const amt = +document.getElementById('expAmount').value||0;
+  const date = document.getElementById('expDate').value || new Date().toISOString().slice(0,10);
+  const note = document.getElementById('expNote').value.trim();
+  if(amt<=0){ showToast('⚠️ จำนวนเงินต้องมากกว่า 0'); return; }
+  expenses.unshift({ id:Date.now(), date, category:cat, amount:amt, note });
+  e.target.reset();
+  document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
+  showToast(`💸 บันทึก ${cat} ฿${amt.toLocaleString()} เรียบร้อย`);
+  renderAccounting();
+}
+
+function delExpense(id){
+  if(!confirm('ลบรายการนี้?')) return;
+  expenses = expenses.filter(e=>e.id!==id);
+  renderAccounting();
+  showToast('🗑️ ลบเรียบร้อย');
+}
+
+function renderAccounting(){
+  if(!document.getElementById('acRevenue')) return;
+  const filterDate = getAcDateFilter();
+
+  // Set default expense date to today if empty
+  const dEl = document.getElementById('expDate');
+  if(dEl && !dEl.value) dEl.value = new Date().toISOString().slice(0,10);
+
+  // --- Revenue & COGS from salesHistory ---
+  const filteredSales = salesHistory.filter(s=>filterDate(s.date));
+  const revenue = filteredSales.reduce((s,b)=>s+(+b.net||0),0);
+  let cogs = 0;
+  filteredSales.forEach(b=>b.items.forEach(it=>{
+    const prod = products.find(p=>p.code===it.code);
+    const cost = prod?(+prod.cost||0):0;
+    cogs += cost*it.qty;
+  }));
+  const grossProfit = revenue - cogs;
+
+  // --- Operating expenses ---
+  const filteredExp = expenses.filter(e=>filterDate(e.date));
+  const opex = filteredExp.reduce((s,e)=>s+(+e.amount||0),0);
+
+  const netProfit = grossProfit - opex;
+  const margin = revenue ? (netProfit/revenue*100) : 0;
+
+  // Update KPIs
+  document.getElementById('acRevenue').textContent     = '฿'+revenue.toLocaleString();
+  document.getElementById('acCogs').textContent        = '฿'+cogs.toLocaleString();
+  document.getElementById('acGrossProfit').textContent = '฿'+grossProfit.toLocaleString();
+  document.getElementById('acOpex').textContent        = '฿'+opex.toLocaleString();
+  document.getElementById('acNet').textContent         = (netProfit<0?'-':'')+'฿'+Math.abs(netProfit).toLocaleString();
+  document.getElementById('acMargin').textContent      = `อัตรากำไรสุทธิ: ${margin.toFixed(1)}%`;
+  document.getElementById('acGrossInfo').textContent   = '฿'+grossProfit.toLocaleString();
+  document.getElementById('acOpexInfo').textContent    = '-฿'+opex.toLocaleString();
+
+  // Net card color: green if profit, red if loss
+  const netCard = document.getElementById('acNetCard');
+  if(netCard){
+    netCard.style.background = netProfit>=0
+      ? 'linear-gradient(135deg,#065f46,#059669)'
+      : 'linear-gradient(135deg,#991b1b,#dc2626)';
+  }
+
+  document.getElementById('acSummaryLabel').textContent = formatAcLabel() + ` • ${filteredSales.length} บิล • ${filteredExp.length} รายการค่าใช้จ่าย`;
+
+  // Expense breakdown
+  const catAgg = {};
+  filteredExp.forEach(e=>{ catAgg[e.category] = (catAgg[e.category]||0)+(+e.amount||0); });
+  const cats = Object.entries(catAgg).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('expBreakdown').innerHTML = cats.length ? cats.map(([cat,val])=>{
+    const pct = opex ? Math.round(val/opex*100) : 0;
+    const color = EXP_COLORS[cat]||'#64748b';
+    const icon = EXP_ICONS[cat]||'📌';
+    return `<div class="cat-row">
+      <span class="cat-name">${icon} ${cat}</span>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${color}"></div></div>
+      <span style="white-space:nowrap">฿${val.toLocaleString()} (${pct}%)</span>
+    </div>`;
+  }).join('') : '<div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีค่าใช้จ่ายในช่วงนี้</div>';
+
+  // Expense list table
+  const sorted = filteredExp.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const tbody = document.getElementById('expenseListBody');
+  document.getElementById('expCount').textContent = sorted.length ? `(${sorted.length} รายการ)` : '';
+  tbody.innerHTML = sorted.length ? sorted.map((e,i)=>{
+    const d = new Date(e.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    const icon = EXP_ICONS[e.category]||'📌';
+    return `<tr>
+      <td style="text-align:center;color:var(--text-muted)">${i+1}</td>
+      <td>${d}</td>
+      <td>${icon} ${e.category}</td>
+      <td style="color:var(--text-muted);font-size:12px">${e.note||'—'}</td>
+      <td style="text-align:right;font-weight:700;color:#dc2626">฿${(+e.amount).toLocaleString()}</td>
+      <td style="text-align:center"><button class="btn-del" onclick="delExpense(${e.id})" title="ลบ">🗑️</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีรายการ</td></tr>';
+  document.getElementById('expTotalFoot').textContent = '฿'+opex.toLocaleString();
 }
 
 /* ===== REPORTS ===== */
