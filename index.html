@@ -1048,14 +1048,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
           <!-- CASH CALCULATOR (visible only when cash payment selected) -->
           <div class="cash-section" id="cashSection">
-            <div class="cash-quick">
-              <button class="cash-quick-btn" onclick="setCashReceived(20)">฿20</button>
-              <button class="cash-quick-btn" onclick="setCashReceived(50)">฿50</button>
-              <button class="cash-quick-btn" onclick="setCashReceived(100)">฿100</button>
-              <button class="cash-quick-btn" onclick="setCashReceived(500)">฿500</button>
-              <button class="cash-quick-btn" onclick="setCashReceived(1000)">฿1,000</button>
-              <button class="cash-quick-btn cash-quick-exact" onclick="setCashExact()">พอดี</button>
-            </div>
             <div class="cash-received-row">
               <label>รับเงิน (฿)</label>
               <input type="number" id="cashReceived" class="cash-received-input" placeholder="0" min="0" oninput="updateChange()" />
