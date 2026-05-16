@@ -104,6 +104,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .card-subtitle{font-size:12px;color:var(--text-muted)}
 .row-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .chart-wrap{height:220px;position:relative}
+.sales-table-wrap{overflow-x:auto}
+.sales-table-wrap .table thead th{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:2px solid var(--border);padding:8px 10px}
+.sales-table-wrap .table td{padding:9px 10px;font-size:13.5px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.sales-table-wrap .table tfoot td{padding:10px 10px;font-size:14px;border-top:2px solid var(--border);color:var(--primary)}
+.sales-delta{font-size:12px;font-weight:600}
+.delta-up{color:#10b981}.delta-down{color:var(--red)}.delta-eq{color:var(--text-muted)}
+.sales-bar-mini{display:inline-block;height:6px;border-radius:99px;background:var(--primary);opacity:.25;margin-left:6px;vertical-align:middle}
 .alert-list{display:flex;flex-direction:column;gap:10px}
 .alert-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;border-left:3px solid transparent}
 .alert-critical{background:#fef2f2;border-left-color:var(--red)}
@@ -754,7 +761,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <span class="card-title">📈 ยอดขาย 7 วันล่าสุด</span>
             <span class="card-subtitle">หน่วย: บาท</span>
           </div>
-          <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+          <div class="sales-table-wrap">
+            <table class="table table-sm table-hover mb-0" id="salesDataTable">
+              <thead><tr><th>วันที่</th><th class="text-end">ยอดขาย</th><th class="text-end">เทียบวันก่อน</th></tr></thead>
+              <tbody id="salesTableBody"></tbody>
+              <tfoot><tr class="fw-bold"><td>รวม 7 วัน</td><td class="text-end" id="salesTableTotal" colspan="2"></td></tr></tfoot>
+            </table>
+          </div>
         </div>
 
         <div class="card">
@@ -2051,50 +2064,43 @@ function navMobile(page,el){
   document.querySelector(`.nav-item[data-page="${page}"]`).click();
 }
 
-function drawChart(){
-  const canvas=document.getElementById('salesChart');
-  if(!canvas||!canvas.offsetWidth)return;
-  const ctx=canvas.getContext('2d');
-  const data=[8200,11500,9800,14300,10200,15600,12850];
-  const labels=['9 พ.ค.','10 พ.ค.','11 พ.ค.','12 พ.ค.','13 พ.ค.','14 พ.ค.','15 พ.ค.'];
-  const w=canvas.offsetWidth,h=canvas.offsetHeight;
-  canvas.width=w*devicePixelRatio;canvas.height=h*devicePixelRatio;
-  ctx.scale(devicePixelRatio,devicePixelRatio);
-  const pad={top:20,right:20,bottom:36,left:54};
-  const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
-  const max=Math.max(...data)*1.15;
-  const step=cw/(data.length-1);
-  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){
-    const y=pad.top+ch-(ch/4)*i;
-    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();
-    ctx.fillStyle='#94a3b8';ctx.font='11px Segoe UI';ctx.textAlign='right';
-    ctx.fillText('฿'+Math.round((max/4*i)/1000)+'K',pad.left-6,y+4);
-  }
-  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
-  grad.addColorStop(0,'rgba(3,105,161,.3)');grad.addColorStop(1,'rgba(3,105,161,.02)');
-  const pts=data.map((v,i)=>({x:pad.left+i*step,y:pad.top+ch-(v/max)*ch}));
-  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
-  for(let i=1;i<pts.length;i++){
-    const c1x=pts[i-1].x+step*.45,c1y=pts[i-1].y;
-    const c2x=pts[i].x-step*.45,c2y=pts[i].y;
-    ctx.bezierCurveTo(c1x,c1y,c2x,c2y,pts[i].x,pts[i].y);
-  }
-  ctx.lineTo(pts[pts.length-1].x,pad.top+ch);ctx.lineTo(pts[0].x,pad.top+ch);ctx.closePath();
-  ctx.fillStyle=grad;ctx.fill();
-  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
-  for(let i=1;i<pts.length;i++){
-    const c1x=pts[i-1].x+step*.45,c1y=pts[i-1].y;
-    const c2x=pts[i].x-step*.45,c2y=pts[i].y;
-    ctx.bezierCurveTo(c1x,c1y,c2x,c2y,pts[i].x,pts[i].y);
-  }
-  ctx.strokeStyle='#0369a1';ctx.lineWidth=2.5;ctx.stroke();
-  pts.forEach((pt,i)=>{
-    ctx.beginPath();ctx.arc(pt.x,pt.y,4.5,0,Math.PI*2);
-    ctx.fillStyle='#fff';ctx.strokeStyle='#0369a1';ctx.lineWidth=2.5;ctx.fill();ctx.stroke();
-    ctx.fillStyle='#475569';ctx.font='11px Segoe UI';ctx.textAlign='center';
-    ctx.fillText(labels[i],pt.x,pad.top+ch+22);
-  });
+const salesChartData = [
+  {date:'9 พ.ค.',  val:8200},
+  {date:'10 พ.ค.', val:11500},
+  {date:'11 พ.ค.', val:9800},
+  {date:'12 พ.ค.', val:14300},
+  {date:'13 พ.ค.', val:10200},
+  {date:'14 พ.ค.', val:15600},
+  {date:'15 พ.ค.', val:12850},
+];
+function drawChart(){ renderSalesTable(); } // keep old callers working
+function renderSalesTable(){
+  const tbody = document.getElementById('salesTableBody');
+  const totalEl = document.getElementById('salesTableTotal');
+  if(!tbody) return;
+  const maxVal = Math.max(...salesChartData.map(d=>d.val));
+  const total = salesChartData.reduce((s,d)=>s+d.val,0);
+  tbody.innerHTML = salesChartData.map((d,i)=>{
+    const prev = i>0 ? salesChartData[i-1].val : null;
+    let deltaHtml = '<span class="delta-eq">—</span>';
+    if(prev !== null){
+      const diff = d.val - prev;
+      const pct = Math.abs(Math.round(diff/prev*100));
+      if(diff>0) deltaHtml=`<span class="delta-up">▲ ${pct}%</span>`;
+      else if(diff<0) deltaHtml=`<span class="delta-down">▼ ${pct}%</span>`;
+      else deltaHtml='<span class="delta-eq">= 0%</span>';
+    }
+    const barW = Math.round(d.val/maxVal*80);
+    return `<tr>
+      <td>${d.date}</td>
+      <td class="text-end">
+        ฿${d.val.toLocaleString()}
+        <span class="sales-bar-mini" style="width:${barW}px;opacity:.2"></span>
+      </td>
+      <td class="text-end sales-delta">${deltaHtml}</td>
+    </tr>`;
+  }).join('');
+  if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
 }
 
 function openModal(id){
@@ -2132,8 +2138,8 @@ function showToast(msg){
 
 refreshAllViews();
 renderPOS(posItems);
-setTimeout(drawChart,150);
-window.addEventListener('resize',()=>{setTimeout(drawChart,50);updateCartFab();});
+renderSalesTable();
+window.addEventListener('resize',()=>{updateCartFab();});
 </script>
 
 </body>
