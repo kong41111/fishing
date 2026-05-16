@@ -597,8 +597,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   .product-thumb{width:48px;height:48px}
 
   /* Modals: centered, not full-screen */
-  #addProductModal .modal-dialog{max-width:580px}
-  #addProductModal .modal-content{height:auto;max-height:88vh;border-radius:var(--radius);overflow-y:auto}
+  #addProductModal .modal-dialog,#editProductModal .modal-dialog{max-width:580px}
+  #addProductModal .modal-content,#editProductModal .modal-content{height:auto;max-height:88vh;border-radius:var(--radius);overflow-y:auto}
 
   /* Receipt modal smaller */
   #receiptModal .modal-dialog{max-width:420px}
@@ -662,8 +662,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   .toggle-label{padding:6px 0}
   .form-check-input{width:46px;height:26px}
 
-  /* ===== ADD PRODUCT MODAL ===== */
-  #addProductModal .modal-dialog{max-width:640px}
+  /* ===== ADD / EDIT PRODUCT MODAL ===== */
+  #addProductModal .modal-dialog,#editProductModal .modal-dialog{max-width:640px}
   .product-img-preview{aspect-ratio:1/1}
   .img-url-row{gap:10px;flex-wrap:wrap}
   .img-url-row input{min-width:0}
@@ -702,8 +702,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   .page-actions .btn-primary{flex:1 1 100%}
 
   /* Add product modal: stack image + form */
-  #addProductModal .modal-dialog{max-width:560px}
-  #addProductModal .form-row[style*="140px"]{grid-template-columns:1fr!important}
+  #addProductModal .modal-dialog,#editProductModal .modal-dialog{max-width:560px}
+  #addProductModal .form-row[style*="140px"],#editProductModal .form-row[style*="140px"]{grid-template-columns:1fr!important}
   .product-img-preview{max-width:200px;margin:0 auto 10px}
 
   /* Reports: stack top-name above bar on narrow */
@@ -1192,6 +1192,56 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   </div>
 </div>
 
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">✏️ แก้ไขสินค้า</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveEditProduct(event)" id="editProductForm">
+          <input type="hidden" id="editIdx" />
+          <div class="form-row" style="grid-template-columns:140px 1fr">
+            <div>
+              <img id="editImgPreview" class="product-img-preview" src="" />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <label>URL รูปภาพ
+                <div class="img-url-row">
+                  <input class="form-control" id="editImg" placeholder="วาง URL รูปภาพ"
+                    oninput="document.getElementById('editImgPreview').src=this.value||'data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;%23e0f2fe&quot;/><text x=&quot;50&quot; y=&quot;62&quot; font-size=&quot;42&quot; text-anchor=&quot;middle&quot;>🎣</text></svg>'"/>
+                  <button type="button" class="btn-find-img" onclick="findImgEdit()">🔍 หารูป</button>
+                </div>
+              </label>
+              <label>ชื่อสินค้า<input class="form-control" id="editName" required placeholder="ชื่อสินค้า" /></label>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>รหัสสินค้า<input class="form-control" id="editCode" placeholder="SKU-001" /></label>
+            <label>หมวดหมู่
+              <select class="form-select" id="editCategory">
+                <option>คัน</option><option>รอก</option><option>เบ็ด</option>
+                <option>สาย</option><option>เหยื่อ</option><option>อื่นๆ</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>จำนวนในสต็อก<input class="form-control" type="number" id="editQty" min="0" /></label>
+            <label>ราคาทุน (฿)<input class="form-control" type="number" id="editCost" placeholder="0.00" /></label>
+            <label>ราคาขาย (฿)<input class="form-control" type="number" id="editPrice" placeholder="0.00" /></label>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 บันทึกการแก้ไข</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- RECEIPT MODAL -->
 <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -1662,7 +1712,7 @@ function renderProducts(){
             <td class="${p.qty===0?'qty-low':p.qty<=5?'qty-low':'qty-ok'}">${p.qty} ${p.qty<=5?'⚠️':''}</td>
             <td>฿${value.toLocaleString()}</td>
             <td>${p.qty===0?'<span class="status status-pending">หมดสต็อก</span>':p.qty<=5?'<span class="status" style="background:#fef3c7;color:#a16207">ใกล้หมด</span>':'<span class="status status-done">มีสินค้า</span>'}</td>
-            <td><div class="tbl-actions"><button class="btn-edit" onclick="showToast('✏️ แก้ไข: ${p.name}')">✏️</button><button class="btn-del" onclick="delProduct(${idx})">🗑️</button></div></td>
+            <td><div class="tbl-actions"><button class="btn-edit" onclick="openEditProduct(${idx})">✏️</button><button class="btn-del" onclick="delProduct(${idx})">🗑️</button></div></td>
           </tr>`;
       }).join('');
 
@@ -1777,6 +1827,50 @@ function addProduct(e){
   closeModal('addProductModal');showToast('✅ เพิ่มสินค้าเรียบร้อย');
   e.target.reset();
   document.getElementById('newImgPreview').src=FALLBACK_IMG;
+}
+function openEditProduct(idx){
+  const p = products[idx];
+  if(!p) return;
+  document.getElementById('editIdx').value = idx;
+  document.getElementById('editName').value = p.name||'';
+  document.getElementById('editCode').value = p.code||'';
+  document.getElementById('editQty').value = p.qty??0;
+  document.getElementById('editCost').value = p.cost||0;
+  document.getElementById('editPrice').value = p.price||0;
+  document.getElementById('editImg').value = p.img||'';
+  document.getElementById('editImgPreview').src = p.img||FALLBACK_IMG;
+  const catSel = document.getElementById('editCategory');
+  for(let i=0;i<catSel.options.length;i++){
+    if(catSel.options[i].value===p.cat){catSel.selectedIndex=i;break;}
+  }
+  openModal('editProductModal');
+}
+function saveEditProduct(e){
+  e.preventDefault();
+  const idx = +document.getElementById('editIdx').value;
+  const p = products[idx];
+  if(!p) return;
+  const newCode = document.getElementById('editCode').value.trim()||p.code;
+  // check duplicate code (exclude self)
+  if(products.some((x,i)=>x.code===newCode && i!==idx)){showToast(`⚠️ รหัส ${newCode} ซ้ำกับสินค้าอื่น`);return;}
+  p.name = document.getElementById('editName').value.trim();
+  p.code = newCode;
+  p.cat = document.getElementById('editCategory').value;
+  p.qty = +document.getElementById('editQty').value||0;
+  p.cost = +document.getElementById('editCost').value||0;
+  p.price = +document.getElementById('editPrice').value||0;
+  p.img = document.getElementById('editImg').value.trim()||FALLBACK_IMG;
+  refreshAllViews();
+  closeModal('editProductModal');
+  showToast('✅ แก้ไขสินค้าเรียบร้อย');
+}
+function findImgEdit(){
+  const cat = document.getElementById('editCategory').value;
+  const map = CAT_IMG_MAP[cat]||CAT_IMG_MAP['อื่นๆ']||[];
+  const url = map[Math.floor(Math.random()*map.length)]||FALLBACK_IMG;
+  document.getElementById('editImg').value = url;
+  document.getElementById('editImgPreview').src = url;
+  showToast('🔍 หารูปเรียบร้อย');
 }
 function submitStock(e,t){e.preventDefault();showToast(t==='in'?'📥 รับสินค้าเข้าเรียบร้อย':'📤 จ่ายสินค้าออกเรียบร้อย');e.target.reset();}
 
