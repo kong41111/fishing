@@ -2255,6 +2255,7 @@ function refreshAllViews(){
   renderSuppliers();
   renderZReport();
   updateBackupStats();
+  saveState();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
@@ -2921,6 +2922,7 @@ function renderCart(scrollToNew=false){
     });
   }
   updateTotal();
+  saveState();
 }
 
 let selectedPay = 'cash';
@@ -3199,6 +3201,54 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== PERSISTENCE (localStorage) ===== */
+const STORAGE_KEY = 'fishstock-data-v1';
+let _saveTimer = null;
+function saveState(){
+  // debounce — รวมการ save หลายครั้งภายใน 200ms
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(()=>{
+    try{
+      const data = {
+        v: '1.0',
+        savedAt: new Date().toISOString(),
+        products, suppliers, expenses,
+        salesHistory, stockHistory, stockCountHistory, zReports,
+        cart
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e){
+      console.warn('💾 บันทึกข้อมูลไม่สำเร็จ:', e);
+      if(e.name === 'QuotaExceededError'){
+        showToast('⚠️ พื้นที่ Storage เต็ม — กรุณา Export แล้วล้างข้อมูลเก่า');
+      }
+    }
+  }, 200);
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    if(!d || typeof d !== 'object') return false;
+    if(Array.isArray(d.products) && d.products.length){
+      products.splice(0, products.length, ...d.products);
+    }
+    if(Array.isArray(d.suppliers))         suppliers = d.suppliers;
+    if(Array.isArray(d.expenses))          expenses = d.expenses;
+    if(Array.isArray(d.salesHistory))      { salesHistory.length=0; d.salesHistory.forEach(x=>salesHistory.push(x)); }
+    if(Array.isArray(d.stockHistory))      { stockHistory.length=0; d.stockHistory.forEach(x=>stockHistory.push(x)); }
+    if(Array.isArray(d.stockCountHistory)) stockCountHistory = d.stockCountHistory;
+    if(Array.isArray(d.zReports))          zReports = d.zReports;
+    if(Array.isArray(d.cart))              { cart.length=0; d.cart.forEach(x=>cart.push(x)); }
+    console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
+    return true;
+  } catch(e){
+    console.warn('💾 โหลดข้อมูลไม่สำเร็จ:', e);
+    return false;
+  }
 }
 
 /* ===== EXPORT / IMPORT / BACKUP ===== */
@@ -4273,6 +4323,9 @@ function showToast(msg){
     console.warn('🚨 Data integrity:',{duplicateCodes:dupCode,duplicateBarcodes:dupBar});
   }
 })();
+
+// Load saved data from localStorage on startup (must come before initial render)
+loadState();
 
 refreshAllViews();
 renderPOS(posItems);
