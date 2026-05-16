@@ -104,13 +104,17 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .card-subtitle{font-size:12px;color:var(--text-muted)}
 .row-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .chart-wrap{height:220px;position:relative}
-.sales-table-wrap{overflow-x:auto}
-.sales-table-wrap .table thead th{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:2px solid var(--border);padding:8px 10px}
+.sales-range-group{display:flex;gap:4px}
+.sales-range-btn{padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .15s;font-family:inherit}
+.sales-range-btn:hover{border-color:var(--primary);color:var(--primary)}
+.sales-range-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.sales-table-wrap{overflow-x:auto;overflow-y:auto;max-height:300px}
+.sales-table-wrap .table thead th{position:sticky;top:0;background:#fff;z-index:1;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:2px solid var(--border);padding:8px 10px}
 .sales-table-wrap .table td{padding:9px 10px;font-size:13.5px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-.sales-table-wrap .table tfoot td{padding:10px 10px;font-size:14px;border-top:2px solid var(--border);color:var(--primary)}
+.sales-table-wrap .table tfoot td{padding:10px 10px;font-size:14px;border-top:2px solid var(--border);color:var(--primary);background:#f8fafc;position:sticky;bottom:0}
 .sales-delta{font-size:12px;font-weight:600}
 .delta-up{color:#10b981}.delta-down{color:var(--red)}.delta-eq{color:var(--text-muted)}
-.sales-bar-mini{display:inline-block;height:6px;border-radius:99px;background:var(--primary);opacity:.25;margin-left:6px;vertical-align:middle}
+.sales-bar-mini{display:inline-block;height:6px;border-radius:99px;background:var(--primary);opacity:.2;margin-left:6px;vertical-align:middle}
 .alert-list{display:flex;flex-direction:column;gap:10px}
 .alert-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;border-left:3px solid transparent}
 .alert-critical{background:#fef2f2;border-left-color:var(--red)}
@@ -758,14 +762,18 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div class="row-2col">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">📈 ยอดขาย 7 วันล่าสุด</span>
-            <span class="card-subtitle">หน่วย: บาท</span>
+            <span class="card-title">📈 ยอดขาย</span>
+            <div class="sales-range-group">
+              <button class="sales-range-btn active" onclick="setSalesRange(7,this)">7 วัน</button>
+              <button class="sales-range-btn" onclick="setSalesRange(15,this)">15 วัน</button>
+              <button class="sales-range-btn" onclick="setSalesRange('month',this)">เดือนนี้</button>
+            </div>
           </div>
           <div class="sales-table-wrap">
-            <table class="table table-sm table-hover mb-0" id="salesDataTable">
+            <table class="table table-sm table-hover mb-0">
               <thead><tr><th>วันที่</th><th class="text-end">ยอดขาย</th><th class="text-end">เทียบวันก่อน</th></tr></thead>
               <tbody id="salesTableBody"></tbody>
-              <tfoot><tr class="fw-bold"><td>รวม 7 วัน</td><td class="text-end" id="salesTableTotal" colspan="2"></td></tr></tfoot>
+              <tfoot><tr class="fw-bold"><td id="salesTableLabel">รวม 7 วัน</td><td class="text-end" id="salesTableTotal" colspan="2"></td></tr></tfoot>
             </table>
           </div>
         </div>
@@ -2064,43 +2072,79 @@ function navMobile(page,el){
   document.querySelector(`.nav-item[data-page="${page}"]`).click();
 }
 
-const salesChartData = [
-  {date:'9 พ.ค.',  val:8200},
-  {date:'10 พ.ค.', val:11500},
-  {date:'11 พ.ค.', val:9800},
-  {date:'12 พ.ค.', val:14300},
-  {date:'13 พ.ค.', val:10200},
-  {date:'14 พ.ค.', val:15600},
-  {date:'15 พ.ค.', val:12850},
+// ข้อมูลยอดขายทั้งเดือน พ.ค. 2026 (วัน 1-16)
+const salesAllData = [
+  {day:1,  date:'1 พ.ค.',  val:6500},
+  {day:2,  date:'2 พ.ค.',  val:4200},
+  {day:3,  date:'3 พ.ค.',  val:8900},
+  {day:4,  date:'4 พ.ค.',  val:7300},
+  {day:5,  date:'5 พ.ค.',  val:5800},
+  {day:6,  date:'6 พ.ค.',  val:9100},
+  {day:7,  date:'7 พ.ค.',  val:6700},
+  {day:8,  date:'8 พ.ค.',  val:7400},
+  {day:9,  date:'9 พ.ค.',  val:8200},
+  {day:10, date:'10 พ.ค.', val:11500},
+  {day:11, date:'11 พ.ค.', val:9800},
+  {day:12, date:'12 พ.ค.', val:14300},
+  {day:13, date:'13 พ.ค.', val:10200},
+  {day:14, date:'14 พ.ค.', val:15600},
+  {day:15, date:'15 พ.ค.', val:12850},
+  {day:16, date:'16 พ.ค.', val:3400},
 ];
+let salesRange = 7;
+
+function setSalesRange(range, btn){
+  salesRange = range;
+  document.querySelectorAll('.sales-range-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderSalesTable();
+}
+
 function drawChart(){ renderSalesTable(); } // keep old callers working
+
 function renderSalesTable(){
   const tbody = document.getElementById('salesTableBody');
   const totalEl = document.getElementById('salesTableTotal');
+  const labelEl = document.getElementById('salesTableLabel');
   if(!tbody) return;
-  const maxVal = Math.max(...salesChartData.map(d=>d.val));
-  const total = salesChartData.reduce((s,d)=>s+d.val,0);
-  tbody.innerHTML = salesChartData.map((d,i)=>{
-    const prev = i>0 ? salesChartData[i-1].val : null;
-    let deltaHtml = '<span class="delta-eq">—</span>';
-    if(prev !== null){
+
+  let data;
+  let labelText;
+  if(salesRange === 'month'){
+    data = [...salesAllData]; // all days in month
+    labelText = 'รวมเดือน พ.ค.';
+  } else {
+    const n = Number(salesRange);
+    data = salesAllData.slice(-n);
+    labelText = `รวม ${n} วัน`;
+  }
+
+  const maxVal = Math.max(...data.map(d=>d.val), 1);
+  const total  = data.reduce((s,d)=>s+d.val, 0);
+
+  tbody.innerHTML = data.map((d,i)=>{
+    const prev = i>0 ? data[i-1].val : null;
+    let deltaHtml = '<span class="delta-eq text-muted">—</span>';
+    if(prev !== null && prev > 0){
       const diff = d.val - prev;
-      const pct = Math.abs(Math.round(diff/prev*100));
-      if(diff>0) deltaHtml=`<span class="delta-up">▲ ${pct}%</span>`;
+      const pct  = Math.abs(Math.round(diff/prev*100));
+      if(diff>0)      deltaHtml=`<span class="delta-up">▲ ${pct}%</span>`;
       else if(diff<0) deltaHtml=`<span class="delta-down">▼ ${pct}%</span>`;
-      else deltaHtml='<span class="delta-eq">= 0%</span>';
+      else            deltaHtml=`<span class="delta-eq text-muted">= 0%</span>`;
     }
-    const barW = Math.round(d.val/maxVal*80);
+    const barW = Math.round(d.val/maxVal*72);
     return `<tr>
       <td>${d.date}</td>
       <td class="text-end">
         ฿${d.val.toLocaleString()}
-        <span class="sales-bar-mini" style="width:${barW}px;opacity:.2"></span>
+        <span class="sales-bar-mini" style="width:${barW}px"></span>
       </td>
       <td class="text-end sales-delta">${deltaHtml}</td>
     </tr>`;
   }).join('');
+
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
+  if(labelEl) labelEl.textContent = labelText;
 }
 
 function openModal(id){
