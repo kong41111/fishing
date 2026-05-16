@@ -280,6 +280,22 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .disc-input-modern{width:90px;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;text-align:right;font-size:12px;font-family:inherit}
 
 .payment-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:12px 14px;background:#fff;border-top:1px solid var(--border)}
+
+/* ===== CASH CALCULATOR ===== */
+.cash-section{padding:10px 14px 4px;background:#fff;border-top:1px solid #f1f5f9}
+.cash-quick{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.cash-quick-btn{flex:1;min-width:40px;background:#f8fafc;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;color:var(--text)}
+.cash-quick-btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.cash-quick-exact{background:#e0f2fe!important;color:var(--primary)!important;border-color:var(--primary)!important}
+.cash-received-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cash-received-row label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap}
+.cash-received-input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-weight:800;text-align:right;font-family:inherit;transition:border-color .15s;color:var(--text)}
+.cash-received-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.cash-change-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0 10px;border-top:1px dashed var(--border)}
+.cash-change-label{font-size:13px;font-weight:600;color:var(--text-muted)}
+.cash-change-val{font-size:24px;font-weight:800;transition:color .2s}
+.cash-change-val.ok{color:#10b981}
+.cash-change-val.short{font-size:13px;font-weight:700;color:var(--red)}
 .pay-btn{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s;color:var(--text)}
 .pay-btn:hover{border-color:var(--primary);background:var(--primary-light)}
 .pay-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(3,105,161,.25)}
@@ -720,6 +736,26 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <button class="pay-btn active" onclick="setPay('cash',this)"><span class="pay-btn-icon">💵</span><span>เงินสด</span></button>
             <button class="pay-btn" onclick="setPay('qr',this)"><span class="pay-btn-icon">📱</span><span>QR Code</span></button>
             <button class="pay-btn" onclick="setPay('card',this)"><span class="pay-btn-icon">💳</span><span>บัตร</span></button>
+          </div>
+
+          <!-- CASH CALCULATOR (visible only when cash payment selected) -->
+          <div class="cash-section" id="cashSection">
+            <div class="cash-quick">
+              <button class="cash-quick-btn" onclick="setCashReceived(20)">฿20</button>
+              <button class="cash-quick-btn" onclick="setCashReceived(50)">฿50</button>
+              <button class="cash-quick-btn" onclick="setCashReceived(100)">฿100</button>
+              <button class="cash-quick-btn" onclick="setCashReceived(500)">฿500</button>
+              <button class="cash-quick-btn" onclick="setCashReceived(1000)">฿1,000</button>
+              <button class="cash-quick-btn cash-quick-exact" onclick="setCashExact()">พอดี</button>
+            </div>
+            <div class="cash-received-row">
+              <label>รับเงิน (฿)</label>
+              <input type="number" id="cashReceived" class="cash-received-input" placeholder="0" min="0" oninput="updateChange()" />
+            </div>
+            <div class="cash-change-row">
+              <span class="cash-change-label">เงินทอน</span>
+              <span class="cash-change-val" id="changeDisplay">—</span>
+            </div>
           </div>
 
           <div class="cart-action-buttons">
@@ -1607,6 +1643,38 @@ function setPay(method,btn){
   selectedPay = method;
   document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const cs = document.getElementById('cashSection');
+  if(cs) cs.style.display = method==='cash' ? 'block' : 'none';
+  updateChange();
+}
+function updateChange(){
+  const disp = document.getElementById('changeDisplay');
+  if(!disp) return;
+  if(selectedPay !== 'cash'){disp.textContent='—';disp.className='cash-change-val';return;}
+  const dc = +document.getElementById('discount')?.value||0;
+  const t = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const net = Math.max(0,t-dc);
+  const received = +document.getElementById('cashReceived')?.value||0;
+  if(!received){disp.textContent='—';disp.className='cash-change-val';return;}
+  const change = received - net;
+  if(change < 0){
+    disp.textContent = `ขาดอีก ฿${Math.abs(change).toLocaleString()}`;
+    disp.className = 'cash-change-val short';
+  } else {
+    disp.textContent = '฿'+change.toLocaleString();
+    disp.className = 'cash-change-val ok';
+  }
+}
+function setCashReceived(amt){
+  const inp = document.getElementById('cashReceived');
+  if(inp){inp.value=amt;updateChange();}
+}
+function setCashExact(){
+  const dc = +document.getElementById('discount')?.value||0;
+  const t = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const net = Math.max(0,t-dc);
+  const inp = document.getElementById('cashReceived');
+  if(inp){inp.value=net;updateChange();}
 }
 
 function toggleMobileCart(){
@@ -1651,8 +1719,9 @@ function updateTotal(){
   const payAmt=document.getElementById('payBtnAmt');
   if(payAmt) payAmt.textContent='฿'+net.toLocaleString();
   updateCartFab();
+  updateChange();
 }
-function buildReceipt(forcedBillNo){
+function buildReceipt(forcedBillNo, receivedAmt){
   const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
   const disc = +document.getElementById('discount').value||0;
   const net = Math.max(0,total-disc);
@@ -1660,6 +1729,11 @@ function buildReceipt(forcedBillNo){
   const dateStr = d.toLocaleDateString('th-TH')+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   const billNo = forcedBillNo || ('B'+Date.now().toString().slice(-8));
   const payLabel = {cash:'เงินสด 💵',qr:'QR Code 📱',card:'บัตร 💳'}[selectedPay]||'-';
+  const received = receivedAmt != null ? receivedAmt : (+document.getElementById('cashReceived')?.value||0);
+  const change = received - net;
+  const cashRows = (selectedPay==='cash' && received>0) ? `
+      <div class="receipt-row" style="margin-top:4px"><span>รับเงิน</span><span>฿${received.toLocaleString()}</span></div>
+      <div class="receipt-row" style="font-weight:700;color:#10b981"><span>เงินทอน</span><span>฿${Math.max(0,change).toLocaleString()}</span></div>` : '';
   return `
     <div class="receipt-header">
       <div class="receipt-shop">🎣 ร้านอุปกรณ์ตกปลา สมชาย</div>
@@ -1683,6 +1757,7 @@ function buildReceipt(forcedBillNo){
       ${disc?`<div class="receipt-row"><span>ส่วนลด</span><span>-฿${disc.toLocaleString()}</span></div>`:''}
       <div class="receipt-row grand"><span>ยอดสุทธิ</span><span>฿${net.toLocaleString()}</span></div>
       <div class="receipt-row" style="margin-top:6px"><span>ชำระโดย</span><span>${payLabel}</span></div>
+      ${cashRows}
     </div>
     <div class="receipt-footer">
       *** ขอบคุณที่ใช้บริการ ***<br/>
@@ -1697,6 +1772,18 @@ function printReceipt(){
 function checkout(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
 
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const disc = +document.getElementById('discount').value||0;
+  const net = Math.max(0,total-disc);
+
+  // 0) validate cash received
+  const received = selectedPay==='cash' ? (+document.getElementById('cashReceived')?.value||0) : net;
+  if(selectedPay==='cash' && received < net){
+    showToast(`⚠️ รับเงินไม่พอ — ต้องการอย่างน้อย ฿${net.toLocaleString()}`);
+    document.getElementById('cashReceived')?.focus();
+    return;
+  }
+
   // 1) deduct stock
   cart.forEach(c=>{
     const prod = products.find(p=>p.code===c.code);
@@ -1704,22 +1791,25 @@ function checkout(){
   });
 
   // 2) record sale
-  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
-  const disc = +document.getElementById('discount').value||0;
-  const net = Math.max(0,total-disc);
   const billNo = 'B'+Date.now().toString().slice(-8);
   salesHistory.push({
     billNo, items: cart.map(c=>({...c})), total, discount: disc, net,
-    payMethod: selectedPay, date: new Date().toISOString()
+    payMethod: selectedPay, received, change: Math.max(0,received-net),
+    date: new Date().toISOString()
   });
 
   // 3) build + show receipt BEFORE clearing cart
-  document.getElementById('receiptContent').innerHTML = buildReceipt(billNo);
+  document.getElementById('receiptContent').innerHTML = buildReceipt(billNo, received);
   openModal('receiptModal');
-  showToast(`✅ ชำระเงิน ฿${net.toLocaleString()} (${{cash:'เงินสด',qr:'QR',card:'บัตร'}[selectedPay]})`);
+  const changeAmt = received - net;
+  const changeMsg = selectedPay==='cash' && changeAmt>0 ? ` | ทอน ฿${changeAmt.toLocaleString()}` : '';
+  showToast(`✅ ชำระเงิน ฿${net.toLocaleString()}${changeMsg}`);
 
   // 4) clear cart + refresh
-  cart=[];document.getElementById('discount').value='';
+  cart=[];
+  document.getElementById('discount').value='';
+  document.getElementById('cashReceived').value='';
+  updateChange();
   renderCart();
   refreshAllViews();
   // close mobile cart drawer
