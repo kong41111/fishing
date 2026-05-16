@@ -54,7 +54,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:rgba(255,255,255,.8);text-decoration:none;font-size:13.5px;font-weight:500;transition:background .15s;margin-bottom:2px;cursor:pointer}
 .nav-item:hover{background:rgba(255,255,255,.12);color:#fff}
 .nav-item.active{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
-.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0}
 .sidebar-footer{border-top:1px solid rgba(255,255,255,.15);padding:14px 16px}
 .user-info{display:flex;align-items:center;gap:10px}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-weight:700;font-size:15px}
@@ -500,7 +500,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .mobile-nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:8px;cursor:pointer;color:var(--text-muted);text-decoration:none}
 .mobile-nav-item.active{color:var(--primary)}
-.mobile-nav-icon{font-size:20px}
+.mobile-nav-icon{font-size:20px;display:block;text-align:center}
 .mobile-nav-label{font-size:10px;font-weight:600}
 .menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
 
@@ -793,16 +793,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   </div>
   <nav class="sidebar-nav">
     <div class="nav-group-label">เมนูหลัก</div>
-    <a class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>แดชบอร์ด</span></a>
-    <a class="nav-item" data-page="products"><span class="nav-icon">📦</span><span>สินค้า</span></a>
-    <a class="nav-item" data-page="stock"><span class="nav-icon">🏭</span><span>รับ/จ่ายสินค้า</span></a>
-    <a class="nav-item" data-page="stockcount"><span class="nav-icon">🔢</span><span>นับสต็อก</span></a>
-    <a class="nav-item" data-page="sales"><span class="nav-icon">🛒</span><span>การขาย (POS)</span></a>
+    <a class="nav-item active" data-page="dashboard"><i class="nav-icon bi bi-speedometer2"></i><span>แดชบอร์ด</span></a>
+    <a class="nav-item" data-page="products"><i class="nav-icon bi bi-box-seam"></i><span>คลังสินค้า</span></a>
+    <a class="nav-item" data-page="stock"><i class="nav-icon bi bi-arrow-left-right"></i><span>รับ/จ่ายสินค้า</span></a>
+    <a class="nav-item" data-page="stockcount"><i class="nav-icon bi bi-clipboard-check"></i><span>นับสต็อก</span></a>
+    <a class="nav-item" data-page="sales"><i class="nav-icon bi bi-cart3"></i><span>การขาย (POS)</span></a>
     <div class="nav-group-label">รายงาน</div>
-    <a class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span>รายงานสรุป</span></a>
-    <a class="nav-item" data-page="suppliers"><span class="nav-icon">🤝</span><span>ซัพพลายเออร์</span></a>
+    <a class="nav-item" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
+    <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
     <div class="nav-group-label">ตั้งค่า</div>
-    <a class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>ตั้งค่าระบบ</span></a>
+    <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">
@@ -1432,19 +1432,19 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 <nav class="mobile-nav">
   <div class="mobile-nav-grid">
     <a class="mobile-nav-item active" data-page="dashboard" onclick="navMobile('dashboard',this)">
-      <span class="mobile-nav-icon">📊</span><span class="mobile-nav-label">หน้าหลัก</span>
+      <i class="mobile-nav-icon bi bi-speedometer2"></i><span class="mobile-nav-label">หน้าหลัก</span>
     </a>
     <a class="mobile-nav-item" data-page="products" onclick="navMobile('products',this)">
-      <span class="mobile-nav-icon">📦</span><span class="mobile-nav-label">สินค้า</span>
+      <i class="mobile-nav-icon bi bi-box-seam"></i><span class="mobile-nav-label">คลัง</span>
     </a>
     <a class="mobile-nav-item" data-page="sales" onclick="navMobile('sales',this)">
-      <span class="mobile-nav-icon">🛒</span><span class="mobile-nav-label">ขาย</span>
+      <i class="mobile-nav-icon bi bi-cart3"></i><span class="mobile-nav-label">ขาย</span>
     </a>
     <a class="mobile-nav-item" data-page="stock" onclick="navMobile('stock',this)">
-      <span class="mobile-nav-icon">🏭</span><span class="mobile-nav-label">สต็อก</span>
+      <i class="mobile-nav-icon bi bi-arrow-left-right"></i><span class="mobile-nav-label">รับ/จ่าย</span>
     </a>
     <a class="mobile-nav-item" data-page="reports" onclick="navMobile('reports',this)">
-      <span class="mobile-nav-icon">📈</span><span class="mobile-nav-label">รายงาน</span>
+      <i class="mobile-nav-icon bi bi-graph-up"></i><span class="mobile-nav-label">รายงาน</span>
     </a>
   </div>
 </nav>
@@ -1758,7 +1758,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'คลังสินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
