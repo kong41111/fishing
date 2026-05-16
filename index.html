@@ -1201,6 +1201,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
 <div class="toast" id="toast"></div>
 
+<!-- Bootstrap JS (must load before app script so bootstrap.Modal is available) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const IMG = {
   reel:    'https://images.unsplash.com/photo-1564731071754-001b53a86b95?w=300&h=300&fit=crop',
@@ -2134,6 +2136,5 @@ setTimeout(drawChart,150);
 window.addEventListener('resize',()=>{setTimeout(drawChart,50);updateCartFab();});
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
