@@ -1610,6 +1610,66 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           </form>
         </div>
       </div>
+
+      <!-- Backup & Restore -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">💾 สำรอง / นำเข้าข้อมูล</span></div>
+        <div style="padding:6px 0 4px;font-size:13px;color:var(--text-muted);margin-bottom:14px">
+          📦 ข้อมูลทั้งหมดถูกเก็บในเบราว์เซอร์ — แนะนำให้สำรองเป็นไฟล์ JSON อย่างน้อย <strong>สัปดาห์ละครั้ง</strong> เพื่อป้องกันข้อมูลสูญหาย
+        </div>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px">
+          <div style="background:#f0f9ff;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:var(--primary)" id="bkStatProducts">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">📦 สินค้า</div>
+          </div>
+          <div style="background:#f0fdf4;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:var(--green)" id="bkStatSales">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">🛒 บิลขาย</div>
+          </div>
+          <div style="background:#fffbeb;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:var(--orange)" id="bkStatStock">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">📋 เคลื่อนไหวสต็อก</div>
+          </div>
+          <div style="background:#fef2f2;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:var(--red)" id="bkStatExpenses">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">💸 ค่าใช้จ่าย</div>
+          </div>
+          <div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:#7c3aed" id="bkStatSuppliers">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">👥 ซัพพลายเออร์</div>
+          </div>
+          <div style="background:#f1f5f9;padding:10px;border-radius:8px;text-align:center">
+            <div style="font-size:18px;font-weight:800" id="bkStatZ">0</div>
+            <div style="font-size:11px;color:var(--text-muted)">🧾 Z-Report</div>
+          </div>
+        </div>
+
+        <!-- Full backup (JSON) -->
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔒 สำรองข้อมูลทั้งหมด (JSON)</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+          <button type="button" class="btn btn-primary" onclick="exportAll()"><i class="bi bi-download"></i> Export ข้อมูลทั้งหมด</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAll(this)" />
+          <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('importFile').click()"><i class="bi bi-upload"></i> Import ข้อมูล</button>
+        </div>
+
+        <!-- Per-type CSV exports -->
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">📊 Export แยกตามประเภท (CSV — เปิด Excel ได้)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+          <button type="button" class="btn btn-outline-primary" onclick="exportCsvProducts()">📦 สินค้า</button>
+          <button type="button" class="btn btn-outline-primary" onclick="exportCsvSales()">🛒 รายการขาย</button>
+          <button type="button" class="btn btn-outline-primary" onclick="exportCsvStock()">📋 เคลื่อนไหวสต็อก</button>
+          <button type="button" class="btn btn-outline-primary" onclick="exportCsvExpenses()">💸 ค่าใช้จ่าย</button>
+        </div>
+
+        <!-- Danger zone -->
+        <div style="border-top:1.5px dashed var(--border);padding-top:14px;margin-top:6px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--red)">⚠️ Danger Zone</div>
+          <button type="button" class="btn btn-danger" onclick="clearAllData()"><i class="bi bi-trash"></i> ล้างข้อมูลทั้งหมด</button>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">ลบสินค้า บิล สต็อก ค่าใช้จ่าย ทุกอย่างกลับเป็นค่าเริ่มต้น</span>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -2194,6 +2254,7 @@ function refreshAllViews(){
   renderAccounting();
   renderSuppliers();
   renderZReport();
+  updateBackupStats();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
@@ -3138,6 +3199,128 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== EXPORT / IMPORT / BACKUP ===== */
+const APP_VERSION = '1.0';
+
+function _download(filename, content, mime='application/json'){
+  const blob = new Blob([content], {type: mime+';charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url); a.remove();}, 100);
+}
+
+function _ts(){
+  const d = new Date();
+  return d.toISOString().slice(0,19).replace(/[:T]/g,'-');
+}
+
+function exportAll(){
+  const data = {
+    appVersion: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    products, suppliers, expenses,
+    salesHistory, stockHistory, stockCountHistory, zReports
+  };
+  _download(`FishStock-Backup-${_ts()}.json`, JSON.stringify(data, null, 2));
+  showToast('✅ Export ข้อมูลทั้งหมดเรียบร้อย');
+}
+
+function importAll(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!confirm('นำเข้าข้อมูลจากไฟล์นี้?\n\n⚠️ ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่')){
+    input.value = ''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const d = JSON.parse(e.target.result);
+      if(!d || typeof d !== 'object') throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
+      if(Array.isArray(d.products))         { products.length=0; d.products.forEach(p=>products.push(p)); }
+      if(Array.isArray(d.suppliers))        suppliers = d.suppliers;
+      if(Array.isArray(d.expenses))         expenses = d.expenses;
+      if(Array.isArray(d.salesHistory))     { salesHistory.length=0; d.salesHistory.forEach(x=>salesHistory.push(x)); }
+      if(Array.isArray(d.stockHistory))     { stockHistory.length=0; d.stockHistory.forEach(x=>stockHistory.push(x)); }
+      if(Array.isArray(d.stockCountHistory)) stockCountHistory = d.stockCountHistory;
+      if(Array.isArray(d.zReports))         zReports = d.zReports;
+      refreshAllViews();
+      showToast(`✅ นำเข้าข้อมูลเรียบร้อย (${file.name})`);
+    } catch(err){
+      showToast('❌ Import ล้มเหลว: '+err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData(){
+  if(!confirm('⚠️ คำเตือน!\n\nจะลบข้อมูลทั้งหมด: สินค้า, บิลขาย, สต็อก, ค่าใช้จ่าย, ซัพพลายเออร์, ประวัตินับสต็อก, Z-Report\n\nยืนยันการลบ?')) return;
+  if(!confirm('แน่ใจอีกครั้ง? การกระทำนี้ย้อนกลับไม่ได้!')) return;
+  products.length = 0;
+  salesHistory.length = 0;
+  stockHistory.length = 0;
+  expenses = [];
+  suppliers = [];
+  stockCountHistory = [];
+  zReports = [];
+  cart = [];
+  refreshAllViews();
+  showToast('🗑️ ล้างข้อมูลทั้งหมดเรียบร้อย');
+}
+
+/* ===== CSV EXPORT (UTF-8 with BOM for Excel) ===== */
+function _csvEscape(v){
+  if(v==null) return '';
+  const s = String(v);
+  if(/[",\n\r]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function _toCsv(rows){
+  // ﻿ = BOM for Excel UTF-8 recognition
+  return '﻿' + rows.map(r=>r.map(_csvEscape).join(',')).join('\r\n');
+}
+
+function exportCsvProducts(){
+  const head = ['รหัส','ชื่อสินค้า','หมวด','คงเหลือ','ราคาทุน','ราคาขาย','บาร์โค้ด'];
+  const rows = [head, ...products.map(p=>[p.code,p.name,p.cat,p.qty,p.cost||0,p.price||0,p.barcode||''])];
+  _download(`สินค้า-${_ts()}.csv`, _toCsv(rows), 'text/csv');
+  showToast('📦 Export สินค้าเรียบร้อย');
+}
+
+function exportCsvSales(){
+  const head = ['เลขบิล','วันที่','จำนวนชิ้น','ยอดก่อนลด','ส่วนลด','ยอดสุทธิ','วิธีชำระ','รับเงิน','เงินทอน','รายการสินค้า'];
+  const rows = [head, ...salesHistory.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(b=>{
+    const items = b.items.map(it=>`${it.name} × ${it.qty}`).join('; ');
+    const count = b.items.reduce((s,i)=>s+i.qty,0);
+    const pay = {cash:'เงินสด',qr:'QR',card:'บัตร'}[b.payMethod]||b.payMethod;
+    return [b.billNo, new Date(b.date).toLocaleString('th-TH'), count, b.total, b.discount||0, b.net, pay, b.received||0, b.change||0, items];
+  })];
+  _download(`รายการขาย-${_ts()}.csv`, _toCsv(rows), 'text/csv');
+  showToast('🛒 Export รายการขายเรียบร้อย');
+}
+
+function exportCsvStock(){
+  const head = ['วันที่','รหัส','สินค้า','ประเภท','จำนวน','คงเหลือ','รายละเอียด'];
+  const typeLabel = {in:'รับเข้า', out:'จ่ายออก', sale:'การขาย'};
+  const rows = [head, ...stockHistory.map(h=>[h.date, h.code, h.name, typeLabel[h.type]||h.type, h.qty, h.after, h.note||''])];
+  _download(`ประวัติสต็อก-${_ts()}.csv`, _toCsv(rows), 'text/csv');
+  showToast('📋 Export ประวัติสต็อกเรียบร้อย');
+}
+
+function exportCsvExpenses(){
+  const head = ['วันที่','หมวด','จำนวน','หมายเหตุ'];
+  const rows = [head, ...expenses.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e=>[e.date, e.category, e.amount, e.note||''])];
+  _download(`ค่าใช้จ่าย-${_ts()}.csv`, _toCsv(rows), 'text/csv');
+  showToast('💸 Export ค่าใช้จ่ายเรียบร้อย');
+}
+
+function updateBackupStats(){
+  const ids = {bkStatProducts:products.length, bkStatSales:salesHistory.length, bkStatStock:stockHistory.length, bkStatExpenses:expenses.length, bkStatSuppliers:suppliers.length, bkStatZ:zReports.length};
+  Object.entries(ids).forEach(([id,v])=>{const el=document.getElementById(id); if(el) el.textContent = v;});
 }
 
 /* ===== Z-REPORT (Daily closing) ===== */
