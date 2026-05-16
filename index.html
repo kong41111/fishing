@@ -454,6 +454,31 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .mobile-nav-label{font-size:10px;font-weight:600}
 .menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
 
+/* ===== Sidebar Desktop Toggle ===== */
+.sidebar-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:none;border-radius:8px;cursor:pointer;color:var(--text-muted);font-size:20px;flex-shrink:0;transition:background .15s,color .15s}
+.sidebar-toggle:hover{background:var(--primary-light);color:var(--primary)}
+.sidebar-toggle .bi{transition:transform .3s ease}
+@media(min-width:1025px){
+  .sidebar-toggle{display:flex}
+  .sidebar{transition:width .28s cubic-bezier(.4,0,.2,1)}
+  .main-wrap{transition:margin-left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1),max-width .28s cubic-bezier(.4,0,.2,1)}
+  /* Collapsed sidebar — icon only */
+  body.sidebar-collapsed .sidebar{width:72px;overflow:hidden}
+  body.sidebar-collapsed .sidebar-toggle .bi{transform:scaleX(-1)}
+  body.sidebar-collapsed .main-wrap{margin-left:72px!important;width:calc(100vw - 72px)!important;max-width:calc(100vw - 72px)!important}
+  body.sidebar-collapsed .sidebar-logo{justify-content:center;padding:18px 0;gap:0}
+  body.sidebar-collapsed .logo-text{display:none}
+  body.sidebar-collapsed .logo-icon{font-size:28px}
+  body.sidebar-collapsed .nav-group-label{display:none}
+  body.sidebar-collapsed .nav-item{justify-content:center;padding:14px 6px;margin:3px 8px;font-size:0;border-radius:10px;min-height:48px;gap:0}
+  body.sidebar-collapsed .nav-item .nav-icon{font-size:22px;width:auto}
+  body.sidebar-collapsed .nav-item > span:not(.nav-icon){display:none}
+  body.sidebar-collapsed .sidebar-footer{padding:14px 6px}
+  body.sidebar-collapsed .user-info{justify-content:center;gap:0}
+  body.sidebar-collapsed .user-info > div:not(.user-avatar){display:none}
+  body.sidebar-collapsed .user-avatar{width:40px;height:40px;font-size:16px}
+}
+
 @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){.row-2col,.settings-grid{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:767px){
@@ -738,6 +763,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 <div class="main-wrap">
   <header class="topbar">
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebarDesktop()" title="ซ่อน/แสดงเมนู">
+      <i class="bi bi-layout-sidebar-reverse"></i>
+    </button>
     <div class="topbar-title" id="pageTitle">แดชบอร์ด</div>
     <div class="topbar-quicksearch">
       <span class="qs-icon">🔍</span>
@@ -1558,6 +1586,11 @@ document.querySelectorAll('.nav-item').forEach(item=>{
 const d = new Date();
 document.getElementById('currentDate').textContent = d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
 
+// Restore sidebar collapsed state
+if(localStorage.getItem('sidebarCollapsed') === '1'){
+  document.body.classList.add('sidebar-collapsed');
+}
+
 let prodCat = '';
 let prodPage = 1;
 const CAT_ICONS = {'คัน':'🪝','รอก':'🎣','เบ็ด':'📌','สาย':'🧵','เหยื่อ':'🐛','อื่นๆ':'🎒'};
@@ -2067,6 +2100,10 @@ function checkout(){
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function toggleSidebarDesktop(){
+  const collapsed = document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
 }
 function navMobile(page,el){
   document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
