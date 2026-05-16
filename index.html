@@ -355,13 +355,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .cash-quick-btn{flex:1;min-width:40px;background:#f8fafc;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;color:var(--text)}
 .cash-quick-btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
 .cash-quick-exact{background:#e0f2fe!important;color:var(--primary)!important;border-color:var(--primary)!important}
-.cash-received-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.cash-received-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:nowrap}
 .cash-received-row label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap}
-.cash-exact-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:inherit;line-height:1.1;transition:transform .12s,box-shadow .12s;box-shadow:0 2px 6px rgba(3,105,161,.25);min-height:44px}
+.cash-exact-btn{background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:transform .12s,box-shadow .12s;box-shadow:0 2px 6px rgba(3,105,161,.25);white-space:nowrap;flex-shrink:0}
 .cash-exact-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(3,105,161,.35)}
 .cash-exact-btn:active{transform:translateY(0)}
-.cash-exact-btn .ce-label{font-size:11px;font-weight:700;opacity:.9}
-.cash-exact-btn .ce-amt{font-size:14px;font-weight:800;margin-top:1px}
 .cash-received-input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-weight:800;text-align:right;font-family:inherit;transition:border-color .15s;color:var(--text)}
 .cash-received-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
 .cash-change-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0 10px;border-top:1px dashed var(--border)}
@@ -1089,10 +1087,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <div class="cash-received-row">
               <label>รับเงิน (฿)</label>
               <input type="number" id="cashReceived" class="cash-received-input" placeholder="0" min="0" oninput="updateChange()" />
-              <button type="button" class="cash-exact-btn" id="cashExactBtn" onclick="setCashExact()">
-                <span class="ce-label">พอดี</span>
-                <span class="ce-amt" id="cashExactAmt">฿0</span>
-              </button>
+              <button type="button" class="cash-exact-btn" id="cashExactBtn" onclick="setCashExact()">พอดี</button>
             </div>
             <div class="cash-change-row">
               <span class="cash-change-label">เงินทอน</span>
@@ -2387,8 +2382,6 @@ function updateTotal(){
   document.getElementById('cartNet').textContent='฿'+net.toLocaleString();
   const payAmt=document.getElementById('payBtnAmt');
   if(payAmt) payAmt.textContent='฿'+net.toLocaleString();
-  const exactAmt=document.getElementById('cashExactAmt');
-  if(exactAmt) exactAmt.textContent='฿'+net.toLocaleString();
   updateCartFab();
   updateChange();
 }
