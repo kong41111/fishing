@@ -228,6 +228,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .cat-bar-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden}
 .cat-bar{height:100%;border-radius:99px}
 .supplier-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.cat-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid var(--border);border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:#fff;user-select:none}
+.cat-chip:hover{border-color:var(--primary);color:var(--primary)}
+.cat-chip input{margin:0;cursor:pointer}
+.cat-chip:has(input:checked){background:var(--primary);color:#fff;border-color:var(--primary)}
 .supplier-logo{width:48px;height:48px;border-radius:12px;background:var(--primary);color:#fff;font-size:20px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
 .supplier-info{flex:1;min-width:180px}
 .supplier-name{font-weight:700;font-size:14px;margin-bottom:4px}
@@ -984,7 +988,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             </label>
             <label>จำนวนที่รับเข้า<input type="number" class="form-control" id="stockInQty" min="1" placeholder="0" required /></label>
             <label>ราคาทุนต่อหน่วย (฿)<input type="number" class="form-control" id="stockInCost" placeholder="0.00" /></label>
-            <label>ซัพพลายเออร์<input type="text" class="form-control" id="stockInSupplier" placeholder="ชื่อซัพพลายเออร์ (ถ้ามี)" /></label>
+            <label>ซัพพลายเออร์
+              <div style="display:flex;gap:6px;align-items:center">
+                <select class="form-select" id="stockInSupplier" style="flex:1">
+                  <option value="">-- ไม่ระบุ --</option>
+                </select>
+                <button type="button" class="btn btn-outline-primary" onclick="openSupplierModal()" title="เพิ่มซัพพลายเออร์ใหม่" style="padding:8px 12px;white-space:nowrap"><i class="bi bi-plus-lg"></i></button>
+              </div>
+            </label>
             <label>วันที่รับ<input type="date" class="form-control" id="stockInDate" /></label>
             <button type="submit" class="btn btn-primary w-100">✅ บันทึกการรับสินค้า</button>
           </form>
@@ -1199,51 +1210,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <!-- SUPPLIERS -->
     <section class="page" id="page-suppliers">
       <div class="page-actions">
-        <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหาซัพพลายเออร์..." /></div>
-        <button class="btn btn-primary">+ เพิ่มซัพพลายเออร์</button>
+        <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="supplierSearch" placeholder="ค้นหาซัพพลายเออร์..." oninput="renderSuppliers()" /></div>
+        <button class="btn btn-primary" onclick="openSupplierModal()"><i class="bi bi-plus-lg"></i> เพิ่มซัพพลายเออร์</button>
       </div>
-      <div class="supplier-card">
-        <div class="supplier-logo">S</div>
-        <div class="supplier-info">
-          <div class="supplier-name">บริษัท ชิมาโน่ไทย จำกัด</div>
-          <div class="supplier-contact">📞 02-123-4567</div>
-          <div class="supplier-contact">✉️ shimano.th@example.com</div>
-          <div class="supplier-tags"><span class="badge bg-success">รอก</span><span class="badge bg-success">คัน</span></div>
-        </div>
-        <div class="supplier-stats">
-          <div class="s-stat"><div class="s-val">42</div><div class="s-lbl">คำสั่งซื้อ</div></div>
-          <div class="s-stat"><div class="s-val">฿156K</div><div class="s-lbl">ยอดรวม</div></div>
-        </div>
-        <div class="supplier-actions"><button class="btn btn-outline-primary">ดูประวัติ</button><button class="btn btn-primary">สั่งซื้อ</button></div>
-      </div>
-      <div class="supplier-card">
-        <div class="supplier-logo" style="background:#10b981">O</div>
-        <div class="supplier-info">
-          <div class="supplier-name">ห้างหุ้นส่วน โอกุมา เทรดดิ้ง</div>
-          <div class="supplier-contact">📞 02-987-6543</div>
-          <div class="supplier-contact">✉️ okuma@example.com</div>
-          <div class="supplier-tags"><span class="badge bg-success">รอก</span><span class="badge bg-primary">สาย</span></div>
-        </div>
-        <div class="supplier-stats">
-          <div class="s-stat"><div class="s-val">28</div><div class="s-lbl">คำสั่งซื้อ</div></div>
-          <div class="s-stat"><div class="s-val">฿98K</div><div class="s-lbl">ยอดรวม</div></div>
-        </div>
-        <div class="supplier-actions"><button class="btn btn-outline-primary">ดูประวัติ</button><button class="btn btn-primary">สั่งซื้อ</button></div>
-      </div>
-      <div class="supplier-card">
-        <div class="supplier-logo" style="background:#f59e0b">ท</div>
-        <div class="supplier-info">
-          <div class="supplier-name">ร้านค้าส่งอุปกรณ์ตกปลาไทย</div>
-          <div class="supplier-contact">📞 081-234-5678</div>
-          <div class="supplier-contact">✉️ thaifishing@example.com</div>
-          <div class="supplier-tags"><span class="badge bg-success">เหยื่อ</span><span class="badge bg-primary">เบ็ด</span><span class="badge bg-success">อื่นๆ</span></div>
-        </div>
-        <div class="supplier-stats">
-          <div class="s-stat"><div class="s-val">65</div><div class="s-lbl">คำสั่งซื้อ</div></div>
-          <div class="s-stat"><div class="s-val">฿43K</div><div class="s-lbl">ยอดรวม</div></div>
-        </div>
-        <div class="supplier-actions"><button class="btn btn-outline-primary">ดูประวัติ</button><button class="btn btn-primary">สั่งซื้อ</button></div>
-      </div>
+      <div id="supplierList"></div>
     </section>
 
     <!-- STOCK COUNT -->
@@ -1523,6 +1493,43 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <div class="d-flex justify-content-end gap-2 mt-2">
             <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
             <button type="submit" class="btn btn-primary">บันทึกสินค้า</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL (add/edit) -->
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="supplierModalTitle">+ เพิ่มซัพพลายเออร์</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveSupplier(event)" id="supplierForm">
+          <input type="hidden" id="supplierEditId" />
+          <label>ชื่อบริษัท/ร้าน<input type="text" class="form-control" id="supplierName" required placeholder="เช่น บริษัท ชิมาโน่ไทย จำกัด" /></label>
+          <div class="form-row">
+            <label>เบอร์โทร<input type="text" class="form-control" id="supplierPhone" placeholder="02-XXX-XXXX" /></label>
+            <label>อีเมล<input type="email" class="form-control" id="supplierEmail" placeholder="example@email.com" /></label>
+          </div>
+          <label>หมวดสินค้าที่ส่ง (เลือกได้หลายหมวด)
+            <div id="supplierCatsBox" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+              <label class="cat-chip"><input type="checkbox" value="คัน" /> 🪝 คัน</label>
+              <label class="cat-chip"><input type="checkbox" value="รอก" /> 🎣 รอก</label>
+              <label class="cat-chip"><input type="checkbox" value="เบ็ด" /> 📌 เบ็ด</label>
+              <label class="cat-chip"><input type="checkbox" value="สาย" /> 🧵 สาย</label>
+              <label class="cat-chip"><input type="checkbox" value="เหยื่อ" /> 🐛 เหยื่อ</label>
+              <label class="cat-chip"><input type="checkbox" value="อื่นๆ" /> 🎒 อื่นๆ</label>
+            </div>
+          </label>
+          <label>หมายเหตุ<textarea class="form-control" id="supplierNote" rows="2" placeholder="เช่น เครดิต 30 วัน, ติดต่อ คุณXXX"></textarea></label>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 บันทึก</button>
           </div>
         </form>
       </div>
@@ -2019,6 +2026,7 @@ function refreshAllViews(){
   renderReports();
   renderScHistory();
   renderAccounting();
+  renderSuppliers();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
@@ -2288,6 +2296,122 @@ function saveEditProduct(e){
   closeModal('editProductModal');
   showToast('✅ แก้ไขสินค้าเรียบร้อย');
 }
+/* ===== SUPPLIERS ===== */
+let suppliers = [
+  { id: 1, name: 'บริษัท ชิมาโน่ไทย จำกัด', phone: '02-123-4567', email: 'shimano.th@example.com', cats: ['รอก','คัน'], note: '' },
+  { id: 2, name: 'ห้างหุ้นส่วน โอกุมา เทรดดิ้ง', phone: '02-987-6543', email: 'okuma@example.com', cats: ['รอก','สาย'], note: '' },
+  { id: 3, name: 'ร้านค้าส่งอุปกรณ์ตกปลาไทย', phone: '081-234-5678', email: 'thaifishing@example.com', cats: ['เหยื่อ','เบ็ด','อื่นๆ'], note: '' }
+];
+
+function supplierStats(id){
+  // นับจาก stockHistory ที่ type='in' และ note มี supplier name
+  const s = suppliers.find(x=>x.id===id);
+  if(!s) return {count:0, total:0};
+  let count=0, total=0;
+  stockHistory.forEach(h=>{
+    if(h.type==='in' && h.supplierId===id){
+      count++;
+      // คำนวณยอด: ใช้ qty * cost ถ้ามี
+      if(h.cost) total += h.cost * Math.abs(h.qty);
+    }
+  });
+  return {count, total};
+}
+
+function openSupplierModal(id){
+  const modal = document.getElementById('supplierModal');
+  document.getElementById('supplierForm').reset();
+  document.getElementById('supplierEditId').value = '';
+  document.querySelectorAll('#supplierCatsBox input[type=checkbox]').forEach(c=>c.checked=false);
+  if(id){
+    const s = suppliers.find(x=>x.id===id);
+    if(!s) return;
+    document.getElementById('supplierModalTitle').textContent = '✏️ แก้ไขซัพพลายเออร์';
+    document.getElementById('supplierEditId').value = id;
+    document.getElementById('supplierName').value = s.name||'';
+    document.getElementById('supplierPhone').value = s.phone||'';
+    document.getElementById('supplierEmail').value = s.email||'';
+    document.getElementById('supplierNote').value = s.note||'';
+    (s.cats||[]).forEach(c=>{
+      const cb = document.querySelector(`#supplierCatsBox input[value="${c}"]`);
+      if(cb) cb.checked = true;
+    });
+  } else {
+    document.getElementById('supplierModalTitle').textContent = '+ เพิ่มซัพพลายเออร์';
+  }
+  openModal('supplierModal');
+}
+
+function saveSupplier(e){
+  e.preventDefault();
+  const id = +document.getElementById('supplierEditId').value;
+  const name = document.getElementById('supplierName').value.trim();
+  if(!name){ showToast('⚠️ กรุณาระบุชื่อ'); return; }
+  const phone = document.getElementById('supplierPhone').value.trim();
+  const email = document.getElementById('supplierEmail').value.trim();
+  const note = document.getElementById('supplierNote').value.trim();
+  const cats = [...document.querySelectorAll('#supplierCatsBox input:checked')].map(c=>c.value);
+  if(id){
+    const s = suppliers.find(x=>x.id===id);
+    if(s){ s.name=name; s.phone=phone; s.email=email; s.note=note; s.cats=cats; }
+    showToast('✅ แก้ไขเรียบร้อย');
+  } else {
+    suppliers.push({ id: Date.now(), name, phone, email, cats, note });
+    showToast('✅ เพิ่มซัพพลายเออร์เรียบร้อย');
+  }
+  closeModal('supplierModal');
+  renderSuppliers();
+  renderStockPage();
+}
+
+function delSupplier(id){
+  const s = suppliers.find(x=>x.id===id);
+  if(!s) return;
+  if(!confirm(`ลบ "${s.name}"?`)) return;
+  suppliers = suppliers.filter(x=>x.id!==id);
+  renderSuppliers();
+  renderStockPage();
+  showToast('🗑️ ลบเรียบร้อย');
+}
+
+const SUPPLIER_COLORS = ['#0369a1','#10b981','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#dc2626','#6366f1'];
+
+function renderSuppliers(){
+  const wrap = document.getElementById('supplierList');
+  if(!wrap) return;
+  const q = (document.getElementById('supplierSearch')?.value||'').toLowerCase().trim();
+  const filtered = suppliers.filter(s => !q || s.name.toLowerCase().includes(q) || (s.phone||'').includes(q));
+  if(!filtered.length){
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted)">ยังไม่มีซัพพลายเออร์</div>';
+    return;
+  }
+  wrap.innerHTML = filtered.map((s,i)=>{
+    const color = SUPPLIER_COLORS[i % SUPPLIER_COLORS.length];
+    const first = (s.name||'?').charAt(0).toUpperCase();
+    const stats = supplierStats(s.id);
+    const totalK = stats.total >= 1000 ? `฿${(stats.total/1000).toFixed(1)}K` : `฿${stats.total.toLocaleString()}`;
+    const cats = (s.cats||[]).map(c=>`<span class="badge bg-success">${c}</span>`).join(' ');
+    return `<div class="supplier-card">
+      <div class="supplier-logo" style="background:${color}">${first}</div>
+      <div class="supplier-info">
+        <div class="supplier-name">${s.name}</div>
+        ${s.phone?`<div class="supplier-contact">📞 ${s.phone}</div>`:''}
+        ${s.email?`<div class="supplier-contact">✉️ ${s.email}</div>`:''}
+        ${s.note?`<div class="supplier-contact" style="color:var(--text-muted);font-size:12px;margin-top:4px">📝 ${s.note}</div>`:''}
+        <div class="supplier-tags">${cats||'<span style="font-size:11px;color:var(--text-muted)">— ไม่ระบุหมวด —</span>'}</div>
+      </div>
+      <div class="supplier-stats">
+        <div class="s-stat"><div class="s-val">${stats.count}</div><div class="s-lbl">ครั้งรับเข้า</div></div>
+        <div class="s-stat"><div class="s-val">${totalK}</div><div class="s-lbl">ยอดรวม</div></div>
+      </div>
+      <div class="supplier-actions">
+        <button class="btn btn-outline-primary" onclick="openSupplierModal(${s.id})">✏️ แก้ไข</button>
+        <button class="btn btn-danger" onclick="delSupplier(${s.id})">🗑️ ลบ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 /* ===== STOCK PAGE ===== */
 let stockHistory = [];
 
@@ -2302,6 +2426,14 @@ function renderStockPage(){
     el.innerHTML = '<option value="">-- เลือกสินค้า --</option>' + opts;
     if(cur) el.value = cur;
   });
+  // Populate supplier dropdown
+  const supEl = document.getElementById('stockInSupplier');
+  if(supEl){
+    const cur = supEl.value;
+    const supOpts = suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    supEl.innerHTML = '<option value="">-- ไม่ระบุ --</option>' + supOpts;
+    if(cur) supEl.value = cur;
+  }
   // Set today's date if empty
   ['stockInDate','stockOutDate'].forEach(id=>{
     const el = document.getElementById(id);
@@ -2339,20 +2471,23 @@ function submitStock(e, type){
     p.cost = +document.getElementById('stockInCost').value; // update cost price
   }
 
-  // Build note string
+  // Build note string + supplier link
   let note = '';
+  let supplierId = null;
+  let costPerUnit = 0;
   if(type==='in'){
-    const sup = document.getElementById('stockInSupplier').value;
-    const cost = document.getElementById('stockInCost').value;
-    note = [sup, cost?`ทุน ฿${(+cost).toLocaleString()}`:''].filter(Boolean).join(' · ');
+    supplierId = +document.getElementById('stockInSupplier').value || null;
+    const sup = supplierId ? suppliers.find(s=>s.id===supplierId) : null;
+    costPerUnit = +document.getElementById('stockInCost').value || 0;
+    note = [sup?sup.name:'', costPerUnit?`ทุน ฿${costPerUnit.toLocaleString()}/ชิ้น`:''].filter(Boolean).join(' · ');
   } else {
     const reason = document.getElementById('stockOutReason').value;
     const remark = document.getElementById('stockOutNote').value;
     note = [reason, remark].filter(Boolean).join(' · ');
   }
 
-  // Record to history
-  stockHistory.unshift({ date, code, name:p.name, type, qty:type==='in'?+qty:-qty, after:p.qty, note });
+  // Record to history (พ่วง supplierId + cost ไว้ให้ supplierStats คำนวณ)
+  stockHistory.unshift({ date, code, name:p.name, type, qty:type==='in'?+qty:-qty, after:p.qty, note, supplierId, cost: costPerUnit });
 
   refreshAllViews();
   e.target.reset();
