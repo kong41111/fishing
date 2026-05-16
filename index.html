@@ -262,11 +262,20 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .sc-table th{background:#f8fafc;color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
 .sc-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
 .sc-table tr:hover td{background:#f8fafc}
-.sc-input{width:80px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;text-align:center;font-family:inherit}
-.sc-input:focus{outline:none;border-color:var(--primary)}
+.sc-qty-cell{display:inline-flex;align-items:center;gap:4px;justify-content:center}
+.sc-qty-btn{width:30px;height:34px;border:1.5px solid var(--border);background:#fff;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;color:var(--text);transition:all .12s;line-height:1;display:flex;align-items:center;justify-content:center}
+.sc-qty-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.sc-qty-btn:active{transform:scale(.93)}
+.sc-input{width:70px;padding:7px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:800;text-align:center;font-family:inherit;height:34px;-moz-appearance:textfield}
+.sc-input::-webkit-outer-spin-button,.sc-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sc-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
 .sc-input.match{border-color:var(--green);background:#f0fdf4}
 .sc-input.over{border-color:var(--orange);background:#fffbeb}
 .sc-input.under{border-color:var(--red);background:#fef2f2}
+.sc-note-input{width:100%;min-width:140px;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--text)}
+.sc-note-input:focus{outline:none;border-color:var(--primary)}
+.sc-table tfoot td{background:linear-gradient(135deg,#f0f9ff,#dbeafe);font-weight:800;font-size:13px;padding:14px 12px;border-top:2px solid var(--primary);color:var(--text)}
+.sc-table tfoot td.sc-foot-label{color:var(--text-muted);font-size:11px;letter-spacing:.4px;text-transform:uppercase}
 .sc-diff{font-weight:700;font-size:13px}
 .sc-diff.match{color:var(--green)}
 .sc-diff.over{color:var(--orange)}
@@ -1264,13 +1273,23 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
                 <th>รหัส</th>
                 <th>หมวด</th>
                 <th style="text-align:center">สต็อกในระบบ</th>
-                <th style="text-align:center">นับได้จริง</th>
+                <th style="text-align:center;min-width:150px">นับได้จริง</th>
                 <th style="text-align:center">ส่วนต่าง</th>
+                <th style="min-width:160px">หมายเหตุ</th>
               </tr>
             </thead>
             <tbody id="scTableBody">
-              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>
+              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>
             </tbody>
+            <tfoot id="scTableFoot" style="display:none">
+              <tr>
+                <td colspan="4" class="sc-foot-label">รวมทั้งสิ้น</td>
+                <td style="text-align:center" id="scFootSystem">0</td>
+                <td style="text-align:center" id="scFootCounted">0</td>
+                <td style="text-align:center" id="scFootDiff">0</td>
+                <td id="scFootInfo" style="font-size:11px;color:var(--text-muted);font-weight:600"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -2767,11 +2786,12 @@ function renderReports(){
 
 /* ===== STOCK COUNT ===== */
 let scCounts = {};   // {code: number|null}
+let scNotes  = {};   // {code: string}
 let scActive = false;
 
 function scStart(){
-  scCounts = {};
-  products.forEach(p => { scCounts[p.code] = null; });
+  scCounts = {}; scNotes = {};
+  products.forEach(p => { scCounts[p.code] = null; scNotes[p.code] = ''; });
   scActive = true;
   document.getElementById('scStatus').textContent = '🔢 กำลังนับ...';
   document.getElementById('scStatus').className = 'sc-status counting';
@@ -2779,13 +2799,14 @@ function scStart(){
   document.getElementById('scConfirmBtn').style.display = '';
   document.getElementById('scResetBtn').style.display = '';
   document.getElementById('scSummary').style.display = 'grid';
+  document.getElementById('scTableFoot').style.display = '';
   scRenderTable();
   scUpdateSummary();
 }
 
 function scReset(){
   if(!confirm('ล้างข้อมูลการนับทั้งหมด?')) return;
-  scCounts = {};
+  scCounts = {}; scNotes = {};
   scActive = false;
   document.getElementById('scStatus').textContent = '⏸ ยังไม่เริ่มนับ';
   document.getElementById('scStatus').className = 'sc-status idle';
@@ -2793,48 +2814,90 @@ function scReset(){
   document.getElementById('scConfirmBtn').style.display = 'none';
   document.getElementById('scResetBtn').style.display = 'none';
   document.getElementById('scSummary').style.display = 'none';
-  document.getElementById('scTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>';
+  document.getElementById('scTableFoot').style.display = 'none';
+  document.getElementById('scTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>';
+}
+
+function _scDiffInfo(p){
+  const counted = scCounts[p.code];
+  const has = counted !== null && counted !== '';
+  const diff = has ? +counted - p.qty : null;
+  const cls = diff === null ? '' : diff === 0 ? 'match' : diff > 0 ? 'over' : 'under';
+  const txt = diff === null ? '—' : diff === 0 ? '✅ ตรงกัน' : diff > 0 ? `+${diff}` : `${diff}`;
+  return {has, diff, cls, txt, counted};
 }
 
 function scRenderTable(){
   const tbody = document.getElementById('scTableBody');
   if(!tbody) return;
   tbody.innerHTML = products.map(p => {
-    const counted = scCounts[p.code];
-    const diff = counted !== null && counted !== '' ? counted - p.qty : null;
-    const cls = diff === null ? '' : diff === 0 ? 'match' : diff > 0 ? 'over' : 'under';
-    const diffTxt = diff === null ? '—' : diff === 0 ? '✅ ตรงกัน' : diff > 0 ? `+${diff}` : `${diff}`;
-    return `<tr>
+    const d = _scDiffInfo(p);
+    return `<tr data-code="${p.code}">
       <td><img class="sc-thumb" src="${p.img||''}" onerror="this.src=''" /></td>
       <td style="font-weight:600;max-width:200px">${p.name}</td>
       <td style="color:var(--text-muted);font-size:12px">${p.code}</td>
       <td><span class="status status-done" style="font-size:11px">${p.cat}</span></td>
       <td style="text-align:center;font-weight:700;font-size:15px">${p.qty}</td>
-      <td style="text-align:center">
-        <input type="number" min="0" class="sc-input ${cls}"
-          value="${counted !== null ? counted : ''}" placeholder="—"
-          onchange="scSetCount('${p.code}',this.value)"
-          oninput="scSetCount('${p.code}',this.value)" />
+      <td>
+        <div class="sc-qty-cell">
+          <button type="button" class="sc-qty-btn" onclick="scAdjustCount('${p.code}',-1)">−</button>
+          <input type="number" min="0" class="sc-input ${d.cls}"
+            value="${d.has ? d.counted : ''}" placeholder="—"
+            oninput="scSetCount('${p.code}',this.value)" />
+          <button type="button" class="sc-qty-btn" onclick="scAdjustCount('${p.code}',1)">+</button>
+        </div>
       </td>
-      <td style="text-align:center"><span class="sc-diff ${cls}">${diffTxt}</span></td>
+      <td style="text-align:center"><span class="sc-diff ${d.cls}">${d.txt}</span></td>
+      <td>
+        <input type="text" class="sc-note-input" placeholder="เช่น เสียหาย, ลูกค้าคืน..."
+          value="${(scNotes[p.code]||'').replace(/"/g,'&quot;')}"
+          oninput="scSetNote('${p.code}',this.value)" />
+      </td>
     </tr>`;
   }).join('');
+  scUpdateFooter();
+}
+
+function _scUpdateRow(code){
+  const p = products.find(x=>x.code===code);
+  if(!p) return;
+  const row = document.querySelector(`#scTableBody tr[data-code="${code}"]`);
+  if(!row) return;
+  const d = _scDiffInfo(p);
+  const input = row.querySelector('.sc-input');
+  if(input){
+    input.classList.remove('match','over','under');
+    if(d.cls) input.classList.add(d.cls);
+    // sync value only if differs (avoid resetting cursor)
+    const cur = input.value;
+    const target = d.has ? String(d.counted) : '';
+    if(cur !== target && document.activeElement !== input) input.value = target;
+  }
+  const diffEl = row.querySelector('.sc-diff');
+  if(diffEl){
+    diffEl.className = 'sc-diff '+d.cls;
+    diffEl.textContent = d.txt;
+  }
 }
 
 function scSetCount(code, val){
   scCounts[code] = val === '' ? null : +val;
+  _scUpdateRow(code);
   scUpdateSummary();
-  // Update diff cell live without re-rendering whole table
-  const inputs = document.querySelectorAll('#scTableBody .sc-input');
-  inputs.forEach(inp => {
-    const row = inp.closest('tr');
-    const p = products.find(x => x.code === code);
-    if(!p) return;
-    // find matching row by checking if this input is the changed one
-    if(inp.dataset && inp.onchange) return;
-  });
-  // Re-render just for diff update
-  scRenderTable();
+  scUpdateFooter();
+}
+
+function scAdjustCount(code, delta){
+  const cur = scCounts[code];
+  const next = Math.max(0, (cur===null||cur==='' ? 0 : +cur) + delta);
+  scCounts[code] = next;
+  _scUpdateRow(code);
+  scUpdateSummary();
+  scUpdateFooter();
+}
+
+function scSetNote(code, val){
+  scNotes[code] = val;
 }
 
 function scUpdateSummary(){
@@ -2849,6 +2912,26 @@ function scUpdateSummary(){
   document.getElementById('scOverItems').textContent  = over;
 }
 
+function scUpdateFooter(){
+  let sysTotal=0, countedTotal=0, diffTotal=0, countedRows=0;
+  products.forEach(p=>{
+    sysTotal += +p.qty||0;
+    const v = scCounts[p.code];
+    if(v!==null && v!==''){
+      countedTotal += +v;
+      diffTotal += (+v - p.qty);
+      countedRows++;
+    }
+  });
+  document.getElementById('scFootSystem').textContent = sysTotal.toLocaleString();
+  document.getElementById('scFootCounted').textContent = countedTotal.toLocaleString();
+  const diffEl = document.getElementById('scFootDiff');
+  const diffTxt = diffTotal===0 ? '0' : (diffTotal>0?`+${diffTotal}`:`${diffTotal}`);
+  diffEl.textContent = diffTxt;
+  diffEl.style.color = diffTotal===0 ? 'var(--green)' : diffTotal>0 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('scFootInfo').textContent = `นับแล้ว ${countedRows} / ${products.length} รายการ`;
+}
+
 function scConfirm(){
   const toUpdate = Object.entries(scCounts).filter(([,v]) => v !== null && v !== '');
   if(!toUpdate.length){ showToast('⚠️ ยังไม่ได้กรอกจำนวนที่นับ'); return; }
@@ -2860,7 +2943,9 @@ function scConfirm(){
     if(!p) return;
     const diff = +val - p.qty;
     if(diff === 0) return;
-    stockHistory.unshift({ date:today, code, name:p.name, type: diff>0?'in':'out', qty:diff, after:+val, note:`ปรับจากการนับสต็อก (ระบบ: ${p.qty}, นับได้: ${+val})` });
+    const userNote = (scNotes[code]||'').trim();
+    const note = `นับสต็อก (ระบบ: ${p.qty}, นับได้: ${+val})${userNote?' · '+userNote:''}`;
+    stockHistory.unshift({ date:today, code, name:p.name, type: diff>0?'in':'out', qty:diff, after:+val, note });
     p.qty = +val;
   });
   refreshAllViews();
