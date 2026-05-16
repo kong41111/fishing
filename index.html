@@ -896,23 +896,44 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div class="row-2col">
         <div class="card">
           <div class="card-header"><span class="card-title">📥 รับสินค้าเข้า</span></div>
-          <form class="stock-form" onsubmit="submitStock(event,'in')">
-            <label>สินค้า<select class="form-select"><option>รอก Shimano Sienna 2500</option><option>คันตกปลา Okuma 6ft</option><option>สายเอ็น 0.4mm (500m)</option><option>เบ็ดตกปลา #6</option></select></label>
-            <label>จำนวนที่รับเข้า<input type="number" class="form-control" min="1" placeholder="0" /></label>
-            <label>ราคาทุนต่อหน่วย (฿)<input type="number" class="form-control" placeholder="0.00" /></label>
-            <label>ซัพพลายเออร์<select class="form-select"><option>บริษัท ชิมาโน่ไทย จำกัด</option><option>ห้างหุ้นส่วน โอกุมา</option><option>ร้านค้าส่งอุปกรณ์ตกปลา</option></select></label>
-            <label>วันที่รับ<input type="date" class="form-control" /></label>
+          <form class="stock-form" id="stockInForm" onsubmit="submitStock(event,'in')">
+            <label>สินค้า
+              <select class="form-select" id="stockInProduct" required onchange="onStockProductChange('in')">
+                <option value="">-- เลือกสินค้า --</option>
+              </select>
+            </label>
+            <label>สต็อกปัจจุบัน
+              <input type="text" class="form-control" id="stockInCurrent" readonly style="background:#f8fafc;color:var(--text-muted);font-weight:700" placeholder="—" />
+            </label>
+            <label>จำนวนที่รับเข้า<input type="number" class="form-control" id="stockInQty" min="1" placeholder="0" required /></label>
+            <label>ราคาทุนต่อหน่วย (฿)<input type="number" class="form-control" id="stockInCost" placeholder="0.00" /></label>
+            <label>ซัพพลายเออร์<input type="text" class="form-control" id="stockInSupplier" placeholder="ชื่อซัพพลายเออร์ (ถ้ามี)" /></label>
+            <label>วันที่รับ<input type="date" class="form-control" id="stockInDate" /></label>
             <button type="submit" class="btn btn-primary w-100">✅ บันทึกการรับสินค้า</button>
           </form>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">📤 จ่ายสินค้าออก</span></div>
-          <form class="stock-form" onsubmit="submitStock(event,'out')">
-            <label>สินค้า<select class="form-select"><option>รอก Shimano Sienna 2500</option><option>คันตกปลา Okuma 6ft</option><option>สายเอ็น 0.4mm (500m)</option><option>เบ็ดตกปลา #6</option></select></label>
-            <label>จำนวนที่จ่ายออก<input type="number" class="form-control" min="1" placeholder="0" /></label>
-            <label>เหตุผล<select class="form-select"><option>ขายให้ลูกค้า</option><option>สินค้าเสียหาย/ตัดบัญชี</option><option>คืนซัพพลายเออร์</option><option>อื่นๆ</option></select></label>
-            <label>วันที่จ่าย<input type="date" class="form-control" /></label>
-            <label>หมายเหตุ<input type="text" class="form-control" placeholder="ระบุหมายเหตุ (ถ้ามี)" /></label>
+          <form class="stock-form" id="stockOutForm" onsubmit="submitStock(event,'out')">
+            <label>สินค้า
+              <select class="form-select" id="stockOutProduct" required onchange="onStockProductChange('out')">
+                <option value="">-- เลือกสินค้า --</option>
+              </select>
+            </label>
+            <label>สต็อกปัจจุบัน
+              <input type="text" class="form-control" id="stockOutCurrent" readonly style="background:#f8fafc;color:var(--text-muted);font-weight:700" placeholder="—" />
+            </label>
+            <label>จำนวนที่จ่ายออก<input type="number" class="form-control" id="stockOutQty" min="1" placeholder="0" required /></label>
+            <label>เหตุผล
+              <select class="form-select" id="stockOutReason">
+                <option>สินค้าเสียหาย/ตัดบัญชี</option>
+                <option>คืนซัพพลายเออร์</option>
+                <option>ย้ายสาขา</option>
+                <option>อื่นๆ</option>
+              </select>
+            </label>
+            <label>วันที่จ่าย<input type="date" class="form-control" id="stockOutDate" /></label>
+            <label>หมายเหตุ<input type="text" class="form-control" id="stockOutNote" placeholder="ระบุหมายเหตุ (ถ้ามี)" /></label>
             <button type="submit" class="btn btn-danger w-100">📤 บันทึกการจ่ายสินค้า</button>
           </form>
         </div>
@@ -921,13 +942,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         <div class="card-header"><span class="card-title">📋 ประวัติการเคลื่อนไหวสต็อก</span></div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>วันที่</th><th>สินค้า</th><th>ประเภท</th><th>จำนวน</th><th>คงเหลือ</th><th>ผู้บันทึก</th></tr></thead>
-            <tbody>
-              <tr><td>15/05/2026</td><td>คันตกปลา Okuma 6ft</td><td><span class="badge bg-success">รับเข้า</span></td><td>+20</td><td>45</td><td>สมชาย</td></tr>
-              <tr><td>15/05/2026</td><td>รอก Shimano Sienna 2500</td><td><span class="badge bg-primary">จ่ายออก</span></td><td>-1</td><td>14</td><td>สมชาย</td></tr>
-              <tr><td>14/05/2026</td><td>สายเอ็น 0.4mm</td><td><span class="badge bg-success">รับเข้า</span></td><td>+30</td><td>38</td><td>สมชาย</td></tr>
-              <tr><td>14/05/2026</td><td>เหยื่อปลอม (ชุดสีแดง)</td><td><span class="badge bg-primary">จ่ายออก</span></td><td>-3</td><td>5</td><td>สมหญิง</td></tr>
-            </tbody>
+            <thead><tr><th>วันที่</th><th>สินค้า</th><th>ประเภท</th><th>จำนวน</th><th>คงเหลือ</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="stockHistoryBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">ยังไม่มีประวัติการเคลื่อนไหว</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1614,6 +1630,7 @@ function refreshAllViews(){
   applyPosFilter();
   renderCatModern();
   renderProducts();
+  renderStockPage();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
@@ -1883,7 +1900,103 @@ function saveEditProduct(e){
   closeModal('editProductModal');
   showToast('✅ แก้ไขสินค้าเรียบร้อย');
 }
-function submitStock(e,t){e.preventDefault();showToast(t==='in'?'📥 รับสินค้าเข้าเรียบร้อย':'📤 จ่ายสินค้าออกเรียบร้อย');e.target.reset();}
+/* ===== STOCK PAGE ===== */
+let stockHistory = [];
+
+function renderStockPage(){
+  const today = new Date().toISOString().slice(0,10);
+  // Populate product dropdowns from products[]
+  const opts = products.map(p=>`<option value="${p.code}">${p.name} — สต็อก: ${p.qty} ชิ้น</option>`).join('');
+  ['stockInProduct','stockOutProduct'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">-- เลือกสินค้า --</option>' + opts;
+    if(cur) el.value = cur;
+  });
+  // Set today's date if empty
+  ['stockInDate','stockOutDate'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && !el.value) el.value = today;
+  });
+  // Refresh current stock display
+  onStockProductChange('in');
+  onStockProductChange('out');
+  // Render history table
+  renderStockHistory();
+}
+
+function onStockProductChange(type){
+  const selId = type==='in' ? 'stockInProduct' : 'stockOutProduct';
+  const curId = type==='in' ? 'stockInCurrent' : 'stockOutCurrent';
+  const code = document.getElementById(selId)?.value;
+  const p = products.find(x=>x.code===code);
+  const el = document.getElementById(curId);
+  if(el) el.value = p ? `${p.qty} ชิ้น` : '';
+}
+
+function submitStock(e, type){
+  e.preventDefault();
+  const code = document.getElementById(type==='in'?'stockInProduct':'stockOutProduct').value;
+  const qty  = +document.getElementById(type==='in'?'stockInQty':'stockOutQty').value;
+  const date = document.getElementById(type==='in'?'stockInDate':'stockOutDate').value;
+  const p = products.find(x=>x.code===code);
+  if(!p){ showToast('⚠️ กรุณาเลือกสินค้า'); return; }
+  if(!qty || qty<=0){ showToast('⚠️ กรุณาระบุจำนวนที่ถูกต้อง'); return; }
+  if(type==='out' && qty>p.qty){ showToast(`⚠️ สต็อกไม่พอ — มีเพียง ${p.qty} ชิ้น`); return; }
+
+  // Update stock
+  p.qty += type==='in' ? qty : -qty;
+  if(type==='in' && document.getElementById('stockInCost').value){
+    p.cost = +document.getElementById('stockInCost').value; // update cost price
+  }
+
+  // Build note string
+  let note = '';
+  if(type==='in'){
+    const sup = document.getElementById('stockInSupplier').value;
+    const cost = document.getElementById('stockInCost').value;
+    note = [sup, cost?`ทุน ฿${(+cost).toLocaleString()}`:''].filter(Boolean).join(' · ');
+  } else {
+    const reason = document.getElementById('stockOutReason').value;
+    const remark = document.getElementById('stockOutNote').value;
+    note = [reason, remark].filter(Boolean).join(' · ');
+  }
+
+  // Record to history
+  stockHistory.unshift({ date, code, name:p.name, type, qty:type==='in'?+qty:-qty, after:p.qty, note });
+
+  refreshAllViews();
+  e.target.reset();
+  document.getElementById(type==='in'?'stockInDate':'stockOutDate').value = new Date().toISOString().slice(0,10);
+  showToast(type==='in' ? `📥 รับเข้า ${qty} ชิ้น — ${p.name}` : `📤 จ่ายออก ${qty} ชิ้น — ${p.name}`);
+}
+
+function renderStockHistory(){
+  const tbody = document.getElementById('stockHistoryBody');
+  if(!tbody) return;
+  if(!stockHistory.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">ยังไม่มีประวัติการเคลื่อนไหว</td></tr>';
+    return;
+  }
+  tbody.innerHTML = stockHistory.map(h=>{
+    const d = h.date ? new Date(h.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '-';
+    const badge = h.type==='in'
+      ? '<span class="badge bg-success">📥 รับเข้า</span>'
+      : '<span class="badge bg-danger">📤 จ่ายออก</span>';
+    const qtyTxt = h.type==='in'
+      ? `<span style="color:var(--green);font-weight:700">+${h.qty}</span>`
+      : `<span style="color:var(--red);font-weight:700">${h.qty}</span>`;
+    return `<tr>
+      <td>${d}</td>
+      <td style="font-weight:600">${h.name}</td>
+      <td>${badge}</td>
+      <td>${qtyTxt}</td>
+      <td style="font-weight:700">${h.after}</td>
+      <td style="color:var(--text-muted);font-size:12px">${h.note||'—'}</td>
+    </tr>`;
+  }).join('');
+}
 
 function renderPOS(items){
   if(items.length===0){
