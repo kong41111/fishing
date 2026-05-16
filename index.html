@@ -251,6 +251,28 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+/* ===== Z-REPORT ===== */
+.z-section{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.z-section-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--primary-light);padding-bottom:8px}
+.z-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #f1f5f9;font-size:13.5px}
+.z-row:last-child{border-bottom:none}
+.z-row-label{color:var(--text-muted);font-weight:600}
+.z-row-val{font-weight:700;font-family:'Courier New',monospace}
+.z-row.total{border-top:2px solid var(--primary);margin-top:6px;padding-top:12px;font-size:16px;font-weight:800;border-bottom:none}
+.z-row.total .z-row-val{color:var(--primary);font-size:18px}
+.z-pay-method{display:flex;align-items:center;gap:8px}
+.z-cash-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.z-cash-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:18px;font-weight:800;text-align:right;font-family:inherit}
+.z-cash-input:focus{outline:none;border-color:var(--primary)}
+.z-variance-card{padding:14px;border-radius:10px;text-align:center;margin-top:14px;font-weight:700}
+.z-variance-card.match{background:#f0fdf4;color:#065f46;border:2px solid #10b981}
+.z-variance-card.short{background:#fef2f2;color:#991b1b;border:2px solid #dc2626}
+.z-variance-card.over{background:#fffbeb;color:#92400e;border:2px solid #f59e0b}
+@media print{
+  body>*:not(#zPrintArea){display:none!important}
+  #zPrintArea{display:block!important;padding:20mm;font-family:'Courier New',monospace}
+}
+#zPrintArea{display:none}
 /* ===== STOCK COUNT PAGE ===== */
 .sc-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .sc-status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700}
@@ -833,6 +855,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a class="nav-item" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
     <a class="nav-item" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
     <a class="nav-item" data-page="accounting"><i class="nav-icon bi bi-cash-coin"></i><span>บัญชี (กำไร/ขาดทุน)</span></a>
+    <a class="nav-item" data-page="zreport"><i class="nav-icon bi bi-receipt"></i><span>ปิดยอดประจำวัน (Z-Report)</span></a>
     <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
     <div class="nav-group-label">ตั้งค่า</div>
     <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
@@ -1434,6 +1457,113 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
     </section>
 
+    <!-- Z-REPORT (Daily Closing) -->
+    <section class="page" id="page-zreport">
+      <!-- Date selector -->
+      <div class="card" style="padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-weight:700">📅 รายงานวันที่:</span>
+          <input type="date" id="zDate" class="form-control" style="width:auto" onchange="renderZReport()" />
+          <div style="flex:1"></div>
+          <button class="btn btn-outline-primary" onclick="printZReport()"><i class="bi bi-printer"></i> พิมพ์รายงาน</button>
+          <button class="btn btn-success" onclick="closeZShift()"><i class="bi bi-lock"></i> ปิดยอด/บันทึก</button>
+        </div>
+      </div>
+
+      <!-- Sales summary -->
+      <div class="z-section">
+        <div class="z-section-title">💰 สรุปยอดขาย</div>
+        <div class="z-row"><span class="z-row-label">จำนวนบิล</span><span class="z-row-val" id="zBillCount">0 บิล</span></div>
+        <div class="z-row"><span class="z-row-label">รายการสินค้ารวม</span><span class="z-row-val" id="zItemCount">0 ชิ้น</span></div>
+        <div class="z-row"><span class="z-row-label">ยอดขายก่อนหักลด</span><span class="z-row-val" id="zGrossSales">฿0</span></div>
+        <div class="z-row"><span class="z-row-label">ส่วนลดรวม</span><span class="z-row-val" id="zDiscount" style="color:var(--red)">-฿0</span></div>
+        <div class="z-row total"><span class="z-row-label">ยอดขายสุทธิ</span><span class="z-row-val" id="zNetSales">฿0</span></div>
+      </div>
+
+      <!-- Payment methods -->
+      <div class="z-section">
+        <div class="z-section-title">💳 แยกตามวิธีการชำระเงิน</div>
+        <div class="z-row">
+          <span class="z-pay-method">💵 เงินสด <span style="color:var(--text-muted);font-size:11px" id="zCashCount">(0 บิล)</span></span>
+          <span class="z-row-val" id="zCashSales">฿0</span>
+        </div>
+        <div class="z-row">
+          <span class="z-pay-method">📱 QR Code <span style="color:var(--text-muted);font-size:11px" id="zQrCount">(0 บิล)</span></span>
+          <span class="z-row-val" id="zQrSales">฿0</span>
+        </div>
+        <div class="z-row">
+          <span class="z-pay-method">💳 บัตรเครดิต <span style="color:var(--text-muted);font-size:11px" id="zCardCount">(0 บิล)</span></span>
+          <span class="z-row-val" id="zCardSales">฿0</span>
+        </div>
+      </div>
+
+      <!-- P&L -->
+      <div class="z-section">
+        <div class="z-section-title">📊 กำไร / ขาดทุน</div>
+        <div class="z-row"><span class="z-row-label">ยอดขาย</span><span class="z-row-val" id="zPlRevenue">฿0</span></div>
+        <div class="z-row"><span class="z-row-label">ต้นทุนสินค้า (COGS)</span><span class="z-row-val" id="zPlCogs" style="color:#f97316">-฿0</span></div>
+        <div class="z-row"><span class="z-row-label">กำไรขั้นต้น</span><span class="z-row-val" id="zPlGross" style="color:var(--green)">฿0</span></div>
+        <div class="z-row"><span class="z-row-label">ค่าใช้จ่ายวันนี้</span><span class="z-row-val" id="zPlOpex" style="color:var(--red)">-฿0</span></div>
+        <div class="z-row total"><span class="z-row-label">กำไรสุทธิ</span><span class="z-row-val" id="zPlNet">฿0</span></div>
+      </div>
+
+      <!-- Cash drawer reconciliation -->
+      <div class="z-section">
+        <div class="z-section-title">💼 ตรวจนับเงินในลิ้นชัก</div>
+        <div class="z-cash-form">
+          <label>เงินเปิดร้าน (ต้นวัน)
+            <input type="number" id="zOpeningCash" class="z-cash-input" min="0" step="0.01" placeholder="0.00" oninput="updateZCashCalc()" />
+          </label>
+          <label>เงินที่นับได้จริง (ปิดร้าน)
+            <input type="number" id="zCountedCash" class="z-cash-input" min="0" step="0.01" placeholder="0.00" oninput="updateZCashCalc()" />
+          </label>
+        </div>
+        <div style="margin-top:14px">
+          <div class="z-row"><span class="z-row-label">เงินเปิดร้าน</span><span class="z-row-val" id="zCashOpen">฿0</span></div>
+          <div class="z-row"><span class="z-row-label">+ ยอดขายเงินสด</span><span class="z-row-val" style="color:var(--green)" id="zCashAdd">+฿0</span></div>
+          <div class="z-row total"><span class="z-row-label">เงินที่ควรมี (Expected)</span><span class="z-row-val" id="zCashExpected">฿0</span></div>
+          <div class="z-row"><span class="z-row-label">เงินที่นับได้จริง</span><span class="z-row-val" id="zCashActual">฿0</span></div>
+        </div>
+        <div class="z-variance-card match" id="zVarianceCard">
+          <div style="font-size:11px;font-weight:600;opacity:.85">ส่วนต่าง (Variance)</div>
+          <div id="zVarianceVal" style="font-size:28px;font-weight:800;margin-top:4px">฿0</div>
+          <div id="zVarianceLbl" style="font-size:12px;margin-top:2px">✅ เงินตรงตามระบบ</div>
+        </div>
+      </div>
+
+      <!-- Top products today -->
+      <div class="z-section">
+        <div class="z-section-title">🏆 สินค้าขายดีวันนี้ (Top 5)</div>
+        <div id="zTopProducts">
+          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">ยังไม่มีการขาย</div>
+        </div>
+      </div>
+
+      <!-- History of closed reports -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">📚 ประวัติการปิดยอด</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:50px;text-align:center">#</th>
+                <th>วันที่</th>
+                <th style="text-align:center">บิล</th>
+                <th style="text-align:right">ยอดขาย</th>
+                <th style="text-align:right">กำไรสุทธิ</th>
+                <th style="text-align:right">เงินสด</th>
+                <th style="text-align:right">ส่วนต่าง</th>
+                <th style="text-align:center">ดู</th>
+              </tr>
+            </thead>
+            <tbody id="zHistoryBody">
+              <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีรายงานที่ปิดยอดแล้ว</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- SETTINGS -->
     <section class="page" id="page-settings">
       <div class="settings-grid">
@@ -1614,6 +1744,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     </div>
   </div>
 </div>
+
+<!-- Z-REPORT PRINT AREA -->
+<div id="zPrintArea"></div>
 
 <!-- BARCODE PRINT AREA (hidden, shown only on print) -->
 <div id="barcodePrintArea"></div>
@@ -2038,13 +2171,14 @@ function refreshAllViews(){
   renderScHistory();
   renderAccounting();
   renderSuppliers();
+  renderZReport();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',zreport:'ปิดยอดประจำวัน (Z-Report)',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -2982,6 +3116,250 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== Z-REPORT (Daily closing) ===== */
+let zReports = []; // {id, date, billCount, netSales, cashSales, qrSales, cardSales, cogs, gross, opex, netProfit, opening, expected, counted, variance}
+
+function getZSnapshot(dateStr){
+  // กรองข้อมูลของวันนั้น
+  const sales = salesHistory.filter(s=> new Date(s.date).toISOString().slice(0,10)===dateStr);
+  const exps  = expenses.filter(e=> e.date===dateStr);
+
+  let grossSales=0, discount=0, netSales=0, itemCount=0;
+  let cashSales=0, qrSales=0, cardSales=0;
+  let cashCnt=0, qrCnt=0, cardCnt=0;
+  let cogs=0;
+  const prodAgg = {};
+
+  sales.forEach(b=>{
+    grossSales += +b.total||0;
+    discount   += +b.discount||0;
+    netSales   += +b.net||0;
+    b.items.forEach(it=>{
+      itemCount += it.qty;
+      const prod = products.find(p=>p.code===it.code);
+      const cost = prod?(+prod.cost||0):0;
+      cogs += cost*it.qty;
+      if(!prodAgg[it.code]) prodAgg[it.code] = {name:it.name, qty:0, total:0};
+      prodAgg[it.code].qty += it.qty;
+      prodAgg[it.code].total += (+it.price||0)*it.qty;
+    });
+    if(b.payMethod==='cash'){cashSales += +b.net||0; cashCnt++;}
+    else if(b.payMethod==='qr'){qrSales += +b.net||0; qrCnt++;}
+    else if(b.payMethod==='card'){cardSales += +b.net||0; cardCnt++;}
+  });
+
+  const opex = exps.reduce((s,e)=>s+(+e.amount||0),0);
+  const gross = netSales - cogs;
+  const netProfit = gross - opex;
+  const topProducts = Object.values(prodAgg).sort((a,b)=>b.total-a.total).slice(0,5);
+
+  return { date:dateStr, sales, exps, grossSales, discount, netSales, itemCount,
+    cashSales, qrSales, cardSales, cashCnt, qrCnt, cardCnt,
+    cogs, gross, opex, netProfit, billCount:sales.length, topProducts };
+}
+
+function renderZReport(){
+  if(!document.getElementById('zDate')) return;
+  const dEl = document.getElementById('zDate');
+  if(!dEl.value) dEl.value = new Date().toISOString().slice(0,10);
+  const date = dEl.value;
+  const z = getZSnapshot(date);
+
+  document.getElementById('zBillCount').textContent  = `${z.billCount} บิล`;
+  document.getElementById('zItemCount').textContent  = `${z.itemCount} ชิ้น`;
+  document.getElementById('zGrossSales').textContent = '฿'+z.grossSales.toLocaleString();
+  document.getElementById('zDiscount').textContent   = (z.discount?'-':'')+'฿'+z.discount.toLocaleString();
+  document.getElementById('zNetSales').textContent   = '฿'+z.netSales.toLocaleString();
+
+  document.getElementById('zCashSales').textContent = '฿'+z.cashSales.toLocaleString();
+  document.getElementById('zQrSales').textContent   = '฿'+z.qrSales.toLocaleString();
+  document.getElementById('zCardSales').textContent = '฿'+z.cardSales.toLocaleString();
+  document.getElementById('zCashCount').textContent = `(${z.cashCnt} บิล)`;
+  document.getElementById('zQrCount').textContent   = `(${z.qrCnt} บิล)`;
+  document.getElementById('zCardCount').textContent = `(${z.cardCnt} บิล)`;
+
+  document.getElementById('zPlRevenue').textContent = '฿'+z.netSales.toLocaleString();
+  document.getElementById('zPlCogs').textContent    = '-฿'+z.cogs.toLocaleString();
+  document.getElementById('zPlGross').textContent   = '฿'+z.gross.toLocaleString();
+  document.getElementById('zPlOpex').textContent    = '-฿'+z.opex.toLocaleString();
+  document.getElementById('zPlNet').textContent     = (z.netProfit<0?'-':'')+'฿'+Math.abs(z.netProfit).toLocaleString();
+  document.getElementById('zPlNet').style.color     = z.netProfit>=0?'var(--green)':'var(--red)';
+
+  // Top products today
+  const top = z.topProducts;
+  const tp = document.getElementById('zTopProducts');
+  if(!top.length){
+    tp.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">ยังไม่มีการขาย</div>';
+  } else {
+    const max = top[0].total || 1;
+    tp.innerHTML = top.map((p,i)=>`
+      <div class="top-item">
+        <span class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</span>
+        <div class="top-name">${p.name} <span style="color:var(--text-muted);font-size:11px">× ${p.qty}</span></div>
+        <div class="top-bar-wrap"><div class="top-bar" style="width:${p.total/max*100}%"></div></div>
+        <span class="top-val">฿${p.total.toLocaleString()}</span>
+      </div>`).join('');
+  }
+
+  updateZCashCalc();
+  renderZHistory();
+}
+
+function updateZCashCalc(){
+  const date = document.getElementById('zDate')?.value;
+  if(!date) return;
+  const z = getZSnapshot(date);
+  const opening = +document.getElementById('zOpeningCash').value || 0;
+  const counted = +document.getElementById('zCountedCash').value || 0;
+  const expected = opening + z.cashSales;
+  const variance = counted - expected;
+
+  document.getElementById('zCashOpen').textContent     = '฿'+opening.toLocaleString();
+  document.getElementById('zCashAdd').textContent      = '+฿'+z.cashSales.toLocaleString();
+  document.getElementById('zCashExpected').textContent = '฿'+expected.toLocaleString();
+  document.getElementById('zCashActual').textContent   = '฿'+counted.toLocaleString();
+
+  const card = document.getElementById('zVarianceCard');
+  const val  = document.getElementById('zVarianceVal');
+  const lbl  = document.getElementById('zVarianceLbl');
+  card.classList.remove('match','short','over');
+  if(counted === 0 && opening === 0){
+    card.classList.add('match');
+    val.textContent = '—';
+    lbl.textContent = 'กรอกข้อมูลเงินเพื่อตรวจสอบ';
+  } else if(variance === 0){
+    card.classList.add('match');
+    val.textContent = '฿0';
+    lbl.textContent = '✅ เงินตรงตามระบบ';
+  } else if(variance > 0){
+    card.classList.add('over');
+    val.textContent = '+฿'+variance.toLocaleString();
+    lbl.textContent = `📈 เงินเกิน — ตรวจสอบบิล/เงินทอน`;
+  } else {
+    card.classList.add('short');
+    val.textContent = '-฿'+Math.abs(variance).toLocaleString();
+    lbl.textContent = `⚠️ เงินขาด — ตรวจสอบรายการ`;
+  }
+}
+
+function closeZShift(){
+  const date = document.getElementById('zDate').value;
+  if(!date){ showToast('⚠️ กรุณาเลือกวันที่'); return; }
+  const opening = +document.getElementById('zOpeningCash').value||0;
+  const counted = +document.getElementById('zCountedCash').value||0;
+  if(counted<=0 && opening<=0){
+    if(!confirm('ยังไม่ได้กรอกจำนวนเงิน ต้องการบันทึกต่อหรือไม่?')) return;
+  }
+  // ถ้าวันนี้เคยปิดยอดแล้ว ให้ overwrite
+  const existing = zReports.find(r=>r.date===date);
+  if(existing && !confirm('วันนี้เคยปิดยอดแล้ว ต้องการบันทึกทับ?')) return;
+
+  const z = getZSnapshot(date);
+  const expected = opening + z.cashSales;
+  const variance = counted - expected;
+  const record = {
+    id: Date.now(), date, billCount:z.billCount, itemCount:z.itemCount,
+    grossSales:z.grossSales, discount:z.discount, netSales:z.netSales,
+    cashSales:z.cashSales, qrSales:z.qrSales, cardSales:z.cardSales,
+    cashCnt:z.cashCnt, qrCnt:z.qrCnt, cardCnt:z.cardCnt,
+    cogs:z.cogs, gross:z.gross, opex:z.opex, netProfit:z.netProfit,
+    opening, counted, expected, variance,
+    topProducts: z.topProducts,
+    closedAt: new Date().toISOString()
+  };
+  if(existing){
+    Object.assign(existing, record);
+  } else {
+    zReports.unshift(record);
+  }
+  renderZHistory();
+  showToast(`✅ ปิดยอดวันที่ ${new Date(date).toLocaleDateString('th-TH')} เรียบร้อย`);
+}
+
+function renderZHistory(){
+  const tbody = document.getElementById('zHistoryBody');
+  if(!tbody) return;
+  if(!zReports.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีรายงานที่ปิดยอดแล้ว</td></tr>';
+    return;
+  }
+  tbody.innerHTML = zReports.map((r,i)=>{
+    const d = new Date(r.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    const varColor = r.variance===0?'var(--green)':r.variance>0?'var(--orange)':'var(--red)';
+    const varTxt = r.variance===0?'฿0':(r.variance>0?`+฿${r.variance.toLocaleString()}`:`-฿${Math.abs(r.variance).toLocaleString()}`);
+    return `<tr>
+      <td style="text-align:center;color:var(--text-muted)">${zReports.length - i}</td>
+      <td>${d}</td>
+      <td style="text-align:center">${r.billCount}</td>
+      <td style="text-align:right">฿${r.netSales.toLocaleString()}</td>
+      <td style="text-align:right;color:${r.netProfit>=0?'var(--green)':'var(--red)'};font-weight:700">฿${r.netProfit.toLocaleString()}</td>
+      <td style="text-align:right">฿${r.cashSales.toLocaleString()}</td>
+      <td style="text-align:right;color:${varColor};font-weight:700">${varTxt}</td>
+      <td style="text-align:center"><button class="btn btn-outline-primary btn-sm" onclick="loadZReport('${r.date}')">👁 เปิด</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadZReport(date){
+  document.getElementById('zDate').value = date;
+  const r = zReports.find(x=>x.date===date);
+  if(r){
+    document.getElementById('zOpeningCash').value = r.opening||'';
+    document.getElementById('zCountedCash').value = r.counted||'';
+  }
+  renderZReport();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function printZReport(){
+  const date = document.getElementById('zDate').value;
+  const z = getZSnapshot(date);
+  const opening = +document.getElementById('zOpeningCash').value||0;
+  const counted = +document.getElementById('zCountedCash').value||0;
+  const expected = opening + z.cashSales;
+  const variance = counted - expected;
+  const d = new Date(date).toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const printedAt = new Date().toLocaleString('th-TH');
+
+  document.getElementById('zPrintArea').innerHTML = `
+    <div style="max-width:380px;margin:0 auto;font-size:12px;line-height:1.5">
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:18px;font-weight:800">🎣 FishStock</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">รายงานปิดยอดประจำวัน (Z-REPORT)</div>
+        <div style="margin-top:6px">วันที่: ${d}</div>
+        <div style="font-size:10px;color:#666">พิมพ์เมื่อ: ${printedAt}</div>
+      </div>
+      <hr style="border:1px dashed #000;margin:8px 0"/>
+      <div style="font-weight:700;margin-bottom:6px">💰 ยอดขาย</div>
+      <div style="display:flex;justify-content:space-between"><span>จำนวนบิล</span><span>${z.billCount}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>จำนวนสินค้า</span><span>${z.itemCount} ชิ้น</span></div>
+      <div style="display:flex;justify-content:space-between"><span>ยอดขายก่อนลด</span><span>฿${z.grossSales.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>ส่วนลด</span><span>-฿${z.discount.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:800;border-top:1px solid #000;padding-top:4px;margin-top:4px"><span>ยอดสุทธิ</span><span>฿${z.netSales.toLocaleString()}</span></div>
+      <hr style="border:1px dashed #000;margin:8px 0"/>
+      <div style="font-weight:700;margin-bottom:6px">💳 วิธีชำระ</div>
+      <div style="display:flex;justify-content:space-between"><span>เงินสด (${z.cashCnt})</span><span>฿${z.cashSales.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>QR Code (${z.qrCnt})</span><span>฿${z.qrSales.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>บัตรเครดิต (${z.cardCnt})</span><span>฿${z.cardSales.toLocaleString()}</span></div>
+      <hr style="border:1px dashed #000;margin:8px 0"/>
+      <div style="font-weight:700;margin-bottom:6px">📊 กำไร/ขาดทุน</div>
+      <div style="display:flex;justify-content:space-between"><span>ยอดขาย</span><span>฿${z.netSales.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>ต้นทุน</span><span>-฿${z.cogs.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>ค่าใช้จ่าย</span><span>-฿${z.opex.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:800;border-top:1px solid #000;padding-top:4px;margin-top:4px"><span>กำไรสุทธิ</span><span>฿${z.netProfit.toLocaleString()}</span></div>
+      <hr style="border:1px dashed #000;margin:8px 0"/>
+      <div style="font-weight:700;margin-bottom:6px">💼 ลิ้นชักเงินสด</div>
+      <div style="display:flex;justify-content:space-between"><span>เงินเปิดร้าน</span><span>฿${opening.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>+ ยอดขายเงินสด</span><span>+฿${z.cashSales.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700"><span>เงินที่ควรมี</span><span>฿${expected.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>เงินที่นับได้</span><span>฿${counted.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:800;border-top:2px solid #000;padding-top:4px;margin-top:4px"><span>ส่วนต่าง</span><span>${variance===0?'฿0':(variance>0?'+฿'+variance.toLocaleString():'-฿'+Math.abs(variance).toLocaleString())}</span></div>
+      <hr style="border:1px dashed #000;margin:8px 0"/>
+      <div style="text-align:center;font-size:11px;margin-top:10px">— END OF REPORT —</div>
+    </div>`;
+  setTimeout(()=>window.print(), 200);
 }
 
 /* ===== ACCOUNTING / P&L ===== */
