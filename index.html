@@ -455,15 +455,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
 
 /* ===== Sidebar Desktop Toggle ===== */
-.sidebar-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:none;border-radius:8px;cursor:pointer;color:var(--text-muted);font-size:20px;flex-shrink:0;transition:background .15s,color .15s}
-.sidebar-toggle:hover{background:var(--primary-light);color:var(--primary)}
-.sidebar-toggle .bi{transition:transform .3s ease}
+.sidebar-toggle{display:none;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(255,255,255,.12);border:none;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.85);font-size:16px;flex-shrink:0;margin-left:auto;transition:background .15s,color .15s}
+.sidebar-toggle:hover{background:rgba(255,255,255,.25);color:#fff}
+.sidebar-toggle .bi{transition:transform .28s ease}
 @media(min-width:1025px){
   .sidebar-toggle{display:flex}
-  .sidebar{transition:width .28s cubic-bezier(.4,0,.2,1)}
+  .sidebar{transition:width .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
   .main-wrap{transition:margin-left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1),max-width .28s cubic-bezier(.4,0,.2,1)}
   /* Collapsed sidebar — icon only */
-  body.sidebar-collapsed .sidebar{width:72px;overflow:hidden}
+  body.sidebar-collapsed .sidebar{width:72px}
+  body.sidebar-collapsed .sidebar-toggle{margin-left:0}
   body.sidebar-collapsed .sidebar-toggle .bi{transform:scaleX(-1)}
   body.sidebar-collapsed .main-wrap{margin-left:72px!important;width:calc(100vw - 72px)!important;max-width:calc(100vw - 72px)!important}
   body.sidebar-collapsed .sidebar-logo{justify-content:center;padding:18px 0;gap:0}
@@ -736,6 +737,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   <div class="sidebar-logo">
     <span class="logo-icon">🎣</span>
     <span class="logo-text">FishStock</span>
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebarDesktop()" title="ซ่อน/แสดงเมนู">
+      <i class="bi bi-chevron-left"></i>
+    </button>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-group-label">เมนูหลัก</div>
@@ -763,9 +767,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 <div class="main-wrap">
   <header class="topbar">
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebarDesktop()" title="ซ่อน/แสดงเมนู">
-      <i class="bi bi-layout-sidebar-reverse"></i>
-    </button>
     <div class="topbar-title" id="pageTitle">แดชบอร์ด</div>
     <div class="topbar-quicksearch">
       <span class="qs-icon">🔍</span>
