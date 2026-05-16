@@ -374,6 +374,20 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .cart-count-badge{background:rgba(255,255,255,.25);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700}
 .cart-clear-btn{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer}
 .cart-clear-btn:hover{background:rgba(255,255,255,.25)}
+.cart-park-list-btn{background:#f59e0b!important;color:#fff!important}
+.cart-park-list-btn:hover{background:#d97706!important}
+#parkBtn{background:rgba(245,158,11,.6)!important}
+#parkBtn:hover{background:rgba(245,158,11,.85)!important}
+.parked-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s,box-shadow .15s}
+.parked-card:hover{border-color:var(--orange);box-shadow:0 4px 12px rgba(245,158,11,.15)}
+.parked-card .pk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.parked-card .pk-label{font-weight:700;color:var(--text);font-size:14px}
+.parked-card .pk-time{font-size:11px;color:var(--text-muted)}
+.parked-card .pk-items{font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.parked-card .pk-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.parked-card .pk-stats{font-size:12px;color:var(--text-muted);font-weight:600}
+.parked-card .pk-stats strong{color:var(--primary);font-size:15px}
+.parked-card .pk-actions{display:flex;gap:6px}
 .cart-body{padding:12px 14px;min-height:240px;display:flex;flex-direction:column;flex-shrink:0;flex-grow:0}
 .cart-body>.cart-empty-modern{margin:auto}
 .cart-body>.cart-row-modern:first-child{margin-top:0}
@@ -1123,7 +1137,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
               <span>ตะกร้าสินค้า</span>
               <span class="cart-count-badge" id="cartCountBadge">0</span>
             </div>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <button class="cart-clear-btn cart-park-list-btn" onclick="openParkedSales()" id="parkedListBtn" style="display:none" title="ดูบิลที่พักไว้">
+                🅿️ <span id="parkedCountBadge">0</span>
+              </button>
+              <button class="cart-clear-btn" onclick="parkSale()" id="parkBtn" style="display:none" title="พักบิลนี้">🅿️ พัก</button>
               <button class="cart-clear-btn" onclick="clearCart()" id="clearCartBtn" style="display:none">ล้าง</button>
               <button class="cart-clear-btn cart-close-mobile" onclick="toggleMobileCart()" style="display:none">✕</button>
             </div>
@@ -1718,6 +1736,21 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <button type="submit" class="btn btn-primary">บันทึกสินค้า</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PARKED SALES MODAL -->
+<div class="modal fade" id="parkedSalesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">🅿️ บิลที่พักไว้ <span id="parkedModalCount" style="color:var(--text-muted);font-size:13px;font-weight:600"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="parkedSalesBody">
+        <div style="text-align:center;color:var(--text-muted);padding:40px">ยังไม่มีบิลที่พักไว้</div>
       </div>
     </div>
   </div>
@@ -2876,7 +2909,7 @@ function renderCart(scrollToNew=false){
       <div class="txt">ยังไม่มีสินค้า</div>
       <div class="sub">สแกนบาร์โค้ดหรือคลิกสินค้าด้านซ้าย</div>
     </div>`;
-    updateTotal(); return;
+    updateTotal(); updateParkBtns(); return;
   }
 
   // อัปเดต item ที่มีอยู่แล้ว in-place เพื่อไม่ให้ animation รีรันทุกครั้ง
@@ -2922,6 +2955,7 @@ function renderCart(scrollToNew=false){
     });
   }
   updateTotal();
+  updateParkBtns();
   saveState();
 }
 
@@ -3203,6 +3237,113 @@ function renderSalesTable(){
   if(labelEl) labelEl.textContent = labelText;
 }
 
+/* ===== PARK SALE (พักบิล) ===== */
+let parkedSales = []; // {id, label, items[], discount, parkedAt, payMethod}
+
+function parkSale(){
+  if(!cart.length){ showToast('⚠️ ตะกร้าว่างเปล่า'); return; }
+  const label = prompt('ตั้งชื่อบิล (เช่น "ลูกค้าใส่หมวกแดง" หรือเว้นว่างไว้):', '');
+  if(label === null) return; // user cancelled
+  const disc = +document.getElementById('discount')?.value || 0;
+  const total = cart.reduce((s,c)=>s+c.price*c.qty, 0);
+  parkedSales.unshift({
+    id: Date.now(),
+    label: label.trim() || `บิล #${parkedSales.length+1}`,
+    items: cart.map(c=>({...c})),
+    discount: disc,
+    total,
+    parkedAt: new Date().toISOString(),
+    payMethod: selectedPay
+  });
+  cart = [];
+  document.getElementById('discount').value = '';
+  document.getElementById('cashReceived').value = '';
+  renderCart();
+  updateTotal();
+  updateParkBtns();
+  saveState();
+  showToast(`🅿️ พักบิลเรียบร้อย (${parkedSales.length} บิลในระบบ)`);
+}
+
+function openParkedSales(){
+  renderParkedSalesModal();
+  openModal('parkedSalesModal');
+}
+
+function renderParkedSalesModal(){
+  const body = document.getElementById('parkedSalesBody');
+  const cnt  = document.getElementById('parkedModalCount');
+  if(cnt) cnt.textContent = parkedSales.length ? `(${parkedSales.length})` : '';
+  if(!parkedSales.length){
+    body.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px"><div style="font-size:40px;margin-bottom:10px">🅿️</div>ยังไม่มีบิลที่พักไว้</div>';
+    return;
+  }
+  body.innerHTML = parkedSales.map(p=>{
+    const itemCount = p.items.reduce((s,i)=>s+i.qty,0);
+    const itemsTxt = p.items.map(i=>`${i.name} ×${i.qty}`).join(' · ');
+    const net = Math.max(0, p.total - (p.discount||0));
+    const t = new Date(p.parkedAt).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="parked-card">
+      <div class="pk-head">
+        <div>
+          <div class="pk-label">🏷️ ${p.label}</div>
+          <div class="pk-time">⏰ พักไว้: ${t}</div>
+        </div>
+        <button class="btn-del" onclick="deleteParkedSale(${p.id})" title="ยกเลิกบิล">🗑️</button>
+      </div>
+      <div class="pk-items">📦 ${itemsTxt}</div>
+      <div class="pk-summary">
+        <div class="pk-stats">${itemCount} ชิ้น · <strong>฿${net.toLocaleString()}</strong></div>
+        <div class="pk-actions">
+          <button class="btn btn-primary btn-sm" onclick="resumeParkedSale(${p.id})">▶ ดำเนินการต่อ</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function resumeParkedSale(id){
+  const idx = parkedSales.findIndex(p=>p.id===id);
+  if(idx<0) return;
+  if(cart.length && !confirm('ตะกร้าปัจจุบันยังมีของอยู่ — แทนที่ด้วยบิลที่พักไว้?')) return;
+  const p = parkedSales[idx];
+  cart = p.items.map(c=>({...c}));
+  document.getElementById('discount').value = p.discount || '';
+  if(p.payMethod){
+    selectedPay = p.payMethod;
+    document.querySelectorAll('.pay-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.method === p.payMethod);
+    });
+  }
+  parkedSales.splice(idx, 1);
+  renderCart();
+  updateTotal();
+  updateParkBtns();
+  saveState();
+  closeModal('parkedSalesModal');
+  showToast(`▶ ดำเนินการต่อ: ${p.label}`);
+}
+
+function deleteParkedSale(id){
+  const p = parkedSales.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`ยกเลิกบิล "${p.label}"?`)) return;
+  parkedSales = parkedSales.filter(x=>x.id!==id);
+  renderParkedSalesModal();
+  updateParkBtns();
+  saveState();
+  showToast('🗑️ ยกเลิกบิลเรียบร้อย');
+}
+
+function updateParkBtns(){
+  const parkBtn = document.getElementById('parkBtn');
+  const parkedListBtn = document.getElementById('parkedListBtn');
+  const badge = document.getElementById('parkedCountBadge');
+  if(parkBtn) parkBtn.style.display = cart.length ? 'inline-block' : 'none';
+  if(parkedListBtn) parkedListBtn.style.display = parkedSales.length ? 'inline-block' : 'none';
+  if(badge) badge.textContent = parkedSales.length;
+}
+
 /* ===== PERSISTENCE (localStorage) ===== */
 const STORAGE_KEY = 'fishstock-data-v1';
 let _saveTimer = null;
@@ -3216,7 +3357,7 @@ function saveState(){
         savedAt: new Date().toISOString(),
         products, suppliers, expenses,
         salesHistory, stockHistory, stockCountHistory, zReports,
-        cart
+        cart, parkedSales
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch(e){
@@ -3243,6 +3384,7 @@ function loadState(){
     if(Array.isArray(d.stockCountHistory)) stockCountHistory = d.stockCountHistory;
     if(Array.isArray(d.zReports))          zReports = d.zReports;
     if(Array.isArray(d.cart))              { cart.length=0; d.cart.forEach(x=>cart.push(x)); }
+    if(Array.isArray(d.parkedSales))       parkedSales = d.parkedSales;
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -3317,6 +3459,7 @@ function clearAllData(){
   suppliers = [];
   stockCountHistory = [];
   zReports = [];
+  parkedSales = [];
   cart = [];
   refreshAllViews();
   showToast('🗑️ ล้างข้อมูลทั้งหมดเรียบร้อย');
