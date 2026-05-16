@@ -311,7 +311,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .pos-card-modern.disabled{opacity:.5;pointer-events:none}
 
 /* === Modern Cart Panel === */
-.cart-panel{background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow-y:auto;overflow-x:hidden;position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;max-height:calc(100vh - var(--topbar-h) - 36px)}
+.cart-panel{background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow-y:auto;overflow-x:hidden;position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 36px);max-height:calc(100vh - var(--topbar-h) - 36px);scrollbar-gutter:stable}
+.cart-panel::-webkit-scrollbar{width:10px}
+.cart-panel::-webkit-scrollbar-track{background:#f1f5f9;border-radius:99px}
+.cart-panel::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:99px;border:2px solid #f1f5f9}
+.cart-panel::-webkit-scrollbar-thumb:hover{background:#64748b}
 .cart-panel .cart-panel-header{position:sticky;top:0;z-index:2}
 .cart-panel-header{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .cart-panel-title{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
@@ -387,7 +391,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
 @media(max-width:1100px){
   .pos-layout{grid-template-columns:1fr}
-  .cart-panel{position:relative;top:0;max-height:none}
+  .cart-panel{position:relative;top:0;height:auto;max-height:none}
   .pos-grid-modern{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:767px){
@@ -605,7 +609,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     position:sticky!important;
     top:calc(var(--topbar-h) + 14px)!important;
     left:auto!important;right:auto!important;bottom:auto!important;
-    height:auto!important;
+    height:calc(100vh - var(--topbar-h) - 28px)!important;
     max-height:calc(100vh - var(--topbar-h) - 28px)!important;
     border-radius:14px!important;
     transition:none!important;
