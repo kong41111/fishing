@@ -826,6 +826,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a class="nav-item" data-page="sales"><i class="nav-icon bi bi-cart3"></i><span>การขาย (POS)</span></a>
     <div class="nav-group-label">รายงาน</div>
     <a class="nav-item" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
+    <a class="nav-item" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
     <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
     <div class="nav-group-label">ตั้งค่า</div>
     <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
@@ -1294,13 +1295,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           </table>
         </div>
       </div>
+    </section>
 
-      <!-- ประวัติการนับสต็อก -->
-      <div class="card" style="margin-top:16px">
-        <div class="card-header">
-          <span class="card-title">📚 ประวัติการนับสต็อก</span>
+    <!-- STOCK COUNT HISTORY REPORT -->
+    <section class="page" id="page-scHistoryReport">
+      <div class="card" style="padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:700">📚 ประวัติการนับสต็อกทั้งหมด</span>
           <span id="scHistCount" style="font-size:12px;color:var(--text-muted);font-weight:600"></span>
         </div>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">🔢</div><div><div class="kpi-value" id="scrTotalSessions">0</div><div class="kpi-label">จำนวนครั้งที่นับ</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">✅</div><div><div class="kpi-value" id="scrTotalMatch">0</div><div class="kpi-label">รายการที่ตรง (รวม)</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value" id="scrTotalAdjust">0</div><div class="kpi-label">รายการที่ปรับ (รวม)</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">📅</div><div><div class="kpi-value" id="scrLastSession" style="font-size:14px">—</div><div class="kpi-label">นับครั้งล่าสุด</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">📋 รายการการนับทั้งหมด</span></div>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
@@ -1895,7 +1910,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -3058,6 +3073,17 @@ function renderScHistory(){
   const cnt = document.getElementById('scHistCount');
   if(!tbody) return;
   if(cnt) cnt.textContent = stockCountHistory.length ? `(${stockCountHistory.length} ครั้ง)` : '';
+
+  // KPI summary
+  const totalMatch  = stockCountHistory.reduce((s,x)=>s+(x.matchCount||0),0);
+  const totalAdjust = stockCountHistory.reduce((s,x)=>s+(x.adjustedCount||0),0);
+  const last = stockCountHistory[0];
+  const lastTxt = last ? new Date(last.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+  const elTotal = document.getElementById('scrTotalSessions');  if(elTotal) elTotal.textContent = stockCountHistory.length;
+  const elM = document.getElementById('scrTotalMatch');         if(elM) elM.textContent = totalMatch;
+  const elA = document.getElementById('scrTotalAdjust');        if(elA) elA.textContent = totalAdjust;
+  const elL = document.getElementById('scrLastSession');        if(elL) elL.textContent = lastTxt;
+
   if(!stockCountHistory.length){
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีประวัติการนับสต็อก</td></tr>';
     return;
