@@ -240,6 +240,31 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+/* ===== STOCK COUNT PAGE ===== */
+.sc-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.sc-status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700}
+.sc-status.idle{background:#f1f5f9;color:var(--text-muted)}
+.sc-status.counting{background:#fef3c7;color:#92400e}
+.sc-status.done{background:#d1fae5;color:#065f46}
+.sc-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.sc-sum-card{background:#fff;border-radius:10px;padding:14px 16px;text-align:center;box-shadow:var(--shadow)}
+.sc-sum-val{font-size:22px;font-weight:800;line-height:1.1}
+.sc-sum-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+.sc-table-wrap{overflow-x:auto}
+.sc-table{width:100%;border-collapse:collapse;font-size:13px}
+.sc-table th{background:#f8fafc;color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.sc-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.sc-table tr:hover td{background:#f8fafc}
+.sc-input{width:80px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;text-align:center;font-family:inherit}
+.sc-input:focus{outline:none;border-color:var(--primary)}
+.sc-input.match{border-color:var(--green);background:#f0fdf4}
+.sc-input.over{border-color:var(--orange);background:#fffbeb}
+.sc-input.under{border-color:var(--red);background:#fef2f2}
+.sc-diff{font-weight:700;font-size:13px}
+.sc-diff.match{color:var(--green)}
+.sc-diff.over{color:var(--orange)}
+.sc-diff.under{color:var(--red)}
+.sc-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;background:#e0f2fe;flex-shrink:0}
 /* ===== MODERN POS PAGE ===== */
 .pos-layout{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:flex-start}
 .pos-left{display:flex;flex-direction:column;gap:14px}
@@ -771,6 +796,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>แดชบอร์ด</span></a>
     <a class="nav-item" data-page="products"><span class="nav-icon">📦</span><span>สินค้า</span></a>
     <a class="nav-item" data-page="stock"><span class="nav-icon">🏭</span><span>รับ/จ่ายสินค้า</span></a>
+    <a class="nav-item" data-page="stockcount"><span class="nav-icon">🔢</span><span>นับสต็อก</span></a>
     <a class="nav-item" data-page="sales"><span class="nav-icon">🛒</span><span>การขาย (POS)</span></a>
     <div class="nav-group-label">รายงาน</div>
     <a class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span>รายงานสรุป</span></a>
@@ -1150,6 +1176,47 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <div class="s-stat"><div class="s-val">฿43K</div><div class="s-lbl">ยอดรวม</div></div>
         </div>
         <div class="supplier-actions"><button class="btn btn-outline-primary">ดูประวัติ</button><button class="btn btn-primary">สั่งซื้อ</button></div>
+      </div>
+    </section>
+
+    <!-- STOCK COUNT -->
+    <section class="page" id="page-stockcount">
+      <!-- Header & actions -->
+      <div class="sc-header">
+        <span class="sc-status idle" id="scStatus">⏸ ยังไม่เริ่มนับ</span>
+        <button class="btn btn-primary" id="scStartBtn" onclick="scStart()">🔢 เริ่มนับสต็อก</button>
+        <button class="btn btn-success" id="scConfirmBtn" onclick="scConfirm()" style="display:none">✅ ยืนยันปรับสต็อก</button>
+        <button class="btn btn-outline-primary" id="scResetBtn" onclick="scReset()" style="display:none">🔄 เริ่มใหม่</button>
+        <div style="flex:1"></div>
+        <div style="font-size:12px;color:var(--text-muted)" id="scLastDate"></div>
+      </div>
+      <!-- Summary cards -->
+      <div class="sc-summary" id="scSummary" style="display:none">
+        <div class="sc-sum-card"><div class="sc-sum-val" id="scTotalItems">0</div><div class="sc-sum-lbl">สินค้าทั้งหมด</div></div>
+        <div class="sc-sum-card"><div class="sc-sum-val" style="color:var(--green)" id="scMatchItems">0</div><div class="sc-sum-lbl">✅ ตรงกัน</div></div>
+        <div class="sc-sum-card"><div class="sc-sum-val" style="color:var(--red)" id="scUnderItems">0</div><div class="sc-sum-lbl">📉 น้อยกว่าระบบ</div></div>
+        <div class="sc-sum-card"><div class="sc-sum-val" style="color:var(--orange)" id="scOverItems">0</div><div class="sc-sum-lbl">📈 มากกว่าระบบ</div></div>
+      </div>
+      <!-- Count table -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="sc-table-wrap">
+          <table class="sc-table">
+            <thead>
+              <tr>
+                <th style="width:44px"></th>
+                <th>สินค้า</th>
+                <th>รหัส</th>
+                <th>หมวด</th>
+                <th style="text-align:center">สต็อกในระบบ</th>
+                <th style="text-align:center">นับได้จริง</th>
+                <th style="text-align:center">ส่วนต่าง</th>
+              </tr>
+            </thead>
+            <tbody id="scTableBody">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1691,7 +1758,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'จัดการสินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -2457,6 +2524,114 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== STOCK COUNT ===== */
+let scCounts = {};   // {code: number|null}
+let scActive = false;
+
+function scStart(){
+  scCounts = {};
+  products.forEach(p => { scCounts[p.code] = null; });
+  scActive = true;
+  document.getElementById('scStatus').textContent = '🔢 กำลังนับ...';
+  document.getElementById('scStatus').className = 'sc-status counting';
+  document.getElementById('scStartBtn').style.display = 'none';
+  document.getElementById('scConfirmBtn').style.display = '';
+  document.getElementById('scResetBtn').style.display = '';
+  document.getElementById('scSummary').style.display = 'grid';
+  scRenderTable();
+  scUpdateSummary();
+}
+
+function scReset(){
+  if(!confirm('ล้างข้อมูลการนับทั้งหมด?')) return;
+  scCounts = {};
+  scActive = false;
+  document.getElementById('scStatus').textContent = '⏸ ยังไม่เริ่มนับ';
+  document.getElementById('scStatus').className = 'sc-status idle';
+  document.getElementById('scStartBtn').style.display = '';
+  document.getElementById('scConfirmBtn').style.display = 'none';
+  document.getElementById('scResetBtn').style.display = 'none';
+  document.getElementById('scSummary').style.display = 'none';
+  document.getElementById('scTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>';
+}
+
+function scRenderTable(){
+  const tbody = document.getElementById('scTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = products.map(p => {
+    const counted = scCounts[p.code];
+    const diff = counted !== null && counted !== '' ? counted - p.qty : null;
+    const cls = diff === null ? '' : diff === 0 ? 'match' : diff > 0 ? 'over' : 'under';
+    const diffTxt = diff === null ? '—' : diff === 0 ? '✅ ตรงกัน' : diff > 0 ? `+${diff}` : `${diff}`;
+    return `<tr>
+      <td><img class="sc-thumb" src="${p.img||''}" onerror="this.src=''" /></td>
+      <td style="font-weight:600;max-width:200px">${p.name}</td>
+      <td style="color:var(--text-muted);font-size:12px">${p.code}</td>
+      <td><span class="status status-done" style="font-size:11px">${p.cat}</span></td>
+      <td style="text-align:center;font-weight:700;font-size:15px">${p.qty}</td>
+      <td style="text-align:center">
+        <input type="number" min="0" class="sc-input ${cls}"
+          value="${counted !== null ? counted : ''}" placeholder="—"
+          onchange="scSetCount('${p.code}',this.value)"
+          oninput="scSetCount('${p.code}',this.value)" />
+      </td>
+      <td style="text-align:center"><span class="sc-diff ${cls}">${diffTxt}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function scSetCount(code, val){
+  scCounts[code] = val === '' ? null : +val;
+  scUpdateSummary();
+  // Update diff cell live without re-rendering whole table
+  const inputs = document.querySelectorAll('#scTableBody .sc-input');
+  inputs.forEach(inp => {
+    const row = inp.closest('tr');
+    const p = products.find(x => x.code === code);
+    if(!p) return;
+    // find matching row by checking if this input is the changed one
+    if(inp.dataset && inp.onchange) return;
+  });
+  // Re-render just for diff update
+  scRenderTable();
+}
+
+function scUpdateSummary(){
+  const counted = Object.entries(scCounts).filter(([,v]) => v !== null && v !== '');
+  const total = products.length;
+  const match = counted.filter(([code,v]) => { const p=products.find(x=>x.code===code); return p && +v===p.qty; }).length;
+  const under = counted.filter(([code,v]) => { const p=products.find(x=>x.code===code); return p && +v<p.qty; }).length;
+  const over  = counted.filter(([code,v]) => { const p=products.find(x=>x.code===code); return p && +v>p.qty; }).length;
+  document.getElementById('scTotalItems').textContent = total;
+  document.getElementById('scMatchItems').textContent = match;
+  document.getElementById('scUnderItems').textContent = under;
+  document.getElementById('scOverItems').textContent  = over;
+}
+
+function scConfirm(){
+  const toUpdate = Object.entries(scCounts).filter(([,v]) => v !== null && v !== '');
+  if(!toUpdate.length){ showToast('⚠️ ยังไม่ได้กรอกจำนวนที่นับ'); return; }
+  const diffItems = toUpdate.filter(([code,v]) => { const p=products.find(x=>x.code===code); return p && +v!==p.qty; });
+  if(!confirm(`ปรับสต็อก ${diffItems.length} รายการที่มีส่วนต่าง ใช่หรือไม่?`)) return;
+  const today = new Date().toISOString().slice(0,10);
+  toUpdate.forEach(([code, val])=>{
+    const p = products.find(x=>x.code===code);
+    if(!p) return;
+    const diff = +val - p.qty;
+    if(diff === 0) return;
+    stockHistory.unshift({ date:today, code, name:p.name, type: diff>0?'in':'out', qty:diff, after:+val, note:`ปรับจากการนับสต็อก (ระบบ: ${p.qty}, นับได้: ${+val})` });
+    p.qty = +val;
+  });
+  refreshAllViews();
+  const dateStr = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('scLastDate').textContent = `นับล่าสุด: ${dateStr}`;
+  document.getElementById('scStatus').textContent = '✅ นับเสร็จแล้ว';
+  document.getElementById('scStatus').className = 'sc-status done';
+  document.getElementById('scConfirmBtn').style.display = 'none';
+  showToast(`✅ ปรับสต็อก ${diffItems.length} รายการเรียบร้อย`);
+  scRenderTable();
 }
 
 /* ===== BARCODE SYSTEM ===== */
