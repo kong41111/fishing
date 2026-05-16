@@ -820,7 +820,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
   <nav class="sidebar-nav">
     <div class="nav-group-label">เมนูหลัก</div>
     <a class="nav-item active" data-page="dashboard"><i class="nav-icon bi bi-speedometer2"></i><span>แดชบอร์ด</span></a>
-    <a class="nav-item" data-page="products"><i class="nav-icon bi bi-box-seam"></i><span>คลังสินค้า</span></a>
+    <a class="nav-item" data-page="products"><i class="nav-icon bi bi-box-seam"></i><span>สินค้า</span></a>
     <a class="nav-item" data-page="stock"><i class="nav-icon bi bi-arrow-left-right"></i><span>รับ/จ่ายสินค้า</span></a>
     <a class="nav-item" data-page="stockcount"><i class="nav-icon bi bi-clipboard-check"></i><span>นับสต็อก</span></a>
     <a class="nav-item" data-page="sales"><i class="nav-icon bi bi-cart3"></i><span>การขาย (POS)</span></a>
@@ -1511,7 +1511,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <i class="mobile-nav-icon bi bi-speedometer2"></i><span class="mobile-nav-label">หน้าหลัก</span>
     </a>
     <a class="mobile-nav-item" data-page="products" onclick="navMobile('products',this)">
-      <i class="mobile-nav-icon bi bi-box-seam"></i><span class="mobile-nav-label">คลัง</span>
+      <i class="mobile-nav-icon bi bi-box-seam"></i><span class="mobile-nav-label">สินค้า</span>
     </a>
     <a class="mobile-nav-item" data-page="sales" onclick="navMobile('sales',this)">
       <i class="mobile-nav-icon bi bi-cart3"></i><span class="mobile-nav-label">ขาย</span>
@@ -1835,7 +1835,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'คลังสินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
