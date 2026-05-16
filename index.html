@@ -107,6 +107,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .row-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .chart-wrap{height:220px;position:relative}
 .sales-range-group{display:flex;gap:4px}
+/* Report filter */
+.rf-mode{display:flex;gap:6px;flex-wrap:wrap}
+.rf-mode-btn{padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .15s;font-family:inherit;white-space:nowrap}
+.rf-mode-btn:hover{border-color:var(--primary);color:var(--primary)}
+.rf-mode-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.rf-inputs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.rf-inputs label{font-size:13px;font-weight:600;color:var(--text);display:inline-flex;align-items:center;gap:6px}
 .sales-range-btn{padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .15s;font-family:inherit}
 .sales-range-btn:hover{border-color:var(--primary);color:var(--primary)}
 .sales-range-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -1109,33 +1116,71 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
     <!-- REPORTS -->
     <section class="page" id="page-reports">
-      <div class="kpi-grid">
-        <div class="kpi-card kpi-blue"><div class="kpi-icon">📅</div><div><div class="kpi-value">฿12,850</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
-        <div class="kpi-card kpi-green"><div class="kpi-icon">📆</div><div><div class="kpi-value">฿67,420</div><div class="kpi-label">ยอดขายเดือนนี้</div></div></div>
-        <div class="kpi-card kpi-teal"><div class="kpi-icon">💹</div><div><div class="kpi-value">฿24,180</div><div class="kpi-label">กำไรเดือนนี้</div></div></div>
-        <div class="kpi-card kpi-orange"><div class="kpi-icon">🏆</div><div><div class="kpi-value" style="font-size:16px">รอก Shimano</div><div class="kpi-label">สินค้าขายดีที่สุด</div></div></div>
+      <!-- Date filter -->
+      <div class="card" style="padding:14px 16px;margin-bottom:16px">
+        <div class="rf-mode">
+          <button class="rf-mode-btn active" data-mode="today" onclick="setReportMode('today',this)">📅 วันนี้</button>
+          <button class="rf-mode-btn" data-mode="yesterday" onclick="setReportMode('yesterday',this)">🕐 เมื่อวาน</button>
+          <button class="rf-mode-btn" data-mode="7d" onclick="setReportMode('7d',this)">7 วัน</button>
+          <button class="rf-mode-btn" data-mode="month" onclick="setReportMode('month',this)">เดือนนี้</button>
+          <button class="rf-mode-btn" data-mode="day" onclick="setReportMode('day',this)">🗓 ระบุวัน</button>
+          <button class="rf-mode-btn" data-mode="range" onclick="setReportMode('range',this)">📆 ช่วงวัน</button>
+          <button class="rf-mode-btn" data-mode="all" onclick="setReportMode('all',this)">ทั้งหมด</button>
+        </div>
+        <div class="rf-inputs" id="rfSingleDate" style="display:none">
+          <label>วันที่: <input type="date" id="rfDay" class="form-control" style="width:auto;display:inline-block" onchange="renderReports()" /></label>
+        </div>
+        <div class="rf-inputs" id="rfRangeDates" style="display:none">
+          <label>ตั้งแต่: <input type="date" id="rfFrom" class="form-control" style="width:auto;display:inline-block" onchange="renderReports()" /></label>
+          <label>ถึง: <input type="date" id="rfTo" class="form-control" style="width:auto;display:inline-block" onchange="renderReports()" /></label>
+        </div>
+        <div id="rfSummaryLabel" style="margin-top:10px;font-size:12px;color:var(--text-muted)"></div>
       </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">💰</div><div><div class="kpi-value" id="rTotalSales">฿0</div><div class="kpi-label">ยอดขายรวม</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">🧾</div><div><div class="kpi-value" id="rBillCount">0</div><div class="kpi-label">จำนวนบิล</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">📊</div><div><div class="kpi-value" id="rAvgBill">฿0</div><div class="kpi-label">เฉลี่ย/บิล</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">💹</div><div><div class="kpi-value" id="rTotalProfit">฿0</div><div class="kpi-label">กำไรรวม</div></div></div>
+      </div>
+
+      <!-- Charts row -->
       <div class="row-2col">
         <div class="card">
           <div class="card-header"><span class="card-title">🏆 สินค้าขายดี 5 อันดับ</span></div>
-          <div class="top-products">
-            <div class="top-item"><span class="rank rank-1">1</span><div class="top-name">รอก Shimano Sienna</div><div class="top-bar-wrap"><div class="top-bar" style="width:90%"></div></div><span class="top-val">฿18,060</span></div>
-            <div class="top-item"><span class="rank rank-2">2</span><div class="top-name">คันตกปลา Okuma 6ft</div><div class="top-bar-wrap"><div class="top-bar" style="width:72%"></div></div><span class="top-val">฿14,400</span></div>
-            <div class="top-item"><span class="rank rank-3">3</span><div class="top-name">สายเอ็น 0.4mm</div><div class="top-bar-wrap"><div class="top-bar" style="width:55%"></div></div><span class="top-val">฿11,000</span></div>
-            <div class="top-item"><span class="rank">4</span><div class="top-name">เหยื่อปลอม สีแดง</div><div class="top-bar-wrap"><div class="top-bar" style="width:38%"></div></div><span class="top-val">฿7,600</span></div>
-            <div class="top-item"><span class="rank">5</span><div class="top-name">เบ็ดตกปลา #6</div><div class="top-bar-wrap"><div class="top-bar" style="width:25%"></div></div><span class="top-val">฿5,000</span></div>
+          <div class="top-products" id="topProductsList">
+            <div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</div>
           </div>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">📊 ยอดขายรายหมวดหมู่</span></div>
-          <div class="cat-stats">
-            <div class="cat-row"><span class="cat-name">🎣 รอก</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:85%;background:#3b82f6"></div></div><span>35%</span></div>
-            <div class="cat-row"><span class="cat-name">🪝 คัน</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:60%;background:#10b981"></div></div><span>25%</span></div>
-            <div class="cat-row"><span class="cat-name">🧵 สาย</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:45%;background:#f59e0b"></div></div><span>18%</span></div>
-            <div class="cat-row"><span class="cat-name">🐛 เหยื่อ</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:30%;background:#8b5cf6"></div></div><span>12%</span></div>
-            <div class="cat-row"><span class="cat-name">📌 เบ็ด</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:20%;background:#ec4899"></div></div><span>8%</span></div>
-            <div class="cat-row"><span class="cat-name">🎒 อื่นๆ</span><div class="cat-bar-wrap"><div class="cat-bar" style="width:8%;background:#6b7280"></div></div><span>2%</span></div>
+          <div class="cat-stats" id="catBreakdown">
+            <div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีข้อมูล</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Sales transactions -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">📋 รายการขาย</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>วันที่/เวลา</th>
+                <th>เลขบิล</th>
+                <th>จำนวน</th>
+                <th>วิธีชำระ</th>
+                <th style="text-align:right">ยอดรวม</th>
+                <th style="text-align:right">ส่วนลด</th>
+                <th style="text-align:right">ยอดสุทธิ</th>
+              </tr>
+            </thead>
+            <tbody id="salesTransactionsBody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1763,6 +1808,7 @@ function refreshAllViews(){
   renderCatModern();
   renderProducts();
   renderStockPage();
+  renderReports();
   // dashboard stats
   const stats = todaySalesStats();
   document.querySelectorAll('[data-stat="today-total"]').forEach(el=>el.textContent='฿'+stats.total.toLocaleString());
@@ -2567,6 +2613,156 @@ function renderSalesTable(){
 
   if(totalEl) totalEl.textContent = '฿'+total.toLocaleString();
   if(labelEl) labelEl.textContent = labelText;
+}
+
+/* ===== REPORTS ===== */
+let reportMode = 'today';
+function setReportMode(mode, btn){
+  reportMode = mode;
+  document.querySelectorAll('.rf-mode-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('rfSingleDate').style.display = mode==='day' ? 'flex' : 'none';
+  document.getElementById('rfRangeDates').style.display = mode==='range' ? 'flex' : 'none';
+  // default date to today if empty
+  const today = new Date().toISOString().slice(0,10);
+  if(mode==='day' && !document.getElementById('rfDay').value) document.getElementById('rfDay').value = today;
+  if(mode==='range'){
+    if(!document.getElementById('rfFrom').value) document.getElementById('rfFrom').value = today;
+    if(!document.getElementById('rfTo').value)   document.getElementById('rfTo').value   = today;
+  }
+  renderReports();
+}
+
+function getFilteredSales(){
+  const all = salesHistory.slice();
+  if(reportMode==='all') return all;
+  const now = new Date();
+  if(reportMode==='today'){
+    const t = now.toDateString();
+    return all.filter(s=>new Date(s.date).toDateString()===t);
+  }
+  if(reportMode==='yesterday'){
+    const y = new Date(now); y.setDate(y.getDate()-1);
+    const yStr = y.toDateString();
+    return all.filter(s=>new Date(s.date).toDateString()===yStr);
+  }
+  if(reportMode==='7d'){
+    const cutoff = new Date(now); cutoff.setDate(cutoff.getDate()-7);
+    return all.filter(s=>new Date(s.date)>=cutoff);
+  }
+  if(reportMode==='month'){
+    return all.filter(s=>{
+      const d = new Date(s.date);
+      return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    });
+  }
+  if(reportMode==='day'){
+    const day = document.getElementById('rfDay')?.value;
+    if(!day) return [];
+    return all.filter(s=>new Date(s.date).toISOString().slice(0,10)===day);
+  }
+  if(reportMode==='range'){
+    const from = document.getElementById('rfFrom')?.value;
+    const to   = document.getElementById('rfTo')?.value;
+    return all.filter(s=>{
+      const d = new Date(s.date).toISOString().slice(0,10);
+      return (!from || d>=from) && (!to || d<=to);
+    });
+  }
+  return all;
+}
+
+function formatReportLabel(){
+  const fmt = (d)=> new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+  if(reportMode==='today')     return 'ช่วง: วันนี้ ('+fmt(new Date())+')';
+  if(reportMode==='yesterday'){const y=new Date();y.setDate(y.getDate()-1);return 'ช่วง: เมื่อวาน ('+fmt(y)+')';}
+  if(reportMode==='7d')        return 'ช่วง: 7 วันที่ผ่านมา';
+  if(reportMode==='month')     return 'ช่วง: เดือนนี้';
+  if(reportMode==='day'){const d=document.getElementById('rfDay')?.value;return d?'ช่วง: '+fmt(d):'กรุณาเลือกวัน';}
+  if(reportMode==='range'){const f=document.getElementById('rfFrom')?.value;const t=document.getElementById('rfTo')?.value;return 'ช่วง: '+(f?fmt(f):'-')+' ถึง '+(t?fmt(t):'-');}
+  return 'ช่วง: ทั้งหมด';
+}
+
+function renderReports(){
+  if(!document.getElementById('rTotalSales')) return; // not loaded yet
+  const sales = getFilteredSales();
+  document.getElementById('rfSummaryLabel').textContent = formatReportLabel()+' • พบ '+sales.length+' บิล';
+
+  // KPIs
+  const totalNet = sales.reduce((s,b)=>s+(+b.net||0),0);
+  const billCount = sales.length;
+  const avg = billCount?Math.round(totalNet/billCount):0;
+  let profit = 0;
+  sales.forEach(b=>{
+    b.items.forEach(it=>{
+      const prod = products.find(p=>p.code===it.code);
+      const cost = prod?(+prod.cost||0):0;
+      profit += ((+it.price||0)-cost)*it.qty;
+    });
+  });
+  // adjust profit by discount (subtract discount from profit since revenue lowered)
+  profit -= sales.reduce((s,b)=>s+(+b.discount||0),0);
+
+  document.getElementById('rTotalSales').textContent = '฿'+totalNet.toLocaleString();
+  document.getElementById('rBillCount').textContent = billCount;
+  document.getElementById('rAvgBill').textContent  = '฿'+avg.toLocaleString();
+  document.getElementById('rTotalProfit').textContent = '฿'+profit.toLocaleString();
+
+  // Top products
+  const prodAgg = {};
+  sales.forEach(b=>b.items.forEach(it=>{
+    if(!prodAgg[it.code]) prodAgg[it.code] = {name:it.name,qty:0,total:0};
+    prodAgg[it.code].qty += it.qty;
+    prodAgg[it.code].total += (+it.price||0)*it.qty;
+  }));
+  const top = Object.values(prodAgg).sort((a,b)=>b.total-a.total).slice(0,5);
+  const maxVal = top[0]?.total||1;
+  document.getElementById('topProductsList').innerHTML = top.length ? top.map((p,i)=>`
+    <div class="top-item">
+      <span class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</span>
+      <div class="top-name">${p.name}</div>
+      <div class="top-bar-wrap"><div class="top-bar" style="width:${p.total/maxVal*100}%"></div></div>
+      <span class="top-val">฿${p.total.toLocaleString()}</span>
+    </div>`).join('') : '<div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</div>';
+
+  // Category breakdown
+  const catAgg = {};
+  let catTotal = 0;
+  sales.forEach(b=>b.items.forEach(it=>{
+    const prod = products.find(p=>p.code===it.code);
+    const cat = prod?prod.cat:'อื่นๆ';
+    const v = (+it.price||0)*it.qty;
+    catAgg[cat] = (catAgg[cat]||0)+v;
+    catTotal += v;
+  }));
+  const cats = Object.entries(catAgg).sort((a,b)=>b[1]-a[1]);
+  const colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#6b7280'];
+  document.getElementById('catBreakdown').innerHTML = cats.length ? cats.map(([cat,total],i)=>{
+    const pct = catTotal?Math.round(total/catTotal*100):0;
+    const icon = CAT_ICONS[cat]||'📦';
+    return `<div class="cat-row">
+      <span class="cat-name">${icon} ${cat}</span>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div>
+      <span>${pct}%</span>
+    </div>`;
+  }).join('') : '<div style="padding:30px;text-align:center;color:var(--text-muted)">ยังไม่มีข้อมูล</div>';
+
+  // Transactions table
+  const sorted = sales.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('salesTransactionsBody').innerHTML = sorted.length ? sorted.map(b=>{
+    const d = new Date(b.date).toLocaleString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const pay = {cash:'💵 เงินสด',qr:'📱 QR Code',card:'💳 บัตร'}[b.payMethod]||b.payMethod;
+    const itemCount = b.items.reduce((s,i)=>s+i.qty,0);
+    return `<tr>
+      <td style="font-size:12px">${d}</td>
+      <td><span class="badge bg-primary">${b.billNo}</span></td>
+      <td>${itemCount} ชิ้น</td>
+      <td>${pay}</td>
+      <td style="text-align:right">฿${(+b.total||0).toLocaleString()}</td>
+      <td style="text-align:right;color:var(--red)">${b.discount?'-฿'+(+b.discount).toLocaleString():'—'}</td>
+      <td style="text-align:right;font-weight:700;color:var(--primary)">฿${(+b.net||0).toLocaleString()}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
 }
 
 /* ===== STOCK COUNT ===== */
