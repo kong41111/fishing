@@ -377,11 +377,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .cash-quick-exact{background:#e0f2fe!important;color:var(--primary)!important;border-color:var(--primary)!important}
 .cash-received-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:nowrap}
 .cash-received-row label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap}
-.cash-exact-btn{background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:transform .12s,box-shadow .12s;box-shadow:0 2px 6px rgba(3,105,161,.25);white-space:nowrap;flex-shrink:0}
-.cash-exact-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(3,105,161,.35)}
-.cash-exact-btn:active{transform:translateY(0)}
-.cash-received-input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-weight:800;text-align:right;font-family:inherit;transition:border-color .15s;color:var(--text)}
-.cash-received-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.cash-input-group{display:flex;flex:1;align-items:stretch;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;transition:border-color .15s,box-shadow .15s;min-height:38px}
+.cash-input-group:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.cash-exact-btn{background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:0;padding:0 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:filter .12s;white-space:nowrap;flex-shrink:0;margin:3px 3px 3px 0;border-radius:6px}
+.cash-exact-btn:hover{filter:brightness(1.1)}
+.cash-exact-btn:active{filter:brightness(.95)}
+.cash-received-input{flex:1;padding:6px 10px;border:none;background:transparent;font-size:16px;font-weight:800;text-align:right;font-family:inherit;color:var(--text);min-width:0;outline:none}
 .cash-change-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0 10px;border-top:1px dashed var(--border)}
 .cash-change-label{font-size:13px;font-weight:600;color:var(--text-muted)}
 .cash-change-val{font-size:24px;font-weight:800;transition:color .2s}
@@ -1115,8 +1116,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <div class="cash-section" id="cashSection">
             <div class="cash-received-row">
               <label>รับเงิน (฿)</label>
-              <input type="number" id="cashReceived" class="cash-received-input" placeholder="0" min="0" oninput="updateChange()" />
-              <button type="button" class="cash-exact-btn" id="cashExactBtn" onclick="setCashExact()">พอดี</button>
+              <div class="cash-input-group">
+                <input type="number" id="cashReceived" class="cash-received-input" placeholder="0" min="0" oninput="updateChange()" />
+                <button type="button" class="cash-exact-btn" id="cashExactBtn" onclick="setCashExact()">พอดี</button>
+              </div>
             </div>
             <div class="cash-change-row">
               <span class="cash-change-label">เงินทอน</span>
