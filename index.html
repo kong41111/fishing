@@ -1268,6 +1268,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <table class="sc-table">
             <thead>
               <tr>
+                <th style="width:50px;text-align:center">ลำดับ</th>
                 <th style="width:44px"></th>
                 <th>สินค้า</th>
                 <th>รหัส</th>
@@ -1279,11 +1280,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
               </tr>
             </thead>
             <tbody id="scTableBody">
-              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>
             </tbody>
             <tfoot id="scTableFoot" style="display:none">
               <tr>
-                <td colspan="4" class="sc-foot-label">รวมทั้งสิ้น</td>
+                <td colspan="5" class="sc-foot-label">รวมทั้งสิ้น</td>
                 <td style="text-align:center" id="scFootSystem">0</td>
                 <td style="text-align:center" id="scFootCounted">0</td>
                 <td style="text-align:center" id="scFootDiff">0</td>
@@ -2815,7 +2816,7 @@ function scReset(){
   document.getElementById('scResetBtn').style.display = 'none';
   document.getElementById('scSummary').style.display = 'none';
   document.getElementById('scTableFoot').style.display = 'none';
-  document.getElementById('scTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>';
+  document.getElementById('scTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">กด "เริ่มนับสต็อก" เพื่อเริ่มต้น</td></tr>';
 }
 
 function _scDiffInfo(p){
@@ -2830,9 +2831,10 @@ function _scDiffInfo(p){
 function scRenderTable(){
   const tbody = document.getElementById('scTableBody');
   if(!tbody) return;
-  tbody.innerHTML = products.map(p => {
+  tbody.innerHTML = products.map((p, idx) => {
     const d = _scDiffInfo(p);
     return `<tr data-code="${p.code}">
+      <td style="text-align:center;font-weight:700;color:var(--text-muted)">${idx+1}</td>
       <td><img class="sc-thumb" src="${p.img||''}" onerror="this.src=''" /></td>
       <td style="font-weight:600;max-width:200px">${p.name}</td>
       <td style="color:var(--text-muted);font-size:12px">${p.code}</td>
