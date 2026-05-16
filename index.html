@@ -2371,7 +2371,9 @@ function renderStockHistory(){
     const d = h.date ? new Date(h.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '-';
     const badge = h.type==='in'
       ? '<span class="badge bg-success">📥 รับเข้า</span>'
-      : '<span class="badge bg-danger">📤 จ่ายออก</span>';
+      : h.type==='sale'
+        ? '<span class="badge bg-primary">🛒 การขาย</span>'
+        : '<span class="badge bg-danger">📤 จ่ายออก</span>';
     const qtyTxt = h.type==='in'
       ? `<span style="color:var(--green);font-weight:700">+${h.qty}</span>`
       : `<span style="color:var(--red);font-weight:700">${h.qty}</span>`;
@@ -2704,14 +2706,25 @@ function checkout(){
     return;
   }
 
-  // 1) deduct stock
+  // 1) deduct stock + record each item to stockHistory as 'sale' type
+  const today = new Date().toISOString().slice(0,10);
+  const billNo = 'B'+Date.now().toString().slice(-8);
   cart.forEach(c=>{
     const prod = products.find(p=>p.code===c.code);
-    if(prod) prod.qty = Math.max(0,prod.qty-c.qty);
+    if(!prod) return;
+    const before = prod.qty;
+    prod.qty = Math.max(0, prod.qty - c.qty);
+    stockHistory.unshift({
+      date: today,
+      code: c.code,
+      name: c.name,
+      type: 'sale',
+      qty: -c.qty,
+      after: prod.qty,
+      note: `ขายผ่าน POS · บิล ${billNo} · ราคา ฿${(+c.price||0).toLocaleString()}`
+    });
   });
 
-  // 2) record sale
-  const billNo = 'B'+Date.now().toString().slice(-8);
   salesHistory.push({
     billNo, items: cart.map(c=>({...c})), total, discount: disc, net,
     payMethod: selectedPay, received, change: Math.max(0,received-net),
