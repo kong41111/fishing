@@ -322,8 +322,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .cart-empty-modern .emoji{font-size:56px;margin-bottom:10px;display:block;opacity:.4}
 .cart-empty-modern .txt{font-size:14px;font-weight:600;margin-bottom:4px}
 .cart-empty-modern .sub{font-size:12px;opacity:.7}
-.cart-row-modern{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;animation:slideIn .25s ease}
-@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+.cart-row-modern{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.cart-row-modern.is-new{animation:slideIn .25s ease}
+@keyframes slideIn{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
 .cart-row-modern:last-child{border-bottom:none}
 .cart-row-img{width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e0f2fe}
 .cart-row-info{flex:1;min-width:0}
@@ -2220,10 +2221,14 @@ function addToCart(i){
   const f=cart.find(c=>c.code===it.code);
   const cartQty = f?f.qty:0;
   if(cartQty>=prod.qty){showToast(`⚠️ สต็อก ${prod.name} เหลือ ${prod.qty} ชิ้น`);return;}
+  const isNew = !f;
   if(f)f.qty++;else cart.push({...it,qty:1});
-  renderCart();showToast(`🛒 ${it.name}`);
+  _lastAddedCode = it.code;
+  renderCart(isNew);
+  showToast(`🛒 ${it.name}`);
 }
-function renderCart(){
+let _lastAddedCode = null;
+function renderCart(scrollToNew=false){
   const list=document.getElementById('cartList');
   const clearBtn=document.getElementById('clearCartBtn');
   const countBadge=document.getElementById('cartCountBadge');
@@ -2239,23 +2244,51 @@ function renderCart(){
       <div class="txt">ยังไม่มีสินค้า</div>
       <div class="sub">สแกนบาร์โค้ดหรือคลิกสินค้าด้านซ้าย</div>
     </div>`;
-    updateTotal();return;
+    updateTotal(); return;
   }
-  list.innerHTML = cart.map((c,i)=>`
-    <div class="cart-row-modern">
-      <img class="cart-row-img" src="${c.img}" alt="${c.name}" onerror="this.src='${FALLBACK_IMG}'"/>
-      <div class="cart-row-info">
-        <div class="cart-row-name">${c.name}</div>
-        <div class="cart-row-price">฿${c.price.toLocaleString()} × ${c.qty}</div>
-      </div>
-      <div class="cart-row-controls">
-        <button class="cart-qty-btn" onclick="qty(${i},-1)">−</button>
-        <span class="cart-qty-num">${c.qty}</span>
-        <button class="cart-qty-btn" onclick="qty(${i},1)">+</button>
-      </div>
-      <div class="cart-row-total">฿${(c.price*c.qty).toLocaleString()}</div>
-      <button class="cart-row-remove" onclick="rmCart(${i})">✕</button>
-    </div>`).join('');
+
+  // อัปเดต item ที่มีอยู่แล้ว in-place เพื่อไม่ให้ animation รีรันทุกครั้ง
+  const existingRows = list.querySelectorAll('.cart-row-modern');
+  const existingCodes = [...existingRows].map(r=>r.dataset.code);
+  const newCodes = cart.map(c=>c.code);
+
+  // ถ้าโครงสร้างเปลี่ยน (เพิ่ม/ลบ item) ให้ render ใหม่
+  const structureChanged = existingCodes.join(',') !== newCodes.join(',');
+  if(structureChanged){
+    list.innerHTML = cart.map((c,i)=>`
+      <div class="cart-row-modern${c.code===_lastAddedCode?' is-new':''}" data-code="${c.code}">
+        <img class="cart-row-img" src="${c.img||''}" alt="${c.name}" onerror="this.src='${FALLBACK_IMG}'"/>
+        <div class="cart-row-info">
+          <div class="cart-row-name">${c.name}</div>
+          <div class="cart-row-price">฿${(+c.price||0).toLocaleString()} × ${c.qty}</div>
+        </div>
+        <div class="cart-row-controls">
+          <button class="cart-qty-btn" onclick="qty(${i},-1)">−</button>
+          <span class="cart-qty-num">${c.qty}</span>
+          <button class="cart-qty-btn" onclick="qty(${i},1)">+</button>
+        </div>
+        <div class="cart-row-total">฿${((+c.price||0)*c.qty).toLocaleString()}</div>
+        <button class="cart-row-remove" onclick="rmCart(${i})">✕</button>
+      </div>`).join('');
+    // scroll ไปหา item ใหม่ล่าสุด
+    if(scrollToNew && _lastAddedCode){
+      const newRow = list.querySelector(`[data-code="${_lastAddedCode}"]`);
+      if(newRow) newRow.scrollIntoView({block:'nearest',behavior:'smooth'});
+    }
+  } else {
+    // อัปเดตเฉพาะค่าตัวเลข qty / total โดยไม่ re-render ทั้งหมด
+    cart.forEach((c,i)=>{
+      const row = list.querySelector(`[data-code="${c.code}"]`);
+      if(!row) return;
+      row.querySelector('.cart-row-price').textContent = `฿${(+c.price||0).toLocaleString()} × ${c.qty}`;
+      row.querySelector('.cart-qty-num').textContent = c.qty;
+      row.querySelector('.cart-row-total').textContent = `฿${((+c.price||0)*c.qty).toLocaleString()}`;
+      // อัปเดต onclick index ให้ถูกต้อง
+      row.querySelectorAll('.cart-qty-btn')[0].setAttribute('onclick',`qty(${i},-1)`);
+      row.querySelectorAll('.cart-qty-btn')[1].setAttribute('onclick',`qty(${i},1)`);
+      row.querySelector('.cart-row-remove').setAttribute('onclick',`rmCart(${i})`);
+    });
+  }
   updateTotal();
 }
 
