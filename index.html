@@ -45,6 +45,39 @@
   --radius:12px;--shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
 }
 html{overflow-x:hidden}
+/* ===== DARK MODE ===== */
+body.dark-mode{
+  --bs-body-bg:#0f172a; --bs-body-color:#e2e8f0;
+  --bg:#0f172a; --surface:#1e293b; --border:#334155;
+  --text:#f1f5f9; --text-muted:#94a3b8;
+  --primary-light:#1e3a5f;
+}
+body.dark-mode .card,body.dark-mode .kpi-card,body.dark-mode .supplier-card,
+body.dark-mode .z-section,body.dark-mode .pos-card-modern,body.dark-mode .cart-panel,
+body.dark-mode .pay-method-card,body.dark-mode .pos-search-card{background:#1e293b;color:#e2e8f0}
+body.dark-mode .data-table th,body.dark-mode .sc-table th{background:#0f172a;color:#94a3b8;border-color:#334155}
+body.dark-mode .data-table td,body.dark-mode .sc-table td{border-color:#334155;color:#e2e8f0}
+body.dark-mode .data-table tr:hover td{background:#0f172a}
+body.dark-mode .form-control,body.dark-mode .form-select,body.dark-mode input,body.dark-mode select,body.dark-mode textarea{background:#0f172a;color:#e2e8f0;border-color:#334155}
+body.dark-mode .form-control:focus,body.dark-mode .form-select:focus{background:#0f172a;color:#e2e8f0;border-color:var(--primary)}
+body.dark-mode .topbar{background:#1e293b;border-color:#334155}
+body.dark-mode .topbar-quicksearch input{background:#0f172a;color:#e2e8f0;border-color:#334155}
+body.dark-mode .cat-modern,body.dark-mode .pay-btn,body.dark-mode .sales-range-btn,body.dark-mode .rf-mode-btn,body.dark-mode .cat-chip{background:#0f172a;color:#e2e8f0;border-color:#334155}
+body.dark-mode .sc-sum-card{background:#0f172a;color:#e2e8f0}
+body.dark-mode .pos-stat,body.dark-mode .pos-cat-modern{background:#1e293b}
+body.dark-mode .alert-dropdown,body.dark-mode .qs-results{background:#1e293b;border-color:#334155}
+body.dark-mode .qs-item{border-color:#334155}
+body.dark-mode .cart-empty-modern,body.dark-mode .receipt{background:#1e293b;color:#e2e8f0}
+body.dark-mode .modal-content{background:#1e293b;color:#e2e8f0}
+body.dark-mode .modal-header,body.dark-mode .modal-footer{border-color:#334155}
+body.dark-mode .img-upload-area{background:#0f172a;border-color:#334155}
+body.dark-mode .stat-row.bg-light,body.dark-mode .bg-light{background:#0f172a!important}
+body.dark-mode .badge.bg-primary{background:var(--primary)!important}
+body.dark-mode .receipt-header,body.dark-mode .receipt-totals,body.dark-mode .receipt-footer{color:#e2e8f0}
+/* Topbar toggle button */
+.theme-toggle{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);padding:6px 8px;border-radius:8px;transition:all .15s}
+.theme-toggle:hover{background:var(--primary-light);color:var(--primary)}
+
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;max-width:100vw}
 .sidebar{width:var(--sidebar-w);background:linear-gradient(160deg,#0c4a6e 0%,#0369a1 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
 .sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
@@ -911,6 +944,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a class="nav-item" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
     <a class="nav-item" data-page="accounting"><i class="nav-icon bi bi-cash-coin"></i><span>บัญชี (กำไร/ขาดทุน)</span></a>
     <a class="nav-item" data-page="zreport"><i class="nav-icon bi bi-receipt"></i><span>ปิดยอดประจำวัน (Z-Report)</span></a>
+    <a class="nav-item" data-page="customers"><i class="nav-icon bi bi-person-heart"></i><span>ลูกค้า</span></a>
     <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
     <div class="nav-group-label">ตั้งค่า</div>
     <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
@@ -936,6 +970,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div class="qs-results" id="quickResults"></div>
     </div>
     <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleDarkMode()" title="สลับโหมดมืด/สว่าง">🌙</button>
       <div class="alert-badge" title="แจ้งเตือนสต็อก" id="alertBadge" onclick="toggleAlertDropdown(event)" style="position:relative">
         🔔 <span class="alert-badge-dot" id="alertBadgeDot" style="display:none">0</span>
         <div class="alert-dropdown" id="alertDropdown" style="display:none"></div>
@@ -1168,8 +1203,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           </div>
 
           <div class="cart-totals-modern">
+            <div class="cart-row-total-line" style="gap:8px">
+              <span>ลูกค้า</span>
+              <select id="cartCustomer" class="form-select" style="flex:1;font-size:12px;padding:4px 8px;height:auto" onchange="updateTotal()">
+                <option value="">— ลูกค้าทั่วไป —</option>
+              </select>
+            </div>
             <div class="cart-row-total-line"><span>รวมก่อนหักลด</span><span id="cartTotal">฿0</span></div>
+            <div class="cart-row-total-line" id="memberDiscountRow" style="display:none;color:var(--green)"><span>ส่วนลดสมาชิก</span><span id="memberDiscount">-฿0</span></div>
             <div class="cart-row-total-line"><span>ส่วนลด (บาท)</span><input type="number" id="discount" class="disc-input-modern" placeholder="0" oninput="updateTotal()" /></div>
+            <div class="cart-row-total-line" id="vatRow" style="display:none"><span>VAT 7%</span><span id="cartVat">฿0</span></div>
             <div class="cart-row-total-line grand"><span>รวมสุทธิ</span><span id="cartNet">฿0</span></div>
           </div>
 
@@ -1281,6 +1324,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <tbody id="salesTransactionsBody">
               <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section class="page" id="page-customers">
+      <div class="page-actions">
+        <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="customerSearch" placeholder="ค้นหาชื่อ/เบอร์โทร..." oninput="renderCustomers()" /></div>
+        <button class="btn btn-primary" onclick="openCustomerModal()"><i class="bi bi-plus-lg"></i> เพิ่มลูกค้า</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">👥</div><div><div class="kpi-value" id="custTotal">0</div><div class="kpi-label">ลูกค้าทั้งหมด</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">⭐</div><div><div class="kpi-value" id="custVip">0</div><div class="kpi-label">ลูกค้า VIP</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value" id="custTotalSpent">฿0</div><div class="kpi-label">ยอดซื้อรวม</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">🎁</div><div><div class="kpi-value" id="custTotalPoints">0</div><div class="kpi-label">แต้มรวม</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📋 รายชื่อลูกค้า</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>ชื่อ</th><th>เบอร์โทร</th><th>ระดับ</th><th style="text-align:center">ซื้อมาแล้ว</th><th style="text-align:right">ยอดรวม</th><th style="text-align:center">แต้ม</th><th>หมายเหตุ</th><th></th></tr></thead>
+            <tbody id="customerListBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีลูกค้า</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1634,17 +1700,34 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           </form>
         </div>
         <div class="card">
-          <div class="card-header"><span class="card-title">🔔 ตั้งค่าการแจ้งเตือน</span></div>
+          <div class="card-header"><span class="card-title">🔔 การแจ้งเตือน & ภาษี</span></div>
           <form class="stock-form" onsubmit="saveAppSettings(event)">
             <label>แจ้งเตือนเมื่อสต็อกต่ำกว่าหรือเท่ากับ (ชิ้น)
               <input class="form-control" type="number" id="setLowStock" min="0" />
             </label>
+            <label class="toggle-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="setVatEnabled" class="form-check-input" style="margin:0;width:20px;height:20px" />
+              <span>📊 คำนวณ VAT 7% ในใบเสร็จ</span>
+            </label>
             <div style="background:#f0f9ff;padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted);line-height:1.6">
-              💡 ระบบจะแสดงสินค้าที่มีจำนวน ≤ ค่าที่ตั้ง บน 🔔 ที่ topbar และในหน้า Dashboard<br>
-              ค่าเริ่มต้น: 10 ชิ้น
+              💡 ระบบจะแสดงสินค้าที่มีจำนวน ≤ ค่าที่ตั้ง บน 🔔 ที่ topbar<br>
+              📊 VAT คิดจาก: ยอดสุทธิ × 7/107 (รวมในราคา)<br>
+              ค่าเริ่มต้น: 10 ชิ้น / VAT ปิด
             </div>
             <button type="submit" class="btn btn-primary">💾 บันทึก</button>
           </form>
+        </div>
+      </div>
+
+      <!-- Bulk Import Products -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header"><span class="card-title">📋 นำเข้าสินค้าแบบจำนวนมาก</span></div>
+        <div style="padding:6px 0;font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          เพิ่มสินค้าจากไฟล์ CSV/Excel ทีละหลายร้อยรายการ
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary" onclick="openModal('bulkImportModal')"><i class="bi bi-upload"></i> นำเข้าจาก CSV</button>
+          <button type="button" class="btn btn-outline-primary" onclick="downloadCsvTemplate()">📥 ดาวน์โหลด Template</button>
         </div>
       </div>
 
@@ -1792,6 +1875,69 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
       <div class="modal-body" id="parkedSalesBody">
         <div style="text-align:center;color:var(--text-muted);padding:40px">ยังไม่มีบิลที่พักไว้</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMER MODAL -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customerModalTitle">+ เพิ่มลูกค้า</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveCustomer(event)">
+          <input type="hidden" id="custEditId" />
+          <label>ชื่อ-นามสกุล<input type="text" class="form-control" id="custName" required /></label>
+          <div class="form-row">
+            <label>เบอร์โทร<input type="text" class="form-control" id="custPhone" placeholder="081-XXX-XXXX" /></label>
+            <label>ระดับสมาชิก
+              <select class="form-select" id="custTier">
+                <option value="ทั่วไป">⭐ ทั่วไป (ไม่มีส่วนลด)</option>
+                <option value="Silver">🥈 Silver (ลด 3%)</option>
+                <option value="Gold">🥇 Gold (ลด 5%)</option>
+                <option value="VIP">💎 VIP (ลด 10%)</option>
+              </select>
+            </label>
+          </div>
+          <label>อีเมล<input type="email" class="form-control" id="custEmail" placeholder="example@email.com" /></label>
+          <label>หมายเหตุ<textarea class="form-control" id="custNote" rows="2"></textarea></label>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 บันทึก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BULK IMPORT PRODUCTS MODAL -->
+<div class="modal fade" id="bulkImportModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">📋 นำเข้าสินค้าหลายรายการ (CSV)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#f0f9ff;padding:14px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7">
+          <strong>วิธีใช้:</strong><br>
+          1. ดาวน์โหลด <button class="btn btn-sm btn-link p-0" onclick="downloadCsvTemplate()" style="vertical-align:baseline">📥 template ตัวอย่าง</button> (หรือ Export สินค้าเดิม → แก้ → import กลับ)<br>
+          2. แก้ไขในโปรแกรม Excel/Google Sheets แล้วบันทึกเป็น CSV<br>
+          3. เลือกไฟล์ → กด "นำเข้า"
+        </div>
+        <label>เลือกไฟล์ CSV
+          <input type="file" id="bulkCsvFile" accept=".csv,text/csv" class="form-control" />
+        </label>
+        <div id="bulkImportPreview" style="margin-top:14px;font-size:13px;color:var(--text-muted)"></div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" onclick="doBulkImport()">📥 นำเข้า</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2332,6 +2478,7 @@ function refreshAllViews(){
   renderDashboard();
   renderAlertBadge();
   renderSalesTable();
+  renderCustomers();
   updateBackupStats();
   saveState();
   // dashboard stats
@@ -2340,7 +2487,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',zreport:'ปิดยอดประจำวัน (Z-Report)',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',zreport:'ปิดยอดประจำวัน (Z-Report)',customers:'ลูกค้า',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -3089,9 +3236,29 @@ function qty(i,d){
 }
 function rmCart(i){cart.splice(i,1);renderCart();}
 function updateTotal(){
-  const t=cart.reduce((s,c)=>s+c.price*c.qty,0);
-  const dc=+document.getElementById('discount')?.value||0;
-  const net = Math.max(0,t-dc);
+  const t = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const dc = +document.getElementById('discount')?.value||0;
+  // Member discount
+  const custId = +document.getElementById('cartCustomer')?.value || 0;
+  const customer = custId ? customers.find(c=>c.id===custId) : null;
+  const tierPct = customer ? (TIER_DISCOUNT[customer.tier||'ทั่วไป']||0) : 0;
+  const memberDc = Math.round(t * tierPct / 100);
+  const memberRow = document.getElementById('memberDiscountRow');
+  if(memberRow){
+    if(tierPct){
+      memberRow.style.display='';
+      document.getElementById('memberDiscount').textContent = `-฿${memberDc.toLocaleString()} (${tierPct}%)`;
+    } else memberRow.style.display='none';
+  }
+  let net = Math.max(0, t - dc - memberDc);
+  // VAT 7% (รวมในยอด)
+  const vatEnabled = !!appSettings.vatEnabled;
+  const vat = vatEnabled ? Math.round(net * 7 / 107) : 0;
+  const vatRow = document.getElementById('vatRow');
+  if(vatRow){
+    vatRow.style.display = vatEnabled ? '' : 'none';
+    document.getElementById('cartVat').textContent = '฿'+vat.toLocaleString();
+  }
   document.getElementById('cartTotal').textContent='฿'+t.toLocaleString();
   document.getElementById('cartNet').textContent='฿'+net.toLocaleString();
   const payAmt=document.getElementById('payBtnAmt');
@@ -3142,6 +3309,8 @@ function buildReceipt(forcedBillNo, receivedAmt){
       <div class="receipt-row"><span>จำนวน</span><span>${cart.reduce((s,c)=>s+c.qty,0)} ชิ้น</span></div>
       <div class="receipt-row"><span>รวม</span><span>฿${total.toLocaleString()}</span></div>
       ${disc?`<div class="receipt-row"><span>ส่วนลด</span><span>-฿${disc.toLocaleString()}</span></div>`:''}
+      ${(()=>{ const cid=+document.getElementById('cartCustomer')?.value||0; const c=cid?customers.find(x=>x.id===cid):null; const pct=c?TIER_DISCOUNT[c.tier||'ทั่วไป']:0; const mdc=Math.round(total*pct/100); return c?`<div class="receipt-row"><span>ลูกค้า</span><span>${c.name}</span></div>${pct?`<div class="receipt-row" style="color:#10b981"><span>ลด ${pct}%</span><span>-฿${mdc.toLocaleString()}</span></div>`:''}`:''; })()}
+      ${appSettings.vatEnabled?`<div class="receipt-row" style="color:#94a3b8;font-size:11px"><span>VAT 7% (รวมแล้ว)</span><span>฿${Math.round(net*7/107).toLocaleString()}</span></div>`:''}
       <div class="receipt-row grand"><span>ยอดสุทธิ</span><span>฿${net.toLocaleString()}</span></div>
       <div class="receipt-row" style="margin-top:6px"><span>ชำระโดย</span><span>${payLabel}</span></div>
       ${cashRows}
@@ -3199,11 +3368,26 @@ function checkout(){
     });
   });
 
+  // Customer info
+  const custId = +document.getElementById('cartCustomer')?.value || 0;
+  const customer = custId ? customers.find(c=>c.id===custId) : null;
+  const tierPct = customer ? (TIER_DISCOUNT[customer.tier||'ทั่วไป']||0) : 0;
+  const memberDc = Math.round(total * tierPct / 100);
+  const vat = appSettings.vatEnabled ? Math.round(net * 7 / 107) : 0;
+
   salesHistory.push({
-    billNo, items: cart.map(c=>({...c})), total, discount: disc, net,
+    billNo, items: cart.map(c=>({...c})), total, discount: disc, memberDiscount: memberDc, vat, net,
     payMethod: selectedPay, received, change: Math.max(0,received-net),
+    customerId: custId||null, customerName: customer?customer.name:null,
     date: new Date().toISOString()
   });
+
+  // อัปเดตยอดซื้อลูกค้า + เพิ่มแต้ม (1 แต้ม / ฿20)
+  if(customer){
+    customer.totalSpent = (+customer.totalSpent||0) + net;
+    customer.totalBills = (+customer.totalBills||0) + 1;
+    customer.points    = (+customer.points||0) + Math.floor(net/20);
+  }
 
   // 3) build + show receipt BEFORE clearing cart
   document.getElementById('receiptContent').innerHTML = buildReceipt(billNo, received);
@@ -3219,6 +3403,7 @@ function checkout(){
   cart=[];
   document.getElementById('discount').value='';
   document.getElementById('cashReceived').value='';
+  const custSel = document.getElementById('cartCustomer'); if(custSel) custSel.value='';
   updateChange();
   renderCart();
   refreshAllViews();
@@ -3506,7 +3691,7 @@ function saveState(){
       const data = {
         v: '1.0',
         savedAt: new Date().toISOString(),
-        products, suppliers, expenses,
+        products, suppliers, expenses, customers,
         salesHistory, stockHistory, stockCountHistory, zReports,
         cart, parkedSales, appSettings
       };
@@ -3537,6 +3722,7 @@ function loadState(){
     if(Array.isArray(d.cart))              { cart.length=0; d.cart.forEach(x=>cart.push(x)); }
     if(Array.isArray(d.parkedSales))       parkedSales = d.parkedSales;
     if(d.appSettings && typeof d.appSettings === 'object') appSettings = {...appSettings, ...d.appSettings};
+    if(Array.isArray(d.customers)) customers = d.customers;
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -3612,6 +3798,7 @@ async function clearAllData(){
   stockCountHistory = [];
   zReports = [];
   parkedSales = [];
+  customers = [];
   cart = [];
   refreshAllViews();
   showToast('🗑️ ล้างข้อมูลทั้งหมดเรียบร้อย');
@@ -4245,6 +4432,186 @@ function renderReports(){
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
 }
 
+/* ===== DARK MODE ===== */
+function toggleDarkMode(){
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  appSettings.darkMode = isDark;
+  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+  saveState();
+}
+function applyDarkMode(){
+  if(appSettings.darkMode){
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('themeToggle');
+    if(btn) btn.textContent = '☀️';
+  }
+}
+
+/* ===== CUSTOMERS ===== */
+let customers = []; // {id, name, phone, email, tier, note, totalSpent, totalBills, points}
+const TIER_DISCOUNT = { 'ทั่วไป':0, 'Silver':3, 'Gold':5, 'VIP':10 };
+const TIER_ICON = { 'ทั่วไป':'⭐','Silver':'🥈','Gold':'🥇','VIP':'💎' };
+
+function openCustomerModal(id){
+  document.getElementById('custEditId').value = id||'';
+  if(id){
+    const c = customers.find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('customerModalTitle').textContent = '✏️ แก้ไขลูกค้า';
+    document.getElementById('custName').value = c.name||'';
+    document.getElementById('custPhone').value = c.phone||'';
+    document.getElementById('custEmail').value = c.email||'';
+    document.getElementById('custTier').value = c.tier||'ทั่วไป';
+    document.getElementById('custNote').value = c.note||'';
+  } else {
+    document.getElementById('customerModalTitle').textContent = '+ เพิ่มลูกค้า';
+    document.getElementById('custName').value='';
+    document.getElementById('custPhone').value='';
+    document.getElementById('custEmail').value='';
+    document.getElementById('custTier').value='ทั่วไป';
+    document.getElementById('custNote').value='';
+  }
+  openModal('customerModal');
+}
+function saveCustomer(e){
+  e.preventDefault();
+  const id = +document.getElementById('custEditId').value;
+  const data = {
+    name: document.getElementById('custName').value.trim(),
+    phone: document.getElementById('custPhone').value.trim(),
+    email: document.getElementById('custEmail').value.trim(),
+    tier: document.getElementById('custTier').value,
+    note: document.getElementById('custNote').value.trim()
+  };
+  if(id){
+    const c = customers.find(x=>x.id===id);
+    if(c) Object.assign(c, data);
+    showToast('✅ แก้ไขลูกค้าเรียบร้อย');
+  } else {
+    customers.push({ id:Date.now(), ...data, totalSpent:0, totalBills:0, points:0 });
+    showToast('✅ เพิ่มลูกค้าเรียบร้อย');
+  }
+  closeModal('customerModal');
+  renderCustomers();
+  saveState();
+}
+async function delCustomer(id){
+  const c = customers.find(x=>x.id===id);
+  if(!c) return;
+  if(!await dialogConfirm(`ลบลูกค้า<br><strong>"${c.name}"</strong> ใช่หรือไม่?`,{level:'danger',title:'ลบลูกค้า',okText:'🗑️ ลบ'})) return;
+  customers = customers.filter(x=>x.id!==id);
+  renderCustomers();
+  saveState();
+  showToast('🗑️ ลบเรียบร้อย');
+}
+function renderCustomers(){
+  if(!document.getElementById('customerListBody')) return;
+  const q = (document.getElementById('customerSearch')?.value||'').toLowerCase().trim();
+  const filtered = customers.filter(c=>!q || c.name.toLowerCase().includes(q) || (c.phone||'').includes(q));
+
+  document.getElementById('custTotal').textContent = customers.length;
+  document.getElementById('custVip').textContent = customers.filter(c=>c.tier==='VIP').length;
+  document.getElementById('custTotalSpent').textContent = '฿'+customers.reduce((s,c)=>s+(+c.totalSpent||0),0).toLocaleString();
+  document.getElementById('custTotalPoints').textContent = customers.reduce((s,c)=>s+(+c.points||0),0).toLocaleString();
+
+  const tbody = document.getElementById('customerListBody');
+  tbody.innerHTML = filtered.length ? filtered.map(c=>{
+    const tier = c.tier||'ทั่วไป';
+    return `<tr>
+      <td style="font-weight:600">${c.name}</td>
+      <td>${c.phone||'—'}</td>
+      <td>${TIER_ICON[tier]||'⭐'} ${tier}${TIER_DISCOUNT[tier]?` <span style="font-size:11px;color:var(--green)">(-${TIER_DISCOUNT[tier]}%)</span>`:''}</td>
+      <td style="text-align:center">${c.totalBills||0} ครั้ง</td>
+      <td style="text-align:right;font-weight:700;color:var(--primary)">฿${(+c.totalSpent||0).toLocaleString()}</td>
+      <td style="text-align:center">${(+c.points||0).toLocaleString()}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${c.note||'—'}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn-edit" onclick="openCustomerModal(${c.id})">✏️</button>
+        <button class="btn-del" onclick="delCustomer(${c.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ไม่พบลูกค้า</td></tr>';
+
+  // Populate cart dropdown
+  const sel = document.getElementById('cartCustomer');
+  if(sel){
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— ลูกค้าทั่วไป —</option>' + customers.map(c=>{
+      const t = c.tier||'ทั่วไป';
+      return `<option value="${c.id}">${TIER_ICON[t]} ${c.name}${TIER_DISCOUNT[t]?` (-${TIER_DISCOUNT[t]}%)`:''}</option>`;
+    }).join('');
+    if(cur) sel.value = cur;
+  }
+}
+
+/* ===== BULK IMPORT PRODUCTS ===== */
+function downloadCsvTemplate(){
+  const head = ['ชื่อสินค้า','รหัส','หมวด','คงเหลือ','ราคาทุน','ราคาขาย','บาร์โค้ด','URL รูปภาพ'];
+  const sample = ['ตัวอย่าง คันตกปลา','SKU-001','คัน','10','500','800','8851234567890',''];
+  _download('สินค้า-template.csv', _toCsv([head, sample]), 'text/csv');
+}
+let _bulkParsed = [];
+function parseCsv(text){
+  // Strip BOM
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows = [];
+  let cur = ''; let row = []; let inQ = false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if(inQ){
+      if(ch==='"' && text[i+1]==='"'){ cur+='"'; i++; }
+      else if(ch==='"') inQ = false;
+      else cur += ch;
+    } else {
+      if(ch==='"') inQ = true;
+      else if(ch===','){ row.push(cur); cur=''; }
+      else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(ch==='\r'){ /* skip */ }
+      else cur += ch;
+    }
+  }
+  if(cur||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+document.addEventListener('change', e=>{
+  if(e.target.id !== 'bulkCsvFile') return;
+  const file = e.target.files[0];
+  if(!file){ _bulkParsed=[]; document.getElementById('bulkImportPreview').innerHTML=''; return; }
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const rows = parseCsv(ev.target.result);
+    if(rows.length < 2){ document.getElementById('bulkImportPreview').innerHTML='<span style="color:var(--red)">ไม่พบข้อมูล</span>'; return; }
+    _bulkParsed = rows.slice(1).filter(r=>r[0]).map(r=>({
+      name: r[0]||'', code: r[1]||'', cat: r[2]||'อื่นๆ',
+      qty: +r[3]||0, cost: +r[4]||0, price: +r[5]||0,
+      barcode: r[6]||'', img: r[7]||FALLBACK_IMG
+    }));
+    document.getElementById('bulkImportPreview').innerHTML = `<strong>${_bulkParsed.length} รายการ</strong> พร้อมนำเข้า — ตรวจสอบหัวคอลัมน์: <code style="font-size:11px">${rows[0].join(', ')}</code>`;
+  };
+  reader.readAsText(file, 'utf-8');
+});
+async function doBulkImport(){
+  if(!_bulkParsed.length){ showToast('⚠️ ยังไม่ได้เลือกไฟล์'); return; }
+  if(!await dialogConfirm(`นำเข้า <strong>${_bulkParsed.length}</strong> รายการ?<br><br>สินค้าที่มีรหัสซ้ำจะถูกข้าม`,{level:'warn',title:'ยืนยันนำเข้า'})) return;
+  let added=0, skipped=0;
+  _bulkParsed.forEach(p=>{
+    const code = p.code || `SKU-${String(products.length+added+1).padStart(3,'0')}`;
+    if(products.some(x=>x.code===code)){ skipped++; return; }
+    products.push({
+      code, barcode: p.barcode||('885'+Date.now().toString().slice(-10)+added),
+      name: p.name, cat: p.cat, qty: p.qty, cost: p.cost, price: p.price, img: p.img
+    });
+    added++;
+  });
+  _bulkParsed = [];
+  document.getElementById('bulkCsvFile').value = '';
+  document.getElementById('bulkImportPreview').innerHTML = '';
+  closeModal('bulkImportModal');
+  refreshAllViews();
+  showToast(`✅ นำเข้า ${added} รายการ${skipped?` (ข้าม ${skipped} ที่ซ้ำ)`:''}`);
+}
+
 /* ===== VOID BILL (ยกเลิกบิล) ===== */
 async function voidBill(billNo){
   const bill = salesHistory.find(b=>b.billNo===billNo);
@@ -4435,6 +4802,8 @@ function loadAppSettingsForm(){
     const el = document.getElementById(id);
     if(el) el.value = appSettings[key] ?? '';
   });
+  const vatEl = document.getElementById('setVatEnabled');
+  if(vatEl) vatEl.checked = !!appSettings.vatEnabled;
 }
 function saveAppSettings(e){
   e.preventDefault();
@@ -4450,6 +4819,8 @@ function saveAppSettings(e){
   });
   const ls = document.getElementById('setLowStock');
   if(ls) appSettings.lowStockThreshold = +ls.value || 10;
+  const vatEl = document.getElementById('setVatEnabled');
+  if(vatEl) appSettings.vatEnabled = vatEl.checked;
   refreshAllViews();
   showToast('✅ บันทึกการตั้งค่าเรียบร้อย');
 }
@@ -4838,6 +5209,7 @@ function showToast(msg){
 
 // Load saved data from localStorage on startup (must come before initial render)
 loadState();
+applyDarkMode();
 
 refreshAllViews();
 renderPOS(posItems);
