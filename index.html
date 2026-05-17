@@ -1719,6 +1719,23 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         </div>
       </div>
 
+      <!-- Manage Categories -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header">
+          <span class="card-title">🏷️ จัดการหมวดหมู่สินค้า</span>
+          <button class="btn btn-primary btn-sm" onclick="openCategoryModal()"><i class="bi bi-plus-lg"></i> เพิ่มหมวด</button>
+        </div>
+        <div style="padding:6px 0;font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          จัดการหมวดหมู่ที่ใช้แยกสินค้า — แก้ไขชื่อจะอัปเดตทุกสินค้า/ซัพพลายเออร์ที่เกี่ยวข้องอัตโนมัติ
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th style="width:50px;text-align:center">ลำดับ</th><th style="width:60px;text-align:center">Icon</th><th>ชื่อหมวด</th><th style="text-align:center">จำนวนสินค้า</th><th style="text-align:center;width:120px"></th></tr></thead>
+            <tbody id="categoriesListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Bulk Import Products -->
       <div class="card" style="margin-top:18px">
         <div class="card-header"><span class="card-title">📋 นำเข้าสินค้าแบบจำนวนมาก</span></div>
@@ -1826,7 +1843,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           </div>
           <div class="form-row">
             <label>รหัสสินค้า<input class="form-control" id="newCode" placeholder="SKU-001" /></label>
-            <label>หมวดหมู่<select class="form-select" id="newCategory"><option>คัน</option><option>รอก</option><option>เบ็ด</option><option>สาย</option><option>เหยื่อ</option><option>อื่นๆ</option></select></label>
+            <label>หมวดหมู่<select class="form-select" id="newCategory"></select></label>
           </div>
           <div class="form-row">
             <label>จำนวนเริ่มต้น<input class="form-control" type="number" id="newQty" value="0" /></label>
@@ -1875,6 +1892,46 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
       <div class="modal-body" id="parkedSalesBody">
         <div style="text-align:center;color:var(--text-muted);padding:40px">ยังไม่มีบิลที่พักไว้</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="categoryModalTitle">+ เพิ่มหมวด</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveCategory(event)">
+          <input type="hidden" id="catEditOldName" />
+          <label>ชื่อหมวด<input type="text" class="form-control" id="catName" required maxlength="20" placeholder="เช่น เบ็ดสปินนิ่ง" /></label>
+          <label>ไอคอน (Emoji) <span style="font-size:11px;color:var(--text-muted)">วาง emoji ที่ต้องการ</span>
+            <input type="text" class="form-control" id="catIcon" maxlength="4" placeholder="🎣" style="font-size:22px;text-align:center" />
+          </label>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+            <span style="font-size:11px;color:var(--text-muted);width:100%">แนะนำ:</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🪝'">🪝</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🎣'">🎣</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='📌'">📌</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🧵'">🧵</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🐛'">🐛</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🎒'">🎒</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='⚓'">⚓</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🌊'">🌊</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🦐'">🦐</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🐟'">🐟</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='🧰'">🧰</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('catIcon').value='💎'">💎</button>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 บันทึก</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1960,14 +2017,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <label>อีเมล<input type="email" class="form-control" id="supplierEmail" placeholder="example@email.com" /></label>
           </div>
           <label>หมวดสินค้าที่ส่ง (เลือกได้หลายหมวด)
-            <div id="supplierCatsBox" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-              <label class="cat-chip"><input type="checkbox" value="คัน" /> 🪝 คัน</label>
-              <label class="cat-chip"><input type="checkbox" value="รอก" /> 🎣 รอก</label>
-              <label class="cat-chip"><input type="checkbox" value="เบ็ด" /> 📌 เบ็ด</label>
-              <label class="cat-chip"><input type="checkbox" value="สาย" /> 🧵 สาย</label>
-              <label class="cat-chip"><input type="checkbox" value="เหยื่อ" /> 🐛 เหยื่อ</label>
-              <label class="cat-chip"><input type="checkbox" value="อื่นๆ" /> 🎒 อื่นๆ</label>
-            </div>
+            <div id="supplierCatsBox" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div>
           </label>
           <label>หมายเหตุ<textarea class="form-control" id="supplierNote" rows="2" placeholder="เช่น เครดิต 30 วัน, ติดต่อ คุณXXX"></textarea></label>
           <div class="d-flex justify-content-end gap-2 mt-2">
@@ -2086,10 +2136,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <div class="form-row">
             <label>รหัสสินค้า<input class="form-control" id="editCode" placeholder="SKU-001" /></label>
             <label>หมวดหมู่
-              <select class="form-select" id="editCategory">
-                <option>คัน</option><option>รอก</option><option>เบ็ด</option>
-                <option>สาย</option><option>เหยื่อ</option><option>อื่นๆ</option>
-              </select>
+              <select class="form-select" id="editCategory"></select>
             </label>
           </div>
           <div class="form-row">
@@ -2479,6 +2526,8 @@ function refreshAllViews(){
   renderAlertBadge();
   renderSalesTable();
   renderCustomers();
+  renderCategoriesList();
+  refreshCategoryDropdowns();
   updateBackupStats();
   saveState();
   // dashboard stats
@@ -2523,7 +2572,41 @@ if(localStorage.getItem('sidebarCollapsed') === '1'){
 
 let prodCat = '';
 let prodPage = 1;
-const CAT_ICONS = {'คัน':'🪝','รอก':'🎣','เบ็ด':'📌','สาย':'🧵','เหยื่อ':'🐛','อื่นๆ':'🎒'};
+let categories = [
+  {name:'คัน',icon:'🪝'},
+  {name:'รอก',icon:'🎣'},
+  {name:'เบ็ด',icon:'📌'},
+  {name:'สาย',icon:'🧵'},
+  {name:'เหยื่อ',icon:'🐛'},
+  {name:'อื่นๆ',icon:'🎒'}
+];
+const CAT_ICONS = new Proxy({}, { get:(_,k)=> (categories.find(c=>c.name===k)?.icon || '📦') });
+function getCatIcon(name){ return categories.find(c=>c.name===name)?.icon || '📦'; }
+function getCatList(){ return categories.map(c=>c.name); }
+function refreshCategoryDropdowns(){
+  // สินค้า: addProductModal
+  const newSel = document.getElementById('newCategory');
+  if(newSel){
+    const cur = newSel.value;
+    newSel.innerHTML = categories.map(c=>`<option value="${c.name}">${c.icon} ${c.name}</option>`).join('');
+    if(cur && categories.some(c=>c.name===cur)) newSel.value = cur;
+  }
+  // editProductModal
+  const editSel = document.getElementById('editCategory');
+  if(editSel){
+    const cur = editSel.value;
+    editSel.innerHTML = categories.map(c=>`<option value="${c.name}">${c.icon} ${c.name}</option>`).join('');
+    if(cur && categories.some(c=>c.name===cur)) editSel.value = cur;
+  }
+  // supplier modal checkboxes
+  const supBox = document.getElementById('supplierCatsBox');
+  if(supBox){
+    const checkedCats = [...supBox.querySelectorAll('input:checked')].map(c=>c.value);
+    supBox.innerHTML = categories.map(c=>`
+      <label class="cat-chip"><input type="checkbox" value="${c.name}" ${checkedCats.includes(c.name)?'checked':''} /> ${c.icon} ${c.name}</label>
+    `).join('');
+  }
+}
 
 function renderProductKPI(){
   const totalItems = products.length;
@@ -2720,6 +2803,7 @@ function addProduct(e){
 function openEditProduct(idx){
   const p = products[idx];
   if(!p) return;
+  refreshCategoryDropdowns();
   document.getElementById('editIdx').value = idx;
   document.getElementById('editName').value = p.name||'';
   document.getElementById('editCode').value = p.code||'';
@@ -2781,6 +2865,7 @@ function openSupplierModal(id){
   const modal = document.getElementById('supplierModal');
   document.getElementById('supplierForm').reset();
   document.getElementById('supplierEditId').value = '';
+  refreshCategoryDropdowns();
   document.querySelectorAll('#supplierCatsBox input[type=checkbox]').forEach(c=>c.checked=false);
   if(id){
     const s = suppliers.find(x=>x.id===id);
@@ -3691,7 +3776,7 @@ function saveState(){
       const data = {
         v: '1.0',
         savedAt: new Date().toISOString(),
-        products, suppliers, expenses, customers,
+        products, suppliers, expenses, customers, categories,
         salesHistory, stockHistory, stockCountHistory, zReports,
         cart, parkedSales, appSettings
       };
@@ -3723,6 +3808,7 @@ function loadState(){
     if(Array.isArray(d.parkedSales))       parkedSales = d.parkedSales;
     if(d.appSettings && typeof d.appSettings === 'object') appSettings = {...appSettings, ...d.appSettings};
     if(Array.isArray(d.customers)) customers = d.customers;
+    if(Array.isArray(d.categories) && d.categories.length) categories = d.categories;
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -4430,6 +4516,83 @@ function renderReports(){
       <td style="text-align:center"><button class="btn-del" onclick="voidBill('${b.billNo}')" title="ยกเลิกบิล (คืนสต็อก)">↩️</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
+}
+
+/* ===== CATEGORY MANAGEMENT ===== */
+function renderCategoriesList(){
+  const tbody = document.getElementById('categoriesListBody');
+  if(!tbody) return;
+  tbody.innerHTML = categories.map((c,i)=>{
+    const count = products.filter(p=>p.cat===c.name).length;
+    return `<tr>
+      <td style="text-align:center;color:var(--text-muted);font-weight:700">${i+1}</td>
+      <td style="text-align:center;font-size:22px">${c.icon||'📦'}</td>
+      <td style="font-weight:600">${c.name}</td>
+      <td style="text-align:center"><span class="badge bg-primary">${count}</span></td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn-edit" onclick="openCategoryModal('${c.name.replace(/'/g,'&apos;')}')">✏️</button>
+        <button class="btn-del" onclick="delCategory('${c.name.replace(/'/g,'&apos;')}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function openCategoryModal(oldName){
+  document.getElementById('catEditOldName').value = oldName || '';
+  if(oldName){
+    const c = categories.find(x=>x.name===oldName);
+    if(!c) return;
+    document.getElementById('categoryModalTitle').textContent = '✏️ แก้ไขหมวด';
+    document.getElementById('catName').value = c.name;
+    document.getElementById('catIcon').value = c.icon||'';
+  } else {
+    document.getElementById('categoryModalTitle').textContent = '+ เพิ่มหมวด';
+    document.getElementById('catName').value = '';
+    document.getElementById('catIcon').value = '';
+  }
+  openModal('categoryModal');
+}
+function saveCategory(e){
+  e.preventDefault();
+  const oldName = document.getElementById('catEditOldName').value;
+  const name = document.getElementById('catName').value.trim();
+  const icon = document.getElementById('catIcon').value.trim() || '📦';
+  if(!name){ showToast('⚠️ กรุณาระบุชื่อหมวด'); return; }
+  if(categories.some(c=>c.name===name && c.name!==oldName)){
+    showToast(`⚠️ มีหมวด "${name}" อยู่แล้ว`); return;
+  }
+  if(oldName){
+    const c = categories.find(x=>x.name===oldName);
+    if(c){
+      const renamed = c.name !== name;
+      c.name = name; c.icon = icon;
+      if(renamed){
+        products.forEach(p=>{ if(p.cat===oldName) p.cat = name; });
+        suppliers.forEach(s=>{ if(Array.isArray(s.cats)) s.cats = s.cats.map(x=>x===oldName?name:x); });
+      }
+    }
+    showToast('✅ แก้ไขหมวดเรียบร้อย');
+  } else {
+    categories.push({name, icon});
+    showToast('✅ เพิ่มหมวดเรียบร้อย');
+  }
+  closeModal('categoryModal');
+  refreshAllViews();
+}
+async function delCategory(name){
+  const c = categories.find(x=>x.name===name);
+  if(!c) return;
+  if(categories.length <= 1){ showToast('⚠️ ต้องมีหมวดอย่างน้อย 1 หมวด'); return; }
+  const usedBy = products.filter(p=>p.cat===name);
+  const fallback = categories.find(x=>x.name!==name)?.name || 'อื่นๆ';
+  const confirmMsg = usedBy.length
+    ? `ลบหมวด <strong>"${name}"</strong>?<br><br>มีสินค้า <strong>${usedBy.length}</strong> รายการในหมวดนี้<br>จะถูกย้ายไปหมวด <strong>"${fallback}"</strong>`
+    : `ลบหมวด <strong>"${name}"</strong>?`;
+  if(!await dialogConfirm(confirmMsg,{level:'danger',title:'ลบหมวด',okText:'🗑️ ลบ'})) return;
+  products.forEach(p=>{ if(p.cat===name) p.cat = fallback; });
+  suppliers.forEach(s=>{ if(Array.isArray(s.cats)) s.cats = s.cats.filter(x=>x!==name); });
+  categories = categories.filter(x=>x.name!==name);
+  refreshAllViews();
+  showToast(`🗑️ ลบหมวด "${name}" เรียบร้อย${usedBy.length?` (ย้าย ${usedBy.length} รายการ)`:''}`);
 }
 
 /* ===== DARK MODE ===== */
