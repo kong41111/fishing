@@ -65,7 +65,22 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .topbar-title{font-size:16px;font-weight:700;flex:1}
 .topbar-right{display:flex;align-items:center;gap:18px}
 .alert-badge{position:relative;cursor:pointer;font-size:18px}
-.alert-badge-dot{position:absolute;top:-4px;right:-6px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:16px;text-align:center}
+.alert-badge-dot{position:absolute;top:-4px;right:-6px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:16px;text-align:center;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{transform:scale(1.08);box-shadow:0 0 0 4px rgba(220,38,38,0)}}
+.alert-dropdown{position:absolute;top:calc(100% + 10px);right:-10px;width:340px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:200;cursor:default}
+.alert-dropdown.show{display:block!important}
+.alert-dd-head{padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;background:linear-gradient(135deg,#fef3c7,#fffbeb);border-radius:12px 12px 0 0}
+.alert-dd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .12s}
+.alert-dd-item:hover{background:var(--primary-light)}
+.alert-dd-item:last-child{border-bottom:none}
+.alert-dd-img{width:36px;height:36px;border-radius:6px;background:#e0f2fe;object-fit:cover;flex-shrink:0}
+.alert-dd-info{flex:1;min-width:0}
+.alert-dd-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-dd-meta{font-size:11px;color:var(--text-muted);margin-top:1px}
+.alert-dd-qty{font-size:14px;font-weight:800;text-align:right;flex-shrink:0}
+.alert-dd-qty.critical{color:var(--red)}
+.alert-dd-qty.low{color:var(--orange)}
+.alert-dd-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:13px}
 .topbar-date{font-size:12px;color:var(--text-muted)}
 .topbar-quicksearch{position:relative;flex:1;max-width:420px;margin:0 12px}
 .topbar-quicksearch input{width:100%;padding:8px 14px 8px 36px;border:1.5px solid var(--border);border-radius:99px;font-size:13px;font-family:inherit;background:#f8fafc;outline:none;transition:all .15s}
@@ -921,7 +936,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div class="qs-results" id="quickResults"></div>
     </div>
     <div class="topbar-right">
-      <div class="alert-badge" title="แจ้งเตือน">🔔 <span class="alert-badge-dot">3</span></div>
+      <div class="alert-badge" title="แจ้งเตือนสต็อก" id="alertBadge" onclick="toggleAlertDropdown(event)" style="position:relative">
+        🔔 <span class="alert-badge-dot" id="alertBadgeDot" style="display:none">0</span>
+        <div class="alert-dropdown" id="alertDropdown" style="display:none"></div>
+      </div>
       <div class="topbar-date" id="currentDate"></div>
     </div>
   </header>
@@ -931,10 +949,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <!-- DASHBOARD -->
     <section class="page active" id="page-dashboard">
       <div class="kpi-grid">
-        <div class="kpi-card kpi-blue"><div class="kpi-icon">📦</div><div><div class="kpi-value">247</div><div class="kpi-label">รายการสินค้าทั้งหมด</div></div></div>
-        <div class="kpi-card kpi-green"><div class="kpi-icon">💰</div><div><div class="kpi-value">฿84,320</div><div class="kpi-label">มูลค่าสต็อกรวม</div></div></div>
-        <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value">3</div><div class="kpi-label">สินค้าใกล้หมด</div></div></div>
-        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value" data-stat="today-total">฿0</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
+        <div class="kpi-card kpi-blue"><div class="kpi-icon">📦</div><div><div class="kpi-value" id="dashProductCount">0</div><div class="kpi-label">รายการสินค้าทั้งหมด</div></div></div>
+        <div class="kpi-card kpi-green"><div class="kpi-icon">💰</div><div><div class="kpi-value" id="dashStockValue">฿0</div><div class="kpi-label">มูลค่าสต็อกรวม</div></div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-icon">⚠️</div><div><div class="kpi-value" id="dashLowStock">0</div><div class="kpi-label">สินค้าใกล้หมด</div></div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-icon">🛒</div><div><div class="kpi-value" data-stat="today-total" id="dashTodaySales">฿0</div><div class="kpi-label">ยอดขายวันนี้</div></div></div>
       </div>
 
       <div class="row-2col">
@@ -958,40 +976,22 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
         <div class="card">
           <div class="card-header"><span class="card-title">⚠️ สินค้าใกล้หมด</span></div>
-          <div class="alert-list">
-            <div class="alert-item alert-critical">
-              <div class="alert-name">เบ็ดตกปลา #6 (100 ชิ้น/แพ็ค)</div>
-              <div class="alert-meta">เหลือ <strong>2 แพ็ค</strong> · ต้องการ 10</div>
-              <button class="btn btn-sm btn-primary">สั่งซื้อ</button>
-            </div>
-            <div class="alert-item alert-warn">
-              <div class="alert-name">เหยื่อปลอม (ชุดสีแดง)</div>
-              <div class="alert-meta">เหลือ <strong>5 ชุด</strong> · ต้องการ 15</div>
-              <button class="btn btn-sm btn-primary">สั่งซื้อ</button>
-            </div>
-            <div class="alert-item alert-warn">
-              <div class="alert-name">สายเอ็น 0.4mm (500m)</div>
-              <div class="alert-meta">เหลือ <strong>8 ม้วน</strong> · ต้องการ 20</div>
-              <button class="btn btn-sm btn-primary">สั่งซื้อ</button>
-            </div>
+          <div class="alert-list" id="dashLowStockList">
+            <div style="text-align:center;padding:30px;color:var(--text-muted)">กำลังโหลด...</div>
           </div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">🧾 รายการล่าสุด</span>
-          <button class="btn btn-link p-0">ดูทั้งหมด →</button>
+          <span class="card-title">🧾 กิจกรรมล่าสุด</span>
+          <span style="font-size:12px;color:var(--text-muted)">10 รายการล่าสุด</span>
         </div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>เวลา</th><th>รายการ</th><th>ประเภท</th><th>จำนวน</th><th>ราคา</th><th>สถานะ</th></tr></thead>
-            <tbody>
-              <tr><td>10:32</td><td>รอก Shimano Sienna 2500</td><td><span class="badge bg-primary">ขาย</span></td><td>1</td><td>฿1,290</td><td><span class="badge rounded-pill bg-success">เสร็จสิ้น</span></td></tr>
-              <tr><td>10:15</td><td>คันตกปลา Okuma 6ft (รับเข้า)</td><td><span class="badge bg-success">รับเข้า</span></td><td>20</td><td>฿24,000</td><td><span class="badge rounded-pill bg-success">เสร็จสิ้น</span></td></tr>
-              <tr><td>09:50</td><td>เหยื่อหนอน (แพ็ค 50)</td><td><span class="badge bg-primary">ขาย</span></td><td>3</td><td>฿450</td><td><span class="badge rounded-pill bg-success">เสร็จสิ้น</span></td></tr>
-              <tr><td>09:20</td><td>ตะขอสามง่าม #4</td><td><span class="badge bg-primary">ขาย</span></td><td>5</td><td>฿250</td><td><span class="badge rounded-pill bg-success">เสร็จสิ้น</span></td></tr>
-              <tr><td>08:45</td><td>ลูกลอยโฟม (ชุด 10)</td><td><span class="badge bg-primary">ขาย</span></td><td>2</td><td>฿180</td><td><span class="badge rounded-pill bg-success">เสร็จสิ้น</span></td></tr>
+            <thead><tr><th>วันที่/เวลา</th><th>รายการ</th><th>ประเภท</th><th>จำนวน</th><th>คงเหลือ</th><th>รายละเอียด</th></tr></thead>
+            <tbody id="dashRecentActivity">
+              <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีกิจกรรม</td></tr>
             </tbody>
           </table>
         </div>
@@ -1275,10 +1275,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
                 <th style="text-align:right">ยอดรวม</th>
                 <th style="text-align:right">ส่วนลด</th>
                 <th style="text-align:right">ยอดสุทธิ</th>
+                <th style="text-align:center;width:80px"></th>
               </tr>
             </thead>
             <tbody id="salesTransactionsBody">
-              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</td></tr>
+              <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขาย</td></tr>
             </tbody>
           </table>
         </div>
@@ -1620,23 +1621,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <section class="page" id="page-settings">
       <div class="settings-grid">
         <div class="card">
-          <div class="card-header"><span class="card-title">⚙️ ตั้งค่าทั่วไป</span></div>
-          <form class="stock-form">
-            <label>ชื่อร้าน<input class="form-control" value="ร้านอุปกรณ์ตกปลา สมชาย" /></label>
-            <label>เบอร์โทรศัพท์<input class="form-control" value="081-234-5678" /></label>
-            <label>ที่อยู่<input class="form-control" value="123 ถ.สุขุมวิท กรุงเทพฯ" /></label>
-            <label>สกุลเงิน<select class="form-select"><option>THB (฿)</option></select></label>
-            <button type="button" class="btn btn-primary">บันทึก</button>
+          <div class="card-header"><span class="card-title">🏪 ข้อมูลร้าน (สำหรับใบเสร็จ)</span></div>
+          <form class="stock-form" onsubmit="saveAppSettings(event)">
+            <label>ชื่อร้าน<input class="form-control" id="setShopName" placeholder="เช่น ร้านอุปกรณ์ตกปลา สมชาย" /></label>
+            <label>ที่อยู่<textarea class="form-control" id="setShopAddress" rows="2" placeholder="ที่อยู่ร้าน"></textarea></label>
+            <label>เบอร์โทรศัพท์<input class="form-control" id="setShopPhone" placeholder="081-234-5678" /></label>
+            <label>เลขประจำตัวผู้เสียภาษี<input class="form-control" id="setShopTaxId" placeholder="0-0000-00000-00-0" /></label>
+            <label>URL โลโก้ <span style="font-size:11px;color:var(--text-muted)">(ลิงก์รูปภาพ ไม่บังคับ)</span><input class="form-control" id="setShopLogo" placeholder="https://..." /></label>
+            <label>ข้อความท้ายใบเสร็จ<input class="form-control" id="setReceiptFooter" placeholder="ขอบคุณที่ใช้บริการ" /></label>
+            <label>โซเชียลมีเดีย<input class="form-control" id="setShopSocial" placeholder="IG/LINE/Facebook" /></label>
+            <button type="submit" class="btn btn-primary">💾 บันทึกข้อมูลร้าน</button>
           </form>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">🔔 ตั้งค่าการแจ้งเตือน</span></div>
-          <form class="stock-form">
-            <label>แจ้งเตือนเมื่อสต็อกต่ำกว่า (หน่วย)<input class="form-control" type="number" value="10" /></label>
-            <label class="toggle-label"><span>แจ้งเตือนผ่านหน้าจอ</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked /></div></label>
-            <label class="toggle-label"><span>แจ้งเตือนทางอีเมล</span><div class="form-check form-switch"><input class="form-check-input" type="checkbox" /></div></label>
-            <label>อีเมลสำหรับแจ้งเตือน<input class="form-control" placeholder="example@email.com" /></label>
-            <button type="button" class="btn btn-primary">บันทึก</button>
+          <form class="stock-form" onsubmit="saveAppSettings(event)">
+            <label>แจ้งเตือนเมื่อสต็อกต่ำกว่าหรือเท่ากับ (ชิ้น)
+              <input class="form-control" type="number" id="setLowStock" min="0" />
+            </label>
+            <div style="background:#f0f9ff;padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted);line-height:1.6">
+              💡 ระบบจะแสดงสินค้าที่มีจำนวน ≤ ค่าที่ตั้ง บน 🔔 ที่ topbar และในหน้า Dashboard<br>
+              ค่าเริ่มต้น: 10 ชิ้น
+            </div>
+            <button type="submit" class="btn btn-primary">💾 บันทึก</button>
           </form>
         </div>
       </div>
@@ -1967,6 +1974,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         <div class="receipt-actions">
           <button class="btn btn-outline-primary" data-bs-dismiss="modal">ปิด</button>
           <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์ใบเสร็จ</button>
+          <button class="btn btn-danger" onclick="voidLastBill()" id="voidLastBtn" title="ยกเลิกบิล (กรณีขายผิด)">↩️ ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -2321,6 +2329,9 @@ function refreshAllViews(){
   renderAccounting();
   renderSuppliers();
   renderZReport();
+  renderDashboard();
+  renderAlertBadge();
+  renderSalesTable();
   updateBackupStats();
   saveState();
   // dashboard stats
@@ -2339,9 +2350,10 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
     document.getElementById('pageTitle').textContent = pageTitles[page]||page;
-    if(page==='dashboard') setTimeout(drawChart,50);
+    if(page==='dashboard') { setTimeout(drawChart,50); renderDashboard(); }
     if(page==='products') renderProducts();
     if(page==='sales') renderCatModern();
+    if(page==='settings') loadAppSettingsForm();
     // close mobile cart when changing page
     document.getElementById('cartPanel')?.classList.remove('open');
     document.getElementById('cartOverlay')?.classList.remove('show');
@@ -2808,7 +2820,9 @@ function renderStockHistory(){
       ? '<span class="badge bg-success">📥 รับเข้า</span>'
       : h.type==='sale'
         ? '<span class="badge bg-primary">🛒 การขาย</span>'
-        : '<span class="badge bg-danger">📤 จ่ายออก</span>';
+        : h.type==='void'
+          ? '<span class="badge bg-warning text-dark">↩️ คืน (ยกเลิกบิล)</span>'
+          : '<span class="badge bg-danger">📤 จ่ายออก</span>';
     const qtyTxt = h.type==='in'
       ? `<span style="color:var(--green);font-weight:700">+${h.qty}</span>`
       : `<span style="color:var(--red);font-weight:700">${h.qty}</span>`;
@@ -3098,11 +3112,20 @@ function buildReceipt(forcedBillNo, receivedAmt){
   const cashRows = (selectedPay==='cash' && received>0) ? `
       <div class="receipt-row" style="margin-top:4px"><span>รับเงิน</span><span>฿${received.toLocaleString()}</span></div>
       <div class="receipt-row" style="font-weight:700;color:#10b981"><span>เงินทอน</span><span>฿${Math.max(0,change).toLocaleString()}</span></div>` : '';
+  const shopName = appSettings.shopName || '🎣 FishStock';
+  const shopAddr = appSettings.shopAddress || '';
+  const shopPhone = appSettings.shopPhone || '';
+  const shopTax = appSettings.shopTaxId || '';
+  const shopLogo = appSettings.shopLogo || '';
+  const footer = appSettings.receiptFooter || '*** ขอบคุณที่ใช้บริการ ***';
+  const social = appSettings.shopSocial || '';
   return `
     <div class="receipt-header">
-      <div class="receipt-shop">🎣 ร้านอุปกรณ์ตกปลา สมชาย</div>
-      <div class="receipt-addr">123 ถ.สุขุมวิท กรุงเทพฯ</div>
-      <div class="receipt-addr">โทร. 081-234-5678</div>
+      ${shopLogo?`<img src="${shopLogo}" style="max-height:50px;max-width:180px;margin-bottom:6px" onerror="this.style.display='none'"/>`:''}
+      <div class="receipt-shop">${shopName}</div>
+      ${shopAddr?`<div class="receipt-addr">${shopAddr.replace(/\n/g,'<br/>')}</div>`:''}
+      ${shopPhone?`<div class="receipt-addr">โทร. ${shopPhone}</div>`:''}
+      ${shopTax?`<div class="receipt-addr">เลขผู้เสียภาษี: ${shopTax}</div>`:''}
     </div>
     <div class="receipt-meta">
       <span>เลขที่: ${billNo}</span>
@@ -3124,14 +3147,23 @@ function buildReceipt(forcedBillNo, receivedAmt){
       ${cashRows}
     </div>
     <div class="receipt-footer">
-      *** ขอบคุณที่ใช้บริการ ***<br/>
-      ติดตามเรา IG: @fishstock_shop
+      ${footer}<br/>
+      ${social?social:''}
     </div>`;
 }
+let _lastBillNo = null;
 function printReceipt(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
   document.getElementById('receiptContent').innerHTML = buildReceipt();
+  // ไม่ใช่บิลขายจริง — ซ่อนปุ่ม void
+  const voidBtn = document.getElementById('voidLastBtn');
+  if(voidBtn) voidBtn.style.display = 'none';
   openModal('receiptModal');
+}
+function voidLastBill(){
+  if(!_lastBillNo){ showToast('⚠️ ไม่พบบิลล่าสุด'); return; }
+  voidBill(_lastBillNo);
+  _lastBillNo = null;
 }
 function checkout(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
@@ -3175,6 +3207,9 @@ function checkout(){
 
   // 3) build + show receipt BEFORE clearing cart
   document.getElementById('receiptContent').innerHTML = buildReceipt(billNo, received);
+  _lastBillNo = billNo;
+  const voidBtn = document.getElementById('voidLastBtn');
+  if(voidBtn) voidBtn.style.display = '';
   openModal('receiptModal');
   const changeAmt = received - net;
   const changeMsg = selectedPay==='cash' && changeAmt>0 ? ` | ทอน ฿${changeAmt.toLocaleString()}` : '';
@@ -3241,15 +3276,28 @@ function renderSalesTable(){
   const labelEl = document.getElementById('salesTableLabel');
   if(!tbody) return;
 
-  let data;
+  // คำนวณยอดขายรายวันจาก salesHistory จริง
+  const now = new Date();
+  let days;
   let labelText;
   if(salesRange === 'month'){
-    data = [...salesAllData]; // all days in month
-    labelText = 'รวมเดือน พ.ค.';
+    // ทุกวันในเดือนนี้ (ตั้งแต่วันที่ 1 ถึงวันนี้)
+    days = now.getDate();
+    labelText = `รวมเดือน ${now.toLocaleDateString('th-TH',{month:'short'})}`;
   } else {
-    const n = Number(salesRange);
-    data = salesAllData.slice(-n);
-    labelText = `รวม ${n} วัน`;
+    days = Number(salesRange);
+    labelText = `รวม ${days} วัน`;
+  }
+
+  const data = [];
+  for(let i=days-1; i>=0; i--){
+    const d = new Date(now);
+    d.setDate(d.getDate()-i);
+    const ds = d.toDateString();
+    const val = salesHistory
+      .filter(s => new Date(s.date).toDateString() === ds)
+      .reduce((s,b) => s+(+b.net||0), 0);
+    data.push({date: d.toLocaleDateString('th-TH',{day:'numeric',month:'short'}), val});
   }
 
   const maxVal = Math.max(...data.map(d=>d.val), 1);
@@ -3460,7 +3508,7 @@ function saveState(){
         savedAt: new Date().toISOString(),
         products, suppliers, expenses,
         salesHistory, stockHistory, stockCountHistory, zReports,
-        cart, parkedSales
+        cart, parkedSales, appSettings
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch(e){
@@ -3488,6 +3536,7 @@ function loadState(){
     if(Array.isArray(d.zReports))          zReports = d.zReports;
     if(Array.isArray(d.cart))              { cart.length=0; d.cart.forEach(x=>cart.push(x)); }
     if(Array.isArray(d.parkedSales))       parkedSales = d.parkedSales;
+    if(d.appSettings && typeof d.appSettings === 'object') appSettings = {...appSettings, ...d.appSettings};
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -3824,10 +3873,17 @@ function printZReport(){
   const d = new Date(date).toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const printedAt = new Date().toLocaleString('th-TH');
 
+  const shopName = appSettings.shopName || '🎣 FishStock';
+  const shopAddr = appSettings.shopAddress || '';
+  const shopPhone = appSettings.shopPhone || '';
+  const shopTax = appSettings.shopTaxId || '';
   document.getElementById('zPrintArea').innerHTML = `
     <div style="max-width:380px;margin:0 auto;font-size:12px;line-height:1.5">
       <div style="text-align:center;margin-bottom:14px">
-        <div style="font-size:18px;font-weight:800">🎣 FishStock</div>
+        <div style="font-size:18px;font-weight:800">${shopName}</div>
+        ${shopAddr?`<div style="font-size:11px">${shopAddr.replace(/\n/g,'<br/>')}</div>`:''}
+        ${shopPhone?`<div style="font-size:11px">โทร. ${shopPhone}</div>`:''}
+        ${shopTax?`<div style="font-size:11px">เลขผู้เสียภาษี: ${shopTax}</div>`:''}
         <div style="font-size:14px;font-weight:700;margin-top:4px">รายงานปิดยอดประจำวัน (Z-REPORT)</div>
         <div style="margin-top:6px">วันที่: ${d}</div>
         <div style="font-size:10px;color:#666">พิมพ์เมื่อ: ${printedAt}</div>
@@ -4184,8 +4240,218 @@ function renderReports(){
       <td style="text-align:right">฿${(+b.total||0).toLocaleString()}</td>
       <td style="text-align:right;color:var(--red)">${b.discount?'-฿'+(+b.discount).toLocaleString():'—'}</td>
       <td style="text-align:right;font-weight:700;color:var(--primary)">฿${(+b.net||0).toLocaleString()}</td>
+      <td style="text-align:center"><button class="btn-del" onclick="voidBill('${b.billNo}')" title="ยกเลิกบิล (คืนสต็อก)">↩️</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
+}
+
+/* ===== VOID BILL (ยกเลิกบิล) ===== */
+async function voidBill(billNo){
+  const bill = salesHistory.find(b=>b.billNo===billNo);
+  if(!bill){ showToast('⚠️ ไม่พบบิลที่ระบุ'); return; }
+  const itemList = bill.items.map(i=>`${i.name} ×${i.qty}`).join('<br>');
+  const confirmed = await dialogConfirm(
+    `<strong>เลขบิล: ${bill.billNo}</strong><br>ยอดสุทธิ: ฿${(+bill.net||0).toLocaleString()}<br><br><strong>รายการที่จะคืนสต็อก:</strong><br><div style="text-align:left;font-size:12px;max-height:120px;overflow-y:auto;background:#f8fafc;padding:8px 12px;border-radius:6px;margin-top:6px">${itemList}</div><br><strong>ยืนยันยกเลิกบิล?</strong>`,
+    {level:'danger', title:'↩️ ยกเลิกบิล (คืนสต็อก)', okText:'↩️ ยกเลิกบิล'}
+  );
+  if(!confirmed) return;
+  const today = new Date().toISOString().slice(0,10);
+  // คืนสต็อก + บันทึก stockHistory ประเภท 'void'
+  bill.items.forEach(it=>{
+    const prod = products.find(p=>p.code===it.code);
+    if(prod){
+      prod.qty = (+prod.qty||0) + it.qty;
+      stockHistory.unshift({
+        date: today, code: it.code, name: it.name,
+        type: 'void', qty: +it.qty, after: prod.qty,
+        note: `คืนจากบิลที่ยกเลิก · บิล ${bill.billNo}`
+      });
+    }
+  });
+  // ลบบิลจาก salesHistory
+  salesHistory = salesHistory.filter(b=>b.billNo!==billNo);
+  refreshAllViews();
+  // ปิด receipt modal ถ้าเปิดอยู่
+  const rm = document.getElementById('receiptModal');
+  if(rm) bootstrap.Modal.getInstance(rm)?.hide();
+  showToast(`↩️ ยกเลิกบิล ${bill.billNo} เรียบร้อย (คืนสต็อก ${bill.items.length} รายการ)`);
+}
+
+/* ===== DASHBOARD + LOW STOCK ALERT ===== */
+let appSettings = {
+  lowStockThreshold: 10,
+  shopName: '🎣 FishStock',
+  shopAddress: '',
+  shopPhone: '',
+  shopTaxId: '',
+  shopLogo: '',
+  receiptFooter: '*** ขอบคุณที่ใช้บริการ ***',
+  shopSocial: ''
+};
+
+function getLowStockItems(){
+  const t = +appSettings.lowStockThreshold || 10;
+  return products.filter(p => (+p.qty||0) <= t).sort((a,b)=>(a.qty||0)-(b.qty||0));
+}
+
+function renderDashboard(){
+  if(!document.getElementById('dashProductCount')) return;
+  const totalCount = products.length;
+  const stockValue = products.reduce((s,p)=>s + (+p.qty||0)*(+p.cost||0), 0);
+  const lowItems = getLowStockItems();
+  const today = new Date().toDateString();
+  const todaySales = salesHistory
+    .filter(s=>new Date(s.date).toDateString()===today)
+    .reduce((s,b)=>s+(+b.net||0), 0);
+
+  document.getElementById('dashProductCount').textContent = totalCount.toLocaleString();
+  document.getElementById('dashStockValue').textContent  = '฿'+stockValue.toLocaleString();
+  document.getElementById('dashLowStock').textContent    = lowItems.length;
+  document.getElementById('dashTodaySales').textContent  = '฿'+todaySales.toLocaleString();
+
+  // Low stock list
+  const listEl = document.getElementById('dashLowStockList');
+  if(listEl){
+    if(!lowItems.length){
+      listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted)"><div style="font-size:36px;margin-bottom:8px">✅</div>สต็อกสินค้าทุกชิ้นเพียงพอ</div>';
+    } else {
+      const t = +appSettings.lowStockThreshold || 10;
+      listEl.innerHTML = lowItems.slice(0,8).map(p=>{
+        const critical = p.qty === 0;
+        const cls = critical ? 'alert-critical' : 'alert-warn';
+        const lbl = critical ? '<strong style="color:var(--red)">หมดสต็อก</strong>' : `เหลือ <strong>${p.qty} ชิ้น</strong> · ต้องการ ${t}`;
+        return `<div class="alert-item ${cls}">
+          <div class="alert-name">${p.name}</div>
+          <div class="alert-meta">${lbl}</div>
+          <button class="btn btn-sm btn-primary" onclick="navTo('stock')">รับเข้า</button>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Recent activity from stockHistory
+  const tbody = document.getElementById('dashRecentActivity');
+  if(tbody){
+    const recent = stockHistory.slice(0,10);
+    if(!recent.length){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีกิจกรรม</td></tr>';
+    } else {
+      const badges = {in:'<span class="badge bg-success">รับเข้า</span>',out:'<span class="badge bg-danger">จ่ายออก</span>',sale:'<span class="badge bg-primary">ขาย</span>',void:'<span class="badge bg-warning text-dark">ยกเลิก</span>'};
+      tbody.innerHTML = recent.map(h=>{
+        const d = h.date ? new Date(h.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) : '-';
+        const qtyColor = h.qty<0 ? 'var(--red)' : 'var(--green)';
+        const qtyTxt = h.qty<0 ? h.qty : '+'+h.qty;
+        return `<tr>
+          <td>${d}</td>
+          <td style="font-weight:600">${h.name}</td>
+          <td>${badges[h.type]||h.type}</td>
+          <td style="color:${qtyColor};font-weight:700">${qtyTxt}</td>
+          <td>${h.after??'-'}</td>
+          <td style="font-size:11px;color:var(--text-muted)">${h.note||'-'}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+function renderAlertBadge(){
+  const lowItems = getLowStockItems();
+  const dot = document.getElementById('alertBadgeDot');
+  if(!dot) return;
+  if(lowItems.length){
+    dot.style.display = '';
+    dot.textContent = lowItems.length > 99 ? '99+' : lowItems.length;
+  } else {
+    dot.style.display = 'none';
+  }
+}
+
+function toggleAlertDropdown(e){
+  e?.stopPropagation();
+  const dd = document.getElementById('alertDropdown');
+  if(!dd) return;
+  const isShown = dd.classList.contains('show');
+  if(isShown){
+    dd.classList.remove('show');
+    dd.style.display = 'none';
+    return;
+  }
+  // populate
+  const lowItems = getLowStockItems();
+  const t = +appSettings.lowStockThreshold || 10;
+  if(!lowItems.length){
+    dd.innerHTML = `<div class="alert-dd-head">🔔 แจ้งเตือนสต็อก<span style="font-size:11px;color:var(--text-muted)">เกณฑ์: ≤${t}</span></div>
+      <div class="alert-dd-empty"><div style="font-size:32px;margin-bottom:6px">✅</div>สต็อกทุกชิ้นเพียงพอ</div>`;
+  } else {
+    dd.innerHTML = `<div class="alert-dd-head">🔔 สินค้าใกล้หมด (${lowItems.length})<span style="font-size:11px;color:var(--text-muted)">เกณฑ์: ≤${t}</span></div>` +
+      lowItems.slice(0,20).map(p=>{
+        const critical = p.qty === 0;
+        return `<div class="alert-dd-item" onclick="alertItemClick('${p.code}')">
+          <img class="alert-dd-img" src="${p.img||''}" onerror="this.src=''" />
+          <div class="alert-dd-info">
+            <div class="alert-dd-name">${p.name}</div>
+            <div class="alert-dd-meta">${p.code} · ${p.cat}</div>
+          </div>
+          <div class="alert-dd-qty ${critical?'critical':'low'}">${critical?'หมด':p.qty}</div>
+        </div>`;
+      }).join('');
+  }
+  dd.classList.add('show');
+  dd.style.display = 'block';
+  // close on outside click
+  setTimeout(()=>{
+    document.addEventListener('click', _alertOutsideClick, {once:true});
+  }, 50);
+}
+function _alertOutsideClick(e){
+  const dd = document.getElementById('alertDropdown');
+  if(dd && !document.getElementById('alertBadge').contains(e.target)){
+    dd.classList.remove('show'); dd.style.display='none';
+  }
+}
+function alertItemClick(code){
+  // ไปหน้ารับ/จ่าย และเลือกสินค้าให้
+  document.getElementById('alertDropdown').classList.remove('show');
+  document.getElementById('alertDropdown').style.display = 'none';
+  navTo('stock');
+  setTimeout(()=>{
+    const sel = document.getElementById('stockInProduct');
+    if(sel) { sel.value = code; onStockProductChange('in'); }
+  }, 100);
+}
+function navTo(page){
+  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if(navItem) navItem.click();
+}
+
+function loadAppSettingsForm(){
+  const map = {
+    setShopName:'shopName', setShopAddress:'shopAddress',
+    setShopPhone:'shopPhone', setShopTaxId:'shopTaxId',
+    setShopLogo:'shopLogo', setReceiptFooter:'receiptFooter',
+    setShopSocial:'shopSocial', setLowStock:'lowStockThreshold'
+  };
+  Object.entries(map).forEach(([id, key])=>{
+    const el = document.getElementById(id);
+    if(el) el.value = appSettings[key] ?? '';
+  });
+}
+function saveAppSettings(e){
+  e.preventDefault();
+  const map = {
+    setShopName:'shopName', setShopAddress:'shopAddress',
+    setShopPhone:'shopPhone', setShopTaxId:'shopTaxId',
+    setShopLogo:'shopLogo', setReceiptFooter:'receiptFooter',
+    setShopSocial:'shopSocial'
+  };
+  Object.entries(map).forEach(([id, key])=>{
+    const el = document.getElementById(id);
+    if(el) appSettings[key] = el.value.trim();
+  });
+  const ls = document.getElementById('setLowStock');
+  if(ls) appSettings.lowStockThreshold = +ls.value || 10;
+  refreshAllViews();
+  showToast('✅ บันทึกการตั้งค่าเรียบร้อย');
 }
 
 /* ===== STOCK COUNT ===== */
