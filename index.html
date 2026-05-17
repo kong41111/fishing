@@ -1012,6 +1012,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         <div class="user-name" id="footerUserName">Admin</div>
         <div class="user-role" id="footerUserRole">ผู้ดูแลระบบ</div>
       </div>
+      <button class="logout-btn" onclick="openChangePasswordModal()" title="เปลี่ยนรหัสผ่าน">🔑</button>
       <button class="logout-btn" onclick="doLogout()" title="ออกจากระบบ">🚪</button>
     </div>
   </div>
@@ -1981,6 +1982,37 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
       <div class="modal-body" id="parkedSalesBody">
         <div style="text-align:center;color:var(--text-muted);padding:40px">ยังไม่มีบิลที่พักไว้</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal fade" id="changePwdModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content p-3">
+      <div class="modal-header" style="border-bottom:none;background:linear-gradient(135deg,#dbeafe,#eff6ff);border-radius:10px 10px 0 0;text-align:center;flex-direction:column;padding:20px">
+        <div style="font-size:42px;line-height:1;margin-bottom:6px">🔑</div>
+        <h5 class="modal-title" style="font-weight:800">เปลี่ยนรหัสผ่าน</h5>
+        <div id="changePwdUser" style="font-size:12px;color:#64748b;margin-top:4px"></div>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveChangePassword(event)">
+          <label>🔒 รหัสผ่านปัจจุบัน
+            <input type="password" class="form-control" id="cpOld" required autocomplete="current-password" />
+          </label>
+          <label>🆕 รหัสผ่านใหม่ <span style="font-size:11px;color:var(--text-muted)">(อย่างน้อย 4 ตัว)</span>
+            <input type="password" class="form-control" id="cpNew" required minlength="4" autocomplete="new-password" />
+          </label>
+          <label>✅ ยืนยันรหัสผ่านใหม่
+            <input type="password" class="form-control" id="cpConfirm" required minlength="4" autocomplete="new-password" />
+          </label>
+          <div id="cpError" class="login-error" style="display:none"></div>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 เปลี่ยนรหัส</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -4681,6 +4713,38 @@ function doLogin(e){
   applyAuthUI();
   hideLogin();
   showToast(`👋 ยินดีต้อนรับ ${user.name}`);
+}
+
+function openChangePasswordModal(){
+  if(!currentUser){ showToast('⚠️ ต้อง login ก่อน'); return; }
+  document.getElementById('changePwdUser').textContent = `บัญชี: ${currentUser.name} (${currentUser.username})`;
+  document.getElementById('cpOld').value = '';
+  document.getElementById('cpNew').value = '';
+  document.getElementById('cpConfirm').value = '';
+  document.getElementById('cpError').style.display = 'none';
+  openModal('changePwdModal');
+  setTimeout(()=>document.getElementById('cpOld')?.focus(), 200);
+}
+
+function saveChangePassword(e){
+  e.preventDefault();
+  const oldPwd = document.getElementById('cpOld').value;
+  const newPwd = document.getElementById('cpNew').value;
+  const confirmPwd = document.getElementById('cpConfirm').value;
+  const err = document.getElementById('cpError');
+  const showErr = (msg)=>{ err.textContent = '⚠️ '+msg; err.style.display = ''; };
+
+  const u = users.find(x=>x.id===currentUser.id);
+  if(!u){ showErr('ไม่พบบัญชี'); return; }
+  if(u.passwordHash !== hashPwd(oldPwd)){ showErr('รหัสผ่านปัจจุบันไม่ถูกต้อง'); return; }
+  if(newPwd.length < 4){ showErr('รหัสใหม่ต้องมีอย่างน้อย 4 ตัว'); return; }
+  if(newPwd !== confirmPwd){ showErr('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+  if(newPwd === oldPwd){ showErr('รหัสใหม่ต้องไม่ซ้ำกับรหัสเดิม'); return; }
+
+  u.passwordHash = hashPwd(newPwd);
+  closeModal('changePwdModal');
+  saveState();
+  showToast('✅ เปลี่ยนรหัสผ่านเรียบร้อย');
 }
 
 async function doLogout(){
