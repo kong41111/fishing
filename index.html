@@ -4683,8 +4683,8 @@ function doLogin(e){
   showToast(`👋 ยินดีต้อนรับ ${user.name}`);
 }
 
-function doLogout(){
-  if(!confirm('ออกจากระบบ?')) return;
+async function doLogout(){
+  if(!await dialogConfirm(`ออกจากระบบ <strong>${currentUser?.name||''}</strong> ใช่หรือไม่?`,{level:'warn',title:'ออกจากระบบ',icon:'🚪',okText:'🚪 ออกจากระบบ'})) return;
   currentUser = null;
   try{ sessionStorage.removeItem('fs-session'); }catch(e){}
   document.getElementById('loginUser').value = '';
