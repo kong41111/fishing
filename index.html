@@ -215,7 +215,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .search-icon{color:var(--text-muted)}
 .select-filter{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);cursor:pointer}
 .tbl-actions{display:flex;gap:6px}
-.btn-edit,.btn-del,.btn-barcode{border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600}
+.tbl-actions-spread{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center}
+.tbl-actions-spread button{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.tbl-actions-spread button span{font-size:11px;font-weight:600}
+@media(max-width:1100px){.tbl-actions-spread button span{display:none}}
+.btn-edit,.btn-del,.btn-barcode{border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600;transition:filter .12s}
+.btn-edit:hover,.btn-del:hover,.btn-barcode:hover{filter:brightness(.92)}
 .btn-edit{background:#dbeafe;color:#1d4ed8}
 .btn-barcode{background:#f3e8ff;color:#7c3aed}
 /* Barcode label preview */
@@ -1060,7 +1065,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div class="card">
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>รูป</th><th>สินค้า / รหัส / บาร์โค้ด</th><th>หมวด</th><th>ทุน</th><th>ราคาขาย</th><th>กำไร</th><th>คงเหลือ</th><th>มูลค่า</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+            <thead><tr><th style="width:50px;text-align:center">ลำดับ</th><th>รูป</th><th>สินค้า / รหัส / บาร์โค้ด</th><th>หมวด</th><th>ทุน</th><th>ราคาขาย</th><th>กำไร</th><th>คงเหลือ</th><th>มูลค่า</th><th>สถานะ</th><th style="text-align:center;width:160px">จัดการ</th></tr></thead>
             <tbody id="productBody"></tbody>
           </table>
         </div>
@@ -2654,14 +2659,16 @@ function renderProducts(){
   const pageItems = list.slice(start,start+pageSize);
 
   document.getElementById('productBody').innerHTML = pageItems.length===0
-    ? `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">ไม่พบสินค้าตามเงื่อนไข</td></tr>`
-    : pageItems.map(p=>{
+    ? `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">ไม่พบสินค้าตามเงื่อนไข</td></tr>`
+    : pageItems.map((p,i)=>{
         const idx = products.indexOf(p);
+        const seq = start + i + 1;
         const profit = p.price - p.cost;
         const margin = p.cost?((profit/p.cost)*100).toFixed(0):0;
         const value = p.qty * p.cost;
         return `
           <tr>
+            <td style="text-align:center;font-weight:700;color:var(--text-muted)">${seq}</td>
             <td><img class="product-thumb" src="${p.img||FALLBACK_IMG}" alt="${p.name}" onerror="this.src='${FALLBACK_IMG}'"/></td>
             <td>
               <div class="product-cell-name">${p.name}</div>
@@ -2674,7 +2681,13 @@ function renderProducts(){
             <td class="${p.qty===0?'qty-low':p.qty<=5?'qty-low':'qty-ok'}">${p.qty} ${p.qty<=5?'⚠️':''}</td>
             <td>฿${value.toLocaleString()}</td>
             <td>${p.qty===0?'<span class="status status-pending">หมดสต็อก</span>':p.qty<=5?'<span class="status" style="background:#fef3c7;color:#a16207">ใกล้หมด</span>':'<span class="status status-done">มีสินค้า</span>'}</td>
-            <td><div class="tbl-actions"><button class="btn-edit" onclick="openEditProduct(${idx})">✏️</button><button class="btn-barcode" onclick="openBarcode(${idx})" title="พิมพ์บาร์โค้ด">🔲</button><button class="btn-del" onclick="delProduct(${idx})">🗑️</button></div></td>
+            <td>
+              <div class="tbl-actions-spread">
+                <button class="btn-edit" onclick="openEditProduct(${idx})" title="แก้ไข">✏️ <span>แก้ไข</span></button>
+                <button class="btn-barcode" onclick="openBarcode(${idx})" title="พิมพ์บาร์โค้ด">🔲 <span>บาร์โค้ด</span></button>
+                <button class="btn-del" onclick="delProduct(${idx})" title="ลบ">🗑️</button>
+              </div>
+            </td>
           </tr>`;
       }).join('');
 
