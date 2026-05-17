@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FishStock — ระบบจัดการคลังสินค้าอุปกรณ์ตกปลา</title>
+<meta name="theme-color" content="#0369a1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="FishStock" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijg0IiBmaWxsPSIjMDM2OWExIi8+PHRleHQgeD0iMjU2IiB5PSIzNTAiIGZvbnQtc2l6ZT0iMjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn46jPC90ZXh0Pjwvc3ZnPg==" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -45,6 +51,28 @@
   --radius:12px;--shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
 }
 html{overflow-x:hidden}
+/* ===== LOGIN SCREEN ===== */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0c4a6e 0%,#0369a1 50%,#0284c7 100%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 25px 60px rgba(0,0,0,.3);text-align:center}
+.login-logo{font-size:60px;line-height:1;margin-bottom:8px}
+.login-title{font-size:26px;font-weight:800;color:#0c4a6e;margin-bottom:4px}
+.login-subtitle{font-size:13px;color:#64748b;margin-bottom:26px}
+.login-field{margin-bottom:14px;text-align:left}
+.login-field label{display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px}
+.login-field input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;background:#f8fafc;transition:all .15s;outline:none}
+.login-field input:focus{border-color:#0369a1;background:#fff;box-shadow:0 0 0 3px rgba(3,105,161,.12)}
+.login-btn{width:100%;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:transform .12s,box-shadow .12s;box-shadow:0 4px 14px rgba(3,105,161,.3)}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(3,105,161,.4)}
+.login-error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;padding:9px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:600}
+.login-hint{margin-top:20px;font-size:11.5px;color:#94a3b8;background:#f8fafc;padding:10px;border-radius:8px;line-height:1.6}
+/* ===== PERMISSION HIDE ===== */
+body.role-staff .role-admin-only{display:none!important}
+.user-pills{display:flex;align-items:center;gap:6px;font-size:11px}
+.user-role-badge{padding:2px 7px;border-radius:99px;font-weight:700;font-size:10px}
+.user-role-badge.admin{background:#fef3c7;color:#92400e}
+.user-role-badge.staff{background:#dbeafe;color:#1e40af}
+.logout-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+.logout-btn:hover{background:rgba(255,255,255,.25)}
 /* ===== DARK MODE ===== */
 body.dark-mode{
   --bs-body-bg:#0f172a; --bs-body-color:#e2e8f0;
@@ -927,6 +955,31 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">🎣</div>
+    <div class="login-title" id="loginShopName">FishStock</div>
+    <div class="login-subtitle">ระบบจัดการคลังสินค้าอุปกรณ์ตกปลา</div>
+    <form onsubmit="doLogin(event)">
+      <div class="login-field">
+        <label>👤 ชื่อผู้ใช้</label>
+        <input type="text" id="loginUser" autocomplete="username" required autofocus />
+      </div>
+      <div class="login-field">
+        <label>🔒 รหัสผ่าน</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required />
+      </div>
+      <div id="loginError" class="login-error" style="display:none"></div>
+      <button type="submit" class="login-btn">🚀 เข้าสู่ระบบ</button>
+    </form>
+    <div class="login-hint">
+      <strong>ครั้งแรก:</strong> admin / admin1234<br>
+      <strong>ทดลอง staff:</strong> staff / staff1234
+    </div>
+  </div>
+</div>
+
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <span class="logo-icon">🎣</span>
@@ -939,26 +992,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <div class="nav-group-label">เมนูหลัก</div>
     <a class="nav-item active" data-page="dashboard"><i class="nav-icon bi bi-speedometer2"></i><span>แดชบอร์ด</span></a>
     <a class="nav-item" data-page="products"><i class="nav-icon bi bi-box-seam"></i><span>สินค้า</span></a>
-    <a class="nav-item" data-page="stock"><i class="nav-icon bi bi-arrow-left-right"></i><span>รับ/จ่ายสินค้า</span></a>
-    <a class="nav-item" data-page="stockcount"><i class="nav-icon bi bi-clipboard-check"></i><span>นับสต็อก</span></a>
+    <a class="nav-item role-admin-only" data-page="stock"><i class="nav-icon bi bi-arrow-left-right"></i><span>รับ/จ่ายสินค้า</span></a>
+    <a class="nav-item role-admin-only" data-page="stockcount"><i class="nav-icon bi bi-clipboard-check"></i><span>นับสต็อก</span></a>
     <a class="nav-item" data-page="sales"><i class="nav-icon bi bi-cart3"></i><span>การขาย (POS)</span></a>
-    <div class="nav-group-label">รายงาน</div>
-    <a class="nav-item" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
-    <a class="nav-item" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
-    <a class="nav-item" data-page="accounting"><i class="nav-icon bi bi-cash-coin"></i><span>บัญชี (กำไร/ขาดทุน)</span></a>
-    <a class="nav-item" data-page="zreport"><i class="nav-icon bi bi-receipt"></i><span>ปิดยอดประจำวัน (Z-Report)</span></a>
+    <div class="nav-group-label role-admin-only">รายงาน</div>
+    <a class="nav-item role-admin-only" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
+    <a class="nav-item role-admin-only" data-page="scHistoryReport"><i class="nav-icon bi bi-journal-text"></i><span>ประวัตินับสต็อก</span></a>
+    <a class="nav-item role-admin-only" data-page="accounting"><i class="nav-icon bi bi-cash-coin"></i><span>บัญชี (กำไร/ขาดทุน)</span></a>
+    <a class="nav-item role-admin-only" data-page="zreport"><i class="nav-icon bi bi-receipt"></i><span>ปิดยอดประจำวัน (Z-Report)</span></a>
     <a class="nav-item" data-page="customers"><i class="nav-icon bi bi-person-heart"></i><span>ลูกค้า</span></a>
-    <a class="nav-item" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
-    <div class="nav-group-label">ตั้งค่า</div>
-    <a class="nav-item" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
+    <a class="nav-item role-admin-only" data-page="suppliers"><i class="nav-icon bi bi-people"></i><span>ซัพพลายเออร์</span></a>
+    <div class="nav-group-label role-admin-only">ตั้งค่า</div>
+    <a class="nav-item role-admin-only" data-page="settings"><i class="nav-icon bi bi-gear"></i><span>ตั้งค่าระบบ</span></a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">
-      <div class="user-avatar">ส</div>
-      <div>
-        <div class="user-name">สมชาย ชาวเรือ</div>
-        <div class="user-role">ผู้ดูแลระบบ</div>
+      <div class="user-avatar" id="footerAvatar">A</div>
+      <div style="flex:1;min-width:0">
+        <div class="user-name" id="footerUserName">Admin</div>
+        <div class="user-role" id="footerUserRole">ผู้ดูแลระบบ</div>
       </div>
+      <button class="logout-btn" onclick="doLogout()" title="ออกจากระบบ">🚪</button>
     </div>
   </div>
 </aside>
@@ -1722,6 +1776,38 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         </div>
       </div>
 
+      <!-- Manage Users -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header">
+          <span class="card-title">👥 จัดการผู้ใช้งาน (Login)</span>
+          <button class="btn btn-primary btn-sm" onclick="openUserModal()"><i class="bi bi-plus-lg"></i> เพิ่มผู้ใช้</button>
+        </div>
+        <div style="padding:6px 0;font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          จัดการบัญชี admin/staff สำหรับ login เข้าระบบ
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>Username</th><th>สิทธิ์</th><th>วันที่สร้าง</th><th></th></tr></thead>
+            <tbody id="usersListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PWA Install -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header"><span class="card-title">📱 ติดตั้งเป็น App</span></div>
+        <div style="padding:6px 0;font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.7">
+          ติดตั้ง FishStock เป็นแอปบนเครื่อง — เปิดได้เร็ว ใช้งานออฟไลน์ได้บางส่วน<br>
+          <strong>iPad/iPhone:</strong> เปิดใน Safari → กด <strong>"Share → Add to Home Screen"</strong><br>
+          <strong>Android/Chrome:</strong> กดปุ่มด้านล่าง หรือเมนู ⋮ → "ติดตั้งแอป"<br>
+          <strong>Desktop:</strong> ดูที่ Address bar (Chrome/Edge) จะมี icon ติดตั้ง
+        </div>
+        <button class="btn btn-primary" id="installAppBtn" onclick="installApp()" style="display:none">
+          <i class="bi bi-download"></i> ติดตั้งแอป FishStock
+        </button>
+        <div style="font-size:12px;color:var(--text-muted)">หากปุ่มยังไม่ขึ้น แสดงว่าเบราว์เซอร์ยังไม่รองรับ หรือลงแล้ว — ลองใช้วิธีติดตั้งด้านบน</div>
+      </div>
+
       <!-- Manage Categories -->
       <div class="card" style="margin-top:18px">
         <div class="card-header">
@@ -1895,6 +1981,38 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
       <div class="modal-body" id="parkedSalesBody">
         <div style="text-align:center;color:var(--text-muted);padding:40px">ยังไม่มีบิลที่พักไว้</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalTitle">+ เพิ่มผู้ใช้</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form class="stock-form" onsubmit="saveUser(event)">
+          <input type="hidden" id="userEditId" />
+          <label>ชื่อ-นามสกุล<input type="text" class="form-control" id="userName" required /></label>
+          <label>Username (สำหรับ login)<input type="text" class="form-control" id="userUsername" required pattern="[a-zA-Z0-9_]+" minlength="3" /></label>
+          <label>สิทธิ์
+            <select class="form-select" id="userRole">
+              <option value="admin">👑 Admin (ทำได้ทุกอย่าง)</option>
+              <option value="staff">👤 Staff (เฉพาะ POS + ลูกค้า)</option>
+            </select>
+          </label>
+          <label>รหัสผ่าน <span id="userPwdHint" style="font-size:11px;color:var(--text-muted)">(เว้นว่างเพื่อไม่เปลี่ยน)</span>
+            <input type="password" class="form-control" id="userPassword" minlength="4" />
+          </label>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">💾 บันทึก</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -2531,6 +2649,7 @@ function refreshAllViews(){
   renderCustomers();
   renderCategoriesList();
   refreshCategoryDropdowns();
+  renderUsersList();
   updateBackupStats();
   saveState();
   // dashboard stats
@@ -3787,7 +3906,7 @@ function saveState(){
       const data = {
         v: '1.0',
         savedAt: new Date().toISOString(),
-        products, suppliers, expenses, customers, categories,
+        products, suppliers, expenses, customers, categories, users,
         salesHistory, stockHistory, stockCountHistory, zReports,
         cart, parkedSales, appSettings
       };
@@ -3820,6 +3939,7 @@ function loadState(){
     if(d.appSettings && typeof d.appSettings === 'object') appSettings = {...appSettings, ...d.appSettings};
     if(Array.isArray(d.customers)) customers = d.customers;
     if(Array.isArray(d.categories) && d.categories.length) categories = d.categories;
+    if(Array.isArray(d.users) && d.users.length) users = d.users;
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -4527,6 +4647,191 @@ function renderReports(){
       <td style="text-align:center"><button class="btn-del" onclick="voidBill('${b.billNo}')" title="ยกเลิกบิล (คืนสต็อก)">↩️</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
+}
+
+/* ===== AUTH / LOGIN ===== */
+let users = []; // {id, username, name, role:'admin'|'staff', passwordHash, createdAt}
+let currentUser = null;
+
+function hashPwd(pwd){ return btoa(unescape(encodeURIComponent(pwd + '|fs|salt'))); }
+
+function ensureDefaultUsers(){
+  if(!users.length){
+    users = [
+      { id: 1, username: 'admin', name: 'Admin', role: 'admin', passwordHash: hashPwd('admin1234'), createdAt: new Date().toISOString() },
+      { id: 2, username: 'staff', name: 'พนักงานขาย', role: 'staff', passwordHash: hashPwd('staff1234'), createdAt: new Date().toISOString() }
+    ];
+  }
+}
+
+function doLogin(e){
+  e.preventDefault();
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const user = users.find(x=>x.username===u && x.passwordHash===hashPwd(p));
+  const err = document.getElementById('loginError');
+  if(!user){
+    err.textContent = '⚠️ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    err.style.display = '';
+    document.getElementById('loginPass').value='';
+    return;
+  }
+  currentUser = { id:user.id, username:user.username, name:user.name, role:user.role };
+  try{ sessionStorage.setItem('fs-session', JSON.stringify(currentUser)); }catch(e){}
+  applyAuthUI();
+  hideLogin();
+  showToast(`👋 ยินดีต้อนรับ ${user.name}`);
+}
+
+function doLogout(){
+  if(!confirm('ออกจากระบบ?')) return;
+  currentUser = null;
+  try{ sessionStorage.removeItem('fs-session'); }catch(e){}
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').style.display='none';
+  showLogin();
+}
+
+function showLogin(){
+  document.getElementById('loginScreen').style.display = 'flex';
+  // อัปเดตชื่อร้านในหน้า login
+  const sn = document.getElementById('loginShopName');
+  if(sn) sn.textContent = appSettings.shopName || 'FishStock';
+  setTimeout(()=>document.getElementById('loginUser')?.focus(), 100);
+}
+function hideLogin(){
+  document.getElementById('loginScreen').style.display = 'none';
+}
+
+function applyAuthUI(){
+  if(!currentUser) return;
+  // Body role class
+  document.body.classList.remove('role-admin','role-staff');
+  document.body.classList.add('role-'+currentUser.role);
+
+  // Sidebar footer
+  const initial = (currentUser.name||currentUser.username||'?').charAt(0).toUpperCase();
+  const av = document.getElementById('footerAvatar'); if(av) av.textContent = initial;
+  const nm = document.getElementById('footerUserName'); if(nm) nm.textContent = currentUser.name||currentUser.username;
+  const rl = document.getElementById('footerUserRole');
+  if(rl) rl.innerHTML = currentUser.role==='admin'
+    ? '<span class="user-role-badge admin">👑 Admin</span>'
+    : '<span class="user-role-badge staff">👤 Staff</span>';
+
+  // ถ้า staff อยู่หน้าที่ไม่มีสิทธิ์ → กลับ Dashboard หรือ POS
+  if(currentUser.role==='staff'){
+    const activePage = document.querySelector('.page.active')?.id || '';
+    const restricted = ['page-stock','page-stockcount','page-reports','page-scHistoryReport','page-accounting','page-zreport','page-suppliers','page-settings'];
+    if(restricted.includes(activePage)){
+      navTo('sales');
+    }
+  }
+}
+
+function checkSession(){
+  try{
+    const raw = sessionStorage.getItem('fs-session');
+    if(raw){
+      const u = JSON.parse(raw);
+      // verify user still exists
+      const found = users.find(x=>x.id===u.id);
+      if(found){ currentUser = u; return true; }
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ===== USER CRUD ===== */
+function renderUsersList(){
+  const tbody = document.getElementById('usersListBody');
+  if(!tbody) return;
+  tbody.innerHTML = users.map((u,i)=>{
+    const d = u.createdAt ? new Date(u.createdAt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '-';
+    const roleBadge = u.role==='admin'
+      ? '<span class="user-role-badge admin">👑 Admin</span>'
+      : '<span class="user-role-badge staff">👤 Staff</span>';
+    const isCurrent = currentUser && currentUser.id===u.id;
+    return `<tr>
+      <td style="text-align:center;color:var(--text-muted)">${i+1}</td>
+      <td style="font-weight:600">${u.name} ${isCurrent?'<span style="font-size:11px;color:var(--primary)">(คุณ)</span>':''}</td>
+      <td><code>${u.username}</code></td>
+      <td>${roleBadge}</td>
+      <td style="color:var(--text-muted);font-size:12px">${d}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn-edit" onclick="openUserModal(${u.id})">✏️</button>
+        ${isCurrent?'':`<button class="btn-del" onclick="delUser(${u.id})">🗑️</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+function openUserModal(id){
+  document.getElementById('userEditId').value = id||'';
+  if(id){
+    const u = users.find(x=>x.id===id);
+    if(!u) return;
+    document.getElementById('userModalTitle').textContent = '✏️ แก้ไขผู้ใช้';
+    document.getElementById('userName').value = u.name||'';
+    document.getElementById('userUsername').value = u.username||'';
+    document.getElementById('userRole').value = u.role||'staff';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPwdHint').textContent = '(เว้นว่างเพื่อไม่เปลี่ยน)';
+  } else {
+    document.getElementById('userModalTitle').textContent = '+ เพิ่มผู้ใช้';
+    document.getElementById('userName').value = '';
+    document.getElementById('userUsername').value = '';
+    document.getElementById('userRole').value = 'staff';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPwdHint').textContent = '(ต้องมีอย่างน้อย 4 ตัว)';
+  }
+  openModal('userModal');
+}
+function saveUser(e){
+  e.preventDefault();
+  const id = +document.getElementById('userEditId').value;
+  const name = document.getElementById('userName').value.trim();
+  const username = document.getElementById('userUsername').value.trim().toLowerCase();
+  const role = document.getElementById('userRole').value;
+  const pwd = document.getElementById('userPassword').value;
+  if(users.some(u=>u.username===username && u.id!==id)){
+    showToast(`⚠️ Username "${username}" มีอยู่แล้ว`); return;
+  }
+  if(id){
+    const u = users.find(x=>x.id===id);
+    if(u){
+      u.name = name; u.username = username; u.role = role;
+      if(pwd){
+        if(pwd.length<4){ showToast('⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัว'); return; }
+        u.passwordHash = hashPwd(pwd);
+      }
+      // ถ้าแก้ user ปัจจุบัน อัปเดต currentUser ด้วย
+      if(currentUser && currentUser.id===id){
+        currentUser.name = name; currentUser.username = username; currentUser.role = role;
+        sessionStorage.setItem('fs-session', JSON.stringify(currentUser));
+        applyAuthUI();
+      }
+    }
+    showToast('✅ แก้ไขผู้ใช้เรียบร้อย');
+  } else {
+    if(pwd.length<4){ showToast('⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัว'); return; }
+    users.push({ id:Date.now(), username, name, role, passwordHash:hashPwd(pwd), createdAt:new Date().toISOString() });
+    showToast('✅ เพิ่มผู้ใช้เรียบร้อย');
+  }
+  closeModal('userModal');
+  renderUsersList();
+  saveState();
+}
+async function delUser(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  if(currentUser && currentUser.id===id){ showToast('⚠️ ไม่สามารถลบบัญชีตัวเองได้'); return; }
+  const adminCount = users.filter(x=>x.role==='admin').length;
+  if(u.role==='admin' && adminCount<=1){ showToast('⚠️ ต้องมี Admin อย่างน้อย 1 คน'); return; }
+  if(!await dialogConfirm(`ลบผู้ใช้ <strong>"${u.name}"</strong> (${u.username})?`,{level:'danger',title:'ลบผู้ใช้',okText:'🗑️ ลบ'})) return;
+  users = users.filter(x=>x.id!==id);
+  renderUsersList();
+  saveState();
+  showToast('🗑️ ลบผู้ใช้เรียบร้อย');
 }
 
 /* ===== CATEGORY MANAGEMENT ===== */
@@ -5381,9 +5686,50 @@ function showToast(msg){
   }
 })();
 
+// PWA: Register Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.warn('SW reg failed:',err));
+  });
+}
+// PWA: Install prompt
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  const btn = document.getElementById('installAppBtn');
+  if(btn) btn.style.display = 'inline-flex';
+});
+async function installApp(){
+  if(!_deferredInstallPrompt){
+    showToast('ℹ️ บราวเซอร์นี้ติดตั้งไม่ได้ — ใช้ Safari iOS: กด "Share → Add to Home Screen"');
+    return;
+  }
+  _deferredInstallPrompt.prompt();
+  const { outcome } = await _deferredInstallPrompt.userChoice;
+  if(outcome === 'accepted') showToast('✅ ติดตั้ง FishStock เรียบร้อย');
+  _deferredInstallPrompt = null;
+  const btn = document.getElementById('installAppBtn');
+  if(btn) btn.style.display = 'none';
+}
+window.addEventListener('appinstalled', ()=>{
+  showToast('✅ ติดตั้ง FishStock เรียบร้อย');
+  const btn = document.getElementById('installAppBtn');
+  if(btn) btn.style.display = 'none';
+});
+
 // Load saved data from localStorage on startup (must come before initial render)
 loadState();
 applyDarkMode();
+ensureDefaultUsers();
+
+// Auth check
+if(checkSession()){
+  applyAuthUI();
+  hideLogin();
+} else {
+  showLogin();
+}
 
 refreshAllViews();
 renderPOS(posItems);

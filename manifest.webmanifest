@@ -1,0 +1,27 @@
+{
+  "name": "FishStock — ระบบจัดการคลังสินค้า",
+  "short_name": "FishStock",
+  "description": "ระบบจัดการคลังสินค้าและ POS สำหรับร้านอุปกรณ์ตกปลา",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c4a6e",
+  "theme_color": "#0369a1",
+  "lang": "th",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjMyIiBmaWxsPSIjMDM2OWExIi8+PHRleHQgeD0iOTYiIHk9IjEzMCIgZm9udC1zaXplPSIxMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjqM8L3RleHQ+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijg0IiBmaWxsPSIjMDM2OWExIi8+PHRleHQgeD0iMjU2IiB5PSIzNTAiIGZvbnQtc2l6ZT0iMjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn46jPC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
