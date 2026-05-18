@@ -1004,8 +1004,18 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         <label>🔒 รหัสผ่าน</label>
         <input type="password" id="loginPass" autocomplete="current-password" required />
       </div>
+      <div class="login-field" id="captchaField" style="display:none">
+        <label>🤖 ยืนยันตัวตน — ตอบคำถามคณิตศาสตร์ <span id="captchaQ" style="color:var(--primary);font-weight:700"></span></label>
+        <input type="number" id="captchaAns" placeholder="ตอบเลขที่ได้" />
+      </div>
+      <div id="lockoutBox" style="display:none;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:14px;text-align:center;margin-bottom:12px">
+        <div style="font-size:32px;line-height:1">🔒</div>
+        <div style="font-weight:800;color:#991b1b;margin-top:4px">บัญชี/อุปกรณ์นี้ถูกล็อก</div>
+        <div style="font-size:13px;color:#7f1d1d;margin-top:4px">ลองอีกครั้งใน <strong id="lockoutTimer">--:--</strong></div>
+        <div style="font-size:11px;color:#991b1b;margin-top:6px">หากต้องการปลดล็อกทันที โปรดติดต่อ Admin</div>
+      </div>
       <div id="loginError" class="login-error" style="display:none"></div>
-      <button type="submit" class="login-btn">🚀 เข้าสู่ระบบ</button>
+      <button type="submit" class="login-btn" id="loginSubmitBtn">🚀 เข้าสู่ระบบ</button>
     </form>
     <div class="login-hint">
       <strong>ครั้งแรก:</strong> admin / admin1234<br>
@@ -1824,6 +1834,33 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <table class="data-table">
             <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>Username</th><th>สิทธิ์</th><th>วันที่สร้าง</th><th></th></tr></thead>
             <tbody id="usersListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Security / Login Activity -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header">
+          <span class="card-title">🛡️ ความปลอดภัย & กิจกรรม Login</span>
+          <button class="btn btn-outline-primary btn-sm" onclick="renderLoginSecurityPanel()"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+        </div>
+        <div style="padding:6px 0;font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+          ระบบป้องกัน brute-force และ bot login อัตโนมัติ:<br>
+          • ผิด 3 ครั้ง → ต้องตอบ Captcha<br>
+          • ผิด 5 ครั้ง → ล็อกอุปกรณ์ 5 นาที<br>
+          • ผิด 10 ครั้ง → ล็อก 30 นาที (ทั้ง user + device)
+        </div>
+
+        <!-- Active blocks -->
+        <h6 style="font-size:13px;font-weight:700;margin-bottom:8px">🔒 อุปกรณ์/บัญชีที่ถูกล็อกอยู่</h6>
+        <div id="blocksListBody" style="margin-bottom:16px"></div>
+
+        <!-- Recent log -->
+        <h6 style="font-size:13px;font-weight:700;margin-bottom:8px">📋 ประวัติ Login ล่าสุด (50 รายการ)</h6>
+        <div class="table-wrap" style="max-height:340px;overflow-y:auto">
+          <table class="data-table">
+            <thead><tr><th>เวลา</th><th>Username</th><th>สถานะ</th><th>Device ID</th><th>Browser</th></tr></thead>
+            <tbody id="loginLogBody"></tbody>
           </table>
         </div>
       </div>
@@ -2716,6 +2753,7 @@ function refreshAllViews(){
   renderCategoriesList();
   refreshCategoryDropdowns();
   renderUsersList();
+  renderLoginSecurityPanel();
   updateBackupStats();
   saveState();
   // dashboard stats
@@ -3972,7 +4010,7 @@ function saveState(){
       const data = {
         v: '1.0',
         savedAt: new Date().toISOString(),
-        products, suppliers, expenses, customers, categories, users,
+        products, suppliers, expenses, customers, categories, users, loginLog, loginBlocks,
         salesHistory, stockHistory, stockCountHistory, zReports,
         cart, parkedSales, appSettings
       };
@@ -4006,6 +4044,8 @@ function loadState(){
     if(Array.isArray(d.customers)) customers = d.customers;
     if(Array.isArray(d.categories) && d.categories.length) categories = d.categories;
     if(Array.isArray(d.users) && d.users.length) users = d.users;
+    if(Array.isArray(d.loginLog)) loginLog = d.loginLog;
+    if(d.loginBlocks && typeof d.loginBlocks === 'object') loginBlocks = d.loginBlocks;
     console.log('💾 โหลดข้อมูลจาก localStorage:', d.savedAt);
     return true;
   } catch(e){
@@ -4715,11 +4755,109 @@ function renderReports(){
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
 }
 
-/* ===== AUTH / LOGIN ===== */
+/* ===== AUTH / LOGIN + SECURITY ===== */
 let users = []; // {id, username, name, role:'admin'|'staff', passwordHash, createdAt}
 let currentUser = null;
 
+// Security state
+let loginLog = [];      // [{ts, username, success, deviceId, ua}]
+let loginBlocks = {};   // { 'device:xxx' or 'user:xxx': { until, attempts, reason } }
+let _captchaAnswer = null;
+let _lockoutInterval = null;
+
+const LOCK_THRESHOLD_1 = 3;   // 3 attempts → captcha
+const LOCK_THRESHOLD_2 = 5;   // 5 attempts → 5 min lock
+const LOCK_THRESHOLD_3 = 10;  // 10 attempts → 30 min lock
+const LOCK_DURATION_1 = 5 * 60 * 1000;   // 5 min
+const LOCK_DURATION_2 = 30 * 60 * 1000;  // 30 min
+const LOG_MAX = 200;
+
 function hashPwd(pwd){ return btoa(unescape(encodeURIComponent(pwd + '|fs|salt'))); }
+
+function getDeviceId(){
+  let id = localStorage.getItem('fs-device-id');
+  if(!id){
+    const seed = navigator.userAgent + '|' + (screen.width+'x'+screen.height) + '|' + (navigator.language||'') + '|' + (Intl.DateTimeFormat().resolvedOptions().timeZone||'');
+    id = btoa(unescape(encodeURIComponent(seed))).slice(0,16) + '-' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem('fs-device-id', id);
+  }
+  return id;
+}
+
+function countRecentFailures(key){
+  const cutoff = Date.now() - 30*60*1000; // last 30 min
+  const [type,val] = key.split(':');
+  return loginLog.filter(x => x.ts > cutoff && !x.success && (
+    (type==='device' && x.deviceId===val) ||
+    (type==='user' && x.username===val)
+  )).length;
+}
+
+function isBlocked(deviceId, username){
+  const now = Date.now();
+  for(const key of [`device:${deviceId}`, `user:${username}`]){
+    const b = loginBlocks[key];
+    if(b && b.until > now) return { blocked: true, until: b.until, key };
+  }
+  return { blocked: false };
+}
+
+function blockKey(key, durationMs, reason){
+  loginBlocks[key] = { until: Date.now()+durationMs, attempts: countRecentFailures(key), reason };
+  saveState();
+}
+
+function unblockKey(key){
+  delete loginBlocks[key];
+  saveState();
+  renderLoginSecurityPanel();
+  showToast(`✅ ปลดล็อก ${key} เรียบร้อย`);
+}
+
+function showCaptcha(){
+  const a = Math.floor(Math.random()*8)+2;
+  const b = Math.floor(Math.random()*8)+2;
+  _captchaAnswer = a+b;
+  document.getElementById('captchaQ').textContent = `${a} + ${b} = ?`;
+  document.getElementById('captchaAns').value = '';
+  document.getElementById('captchaField').style.display = '';
+}
+function hideCaptcha(){
+  _captchaAnswer = null;
+  document.getElementById('captchaField').style.display = 'none';
+}
+
+function showLockout(until){
+  document.getElementById('lockoutBox').style.display = '';
+  document.getElementById('loginSubmitBtn').disabled = true;
+  document.getElementById('loginSubmitBtn').style.opacity = '.5';
+  if(_lockoutInterval) clearInterval(_lockoutInterval);
+  const tick = ()=>{
+    const remaining = until - Date.now();
+    if(remaining <= 0){
+      clearInterval(_lockoutInterval); _lockoutInterval = null;
+      document.getElementById('lockoutBox').style.display = 'none';
+      document.getElementById('loginSubmitBtn').disabled = false;
+      document.getElementById('loginSubmitBtn').style.opacity = '1';
+      return;
+    }
+    const m = Math.floor(remaining/60000);
+    const s = Math.floor((remaining%60000)/1000);
+    document.getElementById('lockoutTimer').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  };
+  tick();
+  _lockoutInterval = setInterval(tick, 1000);
+}
+
+function recordLogin(username, success){
+  const deviceId = getDeviceId();
+  loginLog.unshift({
+    ts: Date.now(), username, success, deviceId,
+    ua: navigator.userAgent.split(') ')[0].split('(')[1] || 'Unknown'
+  });
+  if(loginLog.length > LOG_MAX) loginLog.length = LOG_MAX;
+  saveState();
+}
 
 function ensureDefaultUsers(){
   if(!users.length){
@@ -4734,14 +4872,65 @@ function doLogin(e){
   e.preventDefault();
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
-  const user = users.find(x=>x.username===u && x.passwordHash===hashPwd(p));
+  const deviceId = getDeviceId();
   const err = document.getElementById('loginError');
-  if(!user){
-    err.textContent = '⚠️ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
-    err.style.display = '';
-    document.getElementById('loginPass').value='';
+  const showErr = (msg)=>{ err.textContent = msg; err.style.display=''; };
+
+  // 1. Check if blocked
+  const blockChk = isBlocked(deviceId, u);
+  if(blockChk.blocked){
+    showLockout(blockChk.until);
+    showErr('🔒 บัญชี/อุปกรณ์นี้ถูกล็อกชั่วคราว');
     return;
   }
+
+  // 2. Verify captcha if shown
+  if(_captchaAnswer !== null){
+    const ans = +document.getElementById('captchaAns').value;
+    if(ans !== _captchaAnswer){
+      showErr('⚠️ ตอบคำถามคณิตศาสตร์ไม่ถูกต้อง');
+      showCaptcha();  // ใหม่
+      return;
+    }
+  }
+
+  // 3. Check credentials
+  const user = users.find(x=>x.username===u && x.passwordHash===hashPwd(p));
+  if(!user){
+    recordLogin(u, false);
+    document.getElementById('loginPass').value='';
+
+    const devFails = countRecentFailures(`device:${deviceId}`);
+    const userFails = countRecentFailures(`user:${u}`);
+    const fails = Math.max(devFails, userFails);
+
+    // Auto-lock
+    if(fails >= LOCK_THRESHOLD_3){
+      blockKey(`device:${deviceId}`, LOCK_DURATION_2, 'พยายาม login ผิด 10+ ครั้ง');
+      blockKey(`user:${u}`, LOCK_DURATION_2, 'พยายาม login ผิด 10+ ครั้ง');
+      showLockout(Date.now() + LOCK_DURATION_2);
+      showErr('🔒 ล็อกอุปกรณ์ 30 นาที (พยายามผิดเกินกำหนด)');
+      return;
+    }
+    if(fails >= LOCK_THRESHOLD_2){
+      blockKey(`device:${deviceId}`, LOCK_DURATION_1, 'พยายาม login ผิด 5 ครั้ง');
+      showLockout(Date.now() + LOCK_DURATION_1);
+      showErr('🔒 ล็อกอุปกรณ์ 5 นาที (ผิด 5 ครั้ง)');
+      return;
+    }
+    if(fails >= LOCK_THRESHOLD_1){
+      showCaptcha();
+      showErr(`⚠️ ผิด ${fails} ครั้ง — กรุณายืนยันตัวตนด้านล่าง (ล็อกที่ครั้งที่ ${LOCK_THRESHOLD_2})`);
+      return;
+    }
+    showErr(`⚠️ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (พยายาม ${fails}/${LOCK_THRESHOLD_2} ครั้ง)`);
+    return;
+  }
+
+  // 4. Login success
+  recordLogin(u, true);
+  hideCaptcha();
+  err.style.display='none';
   currentUser = { id:user.id, username:user.username, name:user.name, role:user.role };
   try{ sessionStorage.setItem('fs-session', JSON.stringify(currentUser)); }catch(e){}
   applyAuthUI();
@@ -4796,6 +4985,9 @@ function showLogin(){
   // อัปเดตชื่อร้านในหน้า login
   const sn = document.getElementById('loginShopName');
   if(sn) sn.textContent = appSettings.shopName || 'FishStock';
+  // เช็คว่า device นี้ถูกล็อกอยู่หรือไม่
+  const chk = isBlocked(getDeviceId(), '');
+  if(chk.blocked) showLockout(chk.until);
   setTimeout(()=>document.getElementById('loginUser')?.focus(), 100);
 }
 function hideLogin(){
@@ -4825,6 +5017,49 @@ function applyAuthUI(){
       navTo('sales');
     }
   }
+}
+
+function renderLoginSecurityPanel(){
+  const blocksEl = document.getElementById('blocksListBody');
+  const logEl    = document.getElementById('loginLogBody');
+  if(!blocksEl || !logEl) return;
+
+  // Clean expired blocks
+  const now = Date.now();
+  Object.keys(loginBlocks).forEach(k=>{ if(loginBlocks[k].until <= now) delete loginBlocks[k]; });
+
+  const active = Object.entries(loginBlocks);
+  if(!active.length){
+    blocksEl.innerHTML = '<div style="background:#d1fae5;padding:12px;border-radius:8px;font-size:13px;color:#065f46">✅ ไม่มีอุปกรณ์/บัญชีถูกล็อก</div>';
+  } else {
+    blocksEl.innerHTML = active.map(([key,b])=>{
+      const [type,val] = key.split(':');
+      const typeLabel = type==='device'?'🖥️ Device':'👤 User';
+      const mins = Math.ceil((b.until-Date.now())/60000);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;margin-bottom:6px;font-size:13px">
+        <div>
+          <div style="font-weight:700">${typeLabel}: <code>${val}</code></div>
+          <div style="font-size:11px;color:var(--text-muted)">เหตุผล: ${b.reason||'-'} · เหลือ ${mins} นาที</div>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" onclick="unblockKey('${key}')">🔓 ปลดล็อก</button>
+      </div>`;
+    }).join('');
+  }
+
+  const recent = loginLog.slice(0,50);
+  logEl.innerHTML = recent.length ? recent.map(l=>{
+    const d = new Date(l.ts).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const status = l.success
+      ? '<span class="badge bg-success">✅ สำเร็จ</span>'
+      : '<span class="badge bg-danger">❌ ล้มเหลว</span>';
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${d}</td>
+      <td style="font-weight:600">${l.username}</td>
+      <td>${status}</td>
+      <td style="font-size:11px;color:var(--text-muted);font-family:monospace">${l.deviceId.slice(0,16)}…</td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.ua}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">ยังไม่มีบันทึก</td></tr>';
 }
 
 function checkSession(){
