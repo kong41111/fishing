@@ -318,6 +318,19 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 .product-cell-code{font-family:monospace;font-size:11px;color:var(--text-muted)}
 .cart-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#e0f2fe}
 .product-img-preview{width:100%;aspect-ratio:1/1;border-radius:8px;background:#f0f9ff;object-fit:cover;border:1.5px dashed var(--border);display:block;margin-bottom:8px}
+/* Bill receipt upload */
+.receipt-upload{border:2px dashed var(--border);border-radius:10px;padding:14px 12px;text-align:center;cursor:pointer;transition:all .15s;background:#f8fafc;position:relative;min-height:80px;display:flex;align-items:center;justify-content:center}
+.receipt-upload:hover{border-color:var(--primary);background:var(--primary-light)}
+.receipt-upload-hint{display:flex;flex-direction:column;gap:4px;align-items:center;color:var(--text-muted);font-size:13px;font-weight:600}
+.receipt-preview{max-width:100%;max-height:140px;border-radius:8px;cursor:zoom-in;display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.receipt-thumb{width:32px;height:32px;border-radius:6px;cursor:zoom-in;object-fit:cover;border:1px solid var(--border);background:#f8fafc}
+.receipt-thumb:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(99,102,241,.2)}
+/* Bill viewer modal */
+.bill-viewer{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+.bill-viewer.show{display:flex}
+.bill-viewer img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 60px rgba(0,0,0,.5);cursor:default}
+.bill-viewer .bv-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.2);color:#fff;border:none;width:42px;height:42px;border-radius:50%;font-size:20px;cursor:pointer;backdrop-filter:blur(8px)}
+.bill-viewer .bv-close:hover{background:rgba(255,255,255,.35)}
 .img-upload-area{border:2px dashed var(--border);border-radius:10px;padding:16px 12px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#f8fafc;display:flex;flex-direction:column;align-items:center;gap:5px}
 .img-upload-area:hover{border-color:var(--primary);background:var(--primary-light)}
 .img-upload-area .upload-icon{font-size:28px;line-height:1}
@@ -1198,6 +1211,18 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
               </div>
             </label>
             <label>วันที่รับ<input type="date" class="form-control" id="stockInDate" /></label>
+            <label>📷 รูปบิล / ใบกำกับ (ถ้ามี)
+              <input type="hidden" id="stockInBillImg" />
+              <div class="receipt-upload" onclick="document.getElementById('stockInBillFile').click()">
+                <input type="file" id="stockInBillFile" accept="image/*" style="display:none" onchange="handleBillUpload(this,'stockInBillImg','stockInBillPreview')">
+                <img id="stockInBillPreview" class="receipt-preview" src="" style="display:none" onclick="event.stopPropagation();viewBillImage(this.src)" />
+                <div class="receipt-upload-hint">
+                  <span style="font-size:28px">📷</span>
+                  <span>คลิกแนบรูปบิล/ใบกำกับ</span>
+                  <span style="font-size:11px;color:var(--text-muted)">JPG/PNG/WEBP (สูงสุด 5MB)</span>
+                </div>
+              </div>
+            </label>
             <button type="submit" class="btn btn-primary w-100">✅ บันทึกการรับสินค้า</button>
           </form>
         </div>
@@ -1634,6 +1659,18 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
               <label>วันที่<input type="date" class="form-control" id="expDate" required /></label>
               <label>หมายเหตุ<input type="text" class="form-control" id="expNote" placeholder="เช่น ค่าไฟเดือนพฤษภา" /></label>
             </div>
+            <label>📷 รูปบิล/ใบเสร็จ (ถ้ามี)
+              <input type="hidden" id="expBillImg" />
+              <div class="receipt-upload" onclick="document.getElementById('expBillFile').click()">
+                <input type="file" id="expBillFile" accept="image/*" style="display:none" onchange="handleBillUpload(this,'expBillImg','expBillPreview')">
+                <img id="expBillPreview" class="receipt-preview" src="" style="display:none" onclick="event.stopPropagation();viewBillImage(this.src)" />
+                <div class="receipt-upload-hint">
+                  <span style="font-size:28px">📷</span>
+                  <span>คลิกแนบรูปบิล/ใบเสร็จ</span>
+                  <span style="font-size:11px;color:var(--text-muted)">JPG/PNG/WEBP (สูงสุด 5MB)</span>
+                </div>
+              </div>
+            </label>
             <button type="submit" class="btn btn-primary w-100">💾 บันทึกค่าใช้จ่าย</button>
           </form>
         </div>
@@ -2019,6 +2056,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       </div>
     </div>
   </div>
+</div>
+
+<!-- BILL IMAGE VIEWER -->
+<div class="bill-viewer" id="billViewer" onclick="closeBillViewer()">
+  <button class="bv-close" onclick="closeBillViewer()">✕</button>
+  <img id="billViewerImg" src="" alt="" onclick="event.stopPropagation()" />
 </div>
 
 <!-- DIALOG MODAL (custom confirm/prompt) -->
@@ -3005,6 +3048,49 @@ const CAT_IMG_MAP = {
   'เหยื่อ':[IMG.lure,IMG.lure2,IMG.bait],
   'อื่นๆ':[IMG.box,IMG.float,IMG.tackle],
 };
+/* ===== BILL/RECEIPT IMAGE UPLOAD ===== */
+function handleBillUpload(input, hiddenId, previewId){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 5*1024*1024){ showToast('⚠️ ไฟล์ใหญ่เกิน 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const b64 = ev.target.result;
+    document.getElementById(hiddenId).value = b64;
+    const preview = document.getElementById(previewId);
+    if(preview){
+      preview.src = b64;
+      preview.style.display = '';
+      // ซ่อน hint
+      const hint = preview.parentElement?.querySelector('.receipt-upload-hint');
+      if(hint) hint.style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewBillImage(src){
+  if(!src) return;
+  document.getElementById('billViewerImg').src = src;
+  document.getElementById('billViewer').classList.add('show');
+}
+function closeBillViewer(){
+  document.getElementById('billViewer').classList.remove('show');
+}
+
+function resetReceiptUpload(hiddenId, previewId, fileInputId){
+  document.getElementById(hiddenId).value = '';
+  const preview = document.getElementById(previewId);
+  if(preview){
+    preview.src = '';
+    preview.style.display = 'none';
+    const hint = preview.parentElement?.querySelector('.receipt-upload-hint');
+    if(hint) hint.style.display = '';
+  }
+  const fi = document.getElementById(fileInputId);
+  if(fi) fi.value = '';
+}
+
 function handleImgUpload(input, previewId, hiddenId, fnameId){
   const file = input.files[0];
   if(!file) return;
@@ -3264,11 +3350,14 @@ function submitStock(e, type){
     note = [reason, remark].filter(Boolean).join(' · ');
   }
 
-  // Record to history (พ่วง supplierId + cost ไว้ให้ supplierStats คำนวณ)
-  stockHistory.unshift({ date, code, name:p.name, type, qty:type==='in'?+qty:-qty, after:p.qty, note, supplierId, cost: costPerUnit });
+  // รูปบิล (เฉพาะรับเข้า)
+  const billImg = type==='in' ? (document.getElementById('stockInBillImg')?.value || '') : '';
+  // Record to history (พ่วง supplierId + cost + billImg ไว้)
+  stockHistory.unshift({ date, code, name:p.name, type, qty:type==='in'?+qty:-qty, after:p.qty, note, supplierId, cost: costPerUnit, billImg });
 
   refreshAllViews();
   e.target.reset();
+  if(type==='in') resetReceiptUpload('stockInBillImg','stockInBillPreview','stockInBillFile');
   document.getElementById(type==='in'?'stockInDate':'stockOutDate').value = new Date().toISOString().slice(0,10);
   showToast(type==='in' ? `📥 รับเข้า ${qty} ชิ้น — ${p.name}` : `📤 จ่ายออก ${qty} ชิ้น — ${p.name}`);
 }
@@ -3298,7 +3387,12 @@ function renderStockHistory(){
       <td>${badge}</td>
       <td>${qtyTxt}</td>
       <td style="font-weight:700">${h.after}</td>
-      <td style="color:var(--text-muted);font-size:12px">${h.note||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="flex:1">${h.note||'—'}</span>
+          ${h.billImg?`<img src="${h.billImg}" class="receipt-thumb" title="ดูรูปบิล" onclick="viewBillImage(this.src)" />`:''}
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -4481,9 +4575,11 @@ function addExpense(e){
   const amt = +document.getElementById('expAmount').value||0;
   const date = document.getElementById('expDate').value || new Date().toISOString().slice(0,10);
   const note = document.getElementById('expNote').value.trim();
+  const billImg = document.getElementById('expBillImg')?.value || '';
   if(amt<=0){ showToast('⚠️ จำนวนเงินต้องมากกว่า 0'); return; }
-  expenses.unshift({ id:Date.now(), date, category:cat, amount:amt, note });
+  expenses.unshift({ id:Date.now(), date, category:cat, amount:amt, note, billImg });
   e.target.reset();
+  resetReceiptUpload('expBillImg','expBillPreview','expBillFile');
   document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
   showToast(`💸 บันทึก ${cat} ฿${amt.toLocaleString()} เรียบร้อย`);
   renderAccounting();
@@ -4568,7 +4664,12 @@ function renderAccounting(){
       <td style="text-align:center;color:var(--text-muted)">${i+1}</td>
       <td>${d}</td>
       <td>${icon} ${e.category}</td>
-      <td style="color:var(--text-muted);font-size:12px">${e.note||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="flex:1">${e.note||'—'}</span>
+          ${e.billImg?`<img src="${e.billImg}" class="receipt-thumb" title="ดูรูปบิล" onclick="viewBillImage(this.src)" />`:''}
+        </div>
+      </td>
       <td style="text-align:right;font-weight:700;color:#dc2626">฿${(+e.amount).toLocaleString()}</td>
       <td style="text-align:center"><button class="btn-del" onclick="delExpense(${e.id})" title="ลบ">🗑️</button></td>
     </tr>`;
