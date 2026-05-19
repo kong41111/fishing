@@ -1445,7 +1445,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
                 <th style="text-align:right">ยอดรวม</th>
                 <th style="text-align:right">ส่วนลด</th>
                 <th style="text-align:right">ยอดสุทธิ</th>
-                <th style="text-align:center;width:80px"></th>
+                <th style="text-align:center;width:120px">จัดการ</th>
               </tr>
             </thead>
             <tbody id="salesTransactionsBody">
@@ -4851,7 +4851,10 @@ function renderReports(){
       <td style="text-align:right">฿${(+b.total||0).toLocaleString()}</td>
       <td style="text-align:right;color:var(--red)">${b.discount?'-฿'+(+b.discount).toLocaleString():'—'}</td>
       <td style="text-align:right;font-weight:700;color:var(--primary)">฿${(+b.net||0).toLocaleString()}</td>
-      <td style="text-align:center"><button class="btn-del" onclick="voidBill('${b.billNo}')" title="ยกเลิกบิล (คืนสต็อก)">↩️</button></td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn-edit" onclick="reprintBill('${b.billNo}')" title="ดู/พิมพ์บิลย้อนหลัง">🧾</button>
+        <button class="btn-del" onclick="voidBill('${b.billNo}')" title="ยกเลิกบิล (คืนสต็อก)">↩️</button>
+      </td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">ยังไม่มีข้อมูลการขายในช่วงนี้</td></tr>';
 }
@@ -5523,6 +5526,85 @@ async function doBulkImport(){
   closeModal('bulkImportModal');
   refreshAllViews();
   showToast(`✅ นำเข้า ${added} รายการ${skipped?` (ข้าม ${skipped} ที่ซ้ำ)`:''}`);
+}
+
+/* ===== REPRINT BILL (พิมพ์บิลย้อนหลัง) ===== */
+function reprintBill(billNo){
+  const bill = salesHistory.find(b=>b.billNo===billNo);
+  if(!bill){ showToast('⚠️ ไม่พบบิลที่ระบุ'); return; }
+  const items = bill.items;
+  const total = +bill.total||0;
+  const disc = +bill.discount||0;
+  const memberDc = +bill.memberDiscount||0;
+  const net = +bill.net||0;
+  const vat = +bill.vat||0;
+  const received = +bill.received||0;
+  const change = +bill.change||0;
+  const payLabel = {cash:'💵 เงินสด',qr:'📱 QR Code',card:'💳 บัตรเครดิต'}[bill.payMethod] || bill.payMethod;
+  const billDate = new Date(bill.date).toLocaleString('th-TH',{
+    weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
+  });
+  const reprintedAt = new Date().toLocaleString('th-TH');
+
+  // Shop info from settings
+  const shopName = appSettings.shopName || '🎣 FishStock';
+  const shopAddr = appSettings.shopAddress || '';
+  const shopPhone = appSettings.shopPhone || '';
+  const shopTax = appSettings.shopTaxId || '';
+  const shopLogo = appSettings.shopLogo || '';
+  const receiptFooter = appSettings.receiptFooter || 'ขอบคุณที่ใช้บริการ';
+  const shopSocial = appSettings.shopSocial || '';
+
+  const itemsHtml = items.map(it=>`
+    <div class="receipt-item">
+      <div class="receipt-item-name">${it.name}</div>
+      <div class="receipt-item-line">
+        <span>${it.qty} × ฿${(+it.price||0).toLocaleString()}</span>
+        <span>฿${((+it.price||0)*it.qty).toLocaleString()}</span>
+      </div>
+    </div>`).join('');
+
+  const cashRows = bill.payMethod==='cash' && received
+    ? `<div class="receipt-row"><span>รับเงิน</span><span>฿${received.toLocaleString()}</span></div>
+       <div class="receipt-row"><span>เงินทอน</span><span>฿${change.toLocaleString()}</span></div>` : '';
+
+  const html = `
+    <div class="receipt">
+      <div class="receipt-header">
+        ${shopLogo?`<img src="${shopLogo}" style="max-width:80px;max-height:80px;margin:0 auto 8px;display:block;object-fit:contain" />`:''}
+        <div class="receipt-shop">${shopName}</div>
+        ${shopAddr?`<div style="font-size:11px;color:#666;margin-top:2px">${shopAddr}</div>`:''}
+        ${shopPhone?`<div style="font-size:11px;color:#666">📞 ${shopPhone}</div>`:''}
+        ${shopTax?`<div style="font-size:11px;color:#666">เลขผู้เสียภาษี: ${shopTax}</div>`:''}
+        <div style="margin-top:8px;padding:6px;background:#fef3c7;border-radius:4px;font-size:11px;color:#92400e;font-weight:700">
+          🧾 สำเนาใบเสร็จย้อนหลัง · พิมพ์เมื่อ ${reprintedAt}
+        </div>
+        <div style="margin-top:8px"><strong>เลขที่บิล:</strong> ${bill.billNo}</div>
+        <div style="font-size:12px"><strong>วันที่ออกบิล:</strong> ${billDate}</div>
+        ${bill.customerName?`<div style="font-size:12px;margin-top:4px">👤 ลูกค้า: ${bill.customerName}</div>`:''}
+      </div>
+      <div class="receipt-items">${itemsHtml}</div>
+      <div class="receipt-totals">
+        <div class="receipt-row"><span>จำนวน</span><span>${items.reduce((s,c)=>s+c.qty,0)} ชิ้น</span></div>
+        <div class="receipt-row"><span>รวม</span><span>฿${total.toLocaleString()}</span></div>
+        ${disc?`<div class="receipt-row"><span>ส่วนลด</span><span>-฿${disc.toLocaleString()}</span></div>`:''}
+        ${memberDc?`<div class="receipt-row" style="color:#10b981"><span>ส่วนลดสมาชิก</span><span>-฿${memberDc.toLocaleString()}</span></div>`:''}
+        ${vat?`<div class="receipt-row" style="color:#94a3b8;font-size:11px"><span>VAT 7% (รวมแล้ว)</span><span>฿${vat.toLocaleString()}</span></div>`:''}
+        <div class="receipt-row grand"><span>ยอดสุทธิ</span><span>฿${net.toLocaleString()}</span></div>
+        <div class="receipt-row" style="margin-top:6px"><span>ชำระโดย</span><span>${payLabel}</span></div>
+        ${cashRows}
+      </div>
+      <div class="receipt-footer">
+        *** ${receiptFooter} ***
+        ${shopSocial?`<br/>${shopSocial}`:''}
+      </div>
+    </div>`;
+
+  document.getElementById('receiptContent').innerHTML = html;
+  // ซ่อนปุ่ม "ยกเลิกบิลล่าสุด" ในกรณีนี้
+  const voidBtn = document.getElementById('voidLastBtn');
+  if(voidBtn) voidBtn.style.display = 'none';
+  openModal('receiptModal');
 }
 
 /* ===== VOID BILL (ยกเลิกบิล) ===== */
