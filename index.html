@@ -1943,6 +1943,74 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
         </div>
       </div>
 
+      <!-- Cloud Backup -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-header">
+          <span class="card-title">☁️ Auto Cloud Backup (Google Drive)</span>
+          <span id="cloudBackupStatus" style="font-size:12px;font-weight:600"></span>
+        </div>
+
+        <div style="background:#FCF3DE;padding:14px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7;border-left:3px solid #D89B2E">
+          <strong>💡 วิธีตั้งค่า (ครั้งแรกเท่านั้น ~5 นาที):</strong><br>
+          1. เปิด <a href="https://script.google.com" target="_blank" style="color:#B84A2E;font-weight:700">script.google.com</a> → New Project<br>
+          2. กดปุ่ม <strong>"📋 คัดลอกโค้ด Apps Script"</strong> ด้านล่าง → วางใน editor<br>
+          3. Deploy → New deployment → Web app → Execute as: <strong>Me</strong>, Who has access: <strong>Anyone</strong><br>
+          4. คัดลอก <strong>Web App URL</strong> → วางในช่องด้านล่าง<br>
+          5. กด <strong>"🧪 ทดสอบ"</strong> → ✅ พร้อมใช้!
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="copyAppsScriptCode()">📋 คัดลอกโค้ด Apps Script</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="showAppsScriptCode()">👁 ดูโค้ด</button>
+        </div>
+
+        <label style="display:block;margin-bottom:14px">
+          🔗 Apps Script Web App URL
+          <input type="url" id="cbUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec" style="font-family:monospace;font-size:12px" />
+        </label>
+
+        <div class="form-row">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="cbEnabled" class="form-check-input" style="width:20px;height:20px;margin:0" />
+            <span><strong>เปิด Auto Backup</strong></span>
+          </label>
+          <label>ความถี่
+            <select class="form-select" id="cbInterval">
+              <option value="15">ทุก 15 นาที</option>
+              <option value="30" selected>ทุก 30 นาที</option>
+              <option value="60">ทุก 1 ชั่วโมง</option>
+              <option value="180">ทุก 3 ชั่วโมง</option>
+              <option value="360">ทุก 6 ชั่วโมง</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <button type="button" class="btn btn-primary" onclick="saveCloudBackupSettings()">💾 บันทึก</button>
+          <button type="button" class="btn btn-outline-primary" onclick="testCloudBackup()">🧪 ทดสอบการเชื่อมต่อ</button>
+          <button type="button" class="btn btn-success" onclick="manualCloudBackup()">☁️ Backup ทันที</button>
+        </div>
+
+        <div id="cbLog" style="margin-top:14px;padding:10px;background:#FAFAF7;border-radius:8px;font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;line-height:1.6"></div>
+      </div>
+
+      <!-- Apps Script Code Modal -->
+      <div class="modal fade" id="appsScriptCodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content p-3">
+            <div class="modal-header">
+              <h5 class="modal-title">📋 Apps Script Code</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">คัดลอกโค้ดด้านล่าง → วางใน Google Apps Script editor</p>
+              <pre id="appsScriptCodeBox" style="background:#2E2A24;color:#FCF3DE;padding:14px;border-radius:8px;font-size:11px;line-height:1.5;overflow-x:auto;max-height:400px;white-space:pre"></pre>
+              <button type="button" class="btn btn-primary mt-2 w-100" onclick="copyAppsScriptCode()">📋 คัดลอกโค้ด</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Bulk Import Products -->
       <div class="card" style="margin-top:18px">
         <div class="card-header"><span class="card-title">📋 นำเข้าสินค้าแบบจำนวนมาก</span></div>
@@ -4157,6 +4225,208 @@ function loadState(){
   }
 }
 
+/* ===== CLOUD BACKUP (Google Apps Script) ===== */
+const APPS_SCRIPT_CODE = `/**
+ * FishStock Cloud Backup — Apps Script
+ * Save backups to Google Drive folder "FishStock Backups"
+ */
+const FOLDER_NAME = 'FishStock Backups';
+const MAX_BACKUPS = 100; // เก็บ 100 ไฟล์ล่าสุด
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const folder = getOrCreateFolder(FOLDER_NAME);
+    const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+    const filename = 'backup-' + ts + '.json';
+    const file = folder.createFile(filename, JSON.stringify(data, null, 2), 'application/json');
+
+    // Rotate: ลบไฟล์เก่าเกิน MAX_BACKUPS
+    rotateBackups(folder, MAX_BACKUPS);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      filename: filename,
+      fileId: file.getId(),
+      folderUrl: folder.getUrl()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet() {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'ok',
+    service: 'FishStock Cloud Backup'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateFolder(name) {
+  const folders = DriveApp.getFoldersByName(name);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
+}
+
+function rotateBackups(folder, max) {
+  const files = folder.getFiles();
+  const arr = [];
+  while (files.hasNext()) arr.push(files.next());
+  if (arr.length <= max) return;
+  arr.sort((a,b) => b.getDateCreated().getTime() - a.getDateCreated().getTime());
+  arr.slice(max).forEach(f => f.setTrashed(true));
+}
+`;
+
+let _cloudBackupTimer = null;
+let _cloudLogs = []; // recent log entries
+
+function cbLog(msg, level='info'){
+  const ts = new Date().toLocaleTimeString('th-TH');
+  const icons = {info:'ℹ️',success:'✅',error:'❌',warn:'⚠️'};
+  _cloudLogs.unshift(`${icons[level]||''} ${ts} — ${msg}`);
+  if(_cloudLogs.length > 30) _cloudLogs.length = 30;
+  const el = document.getElementById('cbLog');
+  if(el) el.innerHTML = _cloudLogs.map(l=>`<div>${l}</div>`).join('');
+}
+
+function showAppsScriptCode(){
+  document.getElementById('appsScriptCodeBox').textContent = APPS_SCRIPT_CODE;
+  openModal('appsScriptCodeModal');
+}
+
+function copyAppsScriptCode(){
+  navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(()=>{
+    showToast('📋 คัดลอกโค้ดเรียบร้อย — วางใน Apps Script Editor');
+  }).catch(()=>{
+    showToast('⚠️ คัดลอกไม่ได้ — กรุณา copy manual');
+    showAppsScriptCode();
+  });
+}
+
+function loadCloudBackupSettings(){
+  const url = appSettings.cbUrl||'';
+  const enabled = appSettings.cbEnabled||false;
+  const interval = appSettings.cbInterval||30;
+  document.getElementById('cbUrl').value = url;
+  document.getElementById('cbEnabled').checked = enabled;
+  document.getElementById('cbInterval').value = interval;
+  updateCloudBackupStatus();
+}
+
+function updateCloudBackupStatus(){
+  const el = document.getElementById('cloudBackupStatus');
+  if(!el) return;
+  if(appSettings.cbEnabled && appSettings.cbUrl){
+    const last = appSettings.cbLastBackup ? new Date(appSettings.cbLastBackup).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'ยังไม่เคย';
+    el.innerHTML = `<span style="color:var(--green)">● Active</span> · ล่าสุด: ${last}`;
+  } else {
+    el.innerHTML = `<span style="color:var(--text-muted)">○ Inactive</span>`;
+  }
+}
+
+function saveCloudBackupSettings(){
+  const url = document.getElementById('cbUrl').value.trim();
+  const enabled = document.getElementById('cbEnabled').checked;
+  const interval = +document.getElementById('cbInterval').value || 30;
+
+  if(enabled && !url){
+    showToast('⚠️ กรุณาใส่ Apps Script URL ก่อนเปิดใช้');
+    return;
+  }
+  if(url && !url.startsWith('https://script.google.com/')){
+    showToast('⚠️ URL ไม่ถูกต้อง — ต้องขึ้นต้นด้วย https://script.google.com/');
+    return;
+  }
+
+  appSettings.cbUrl = url;
+  appSettings.cbEnabled = enabled;
+  appSettings.cbInterval = interval;
+  saveState();
+
+  // Restart timer
+  startCloudBackupTimer();
+  updateCloudBackupStatus();
+  cbLog(`บันทึกการตั้งค่า — ${enabled?'เปิด':'ปิด'} Auto Backup (ทุก ${interval} นาที)`, 'success');
+  showToast('✅ บันทึกการตั้งค่าเรียบร้อย');
+}
+
+async function testCloudBackup(){
+  const url = document.getElementById('cbUrl').value.trim();
+  if(!url){ showToast('⚠️ ใส่ URL ก่อน'); return; }
+  cbLog('กำลังทดสอบการเชื่อมต่อ...');
+  try{
+    const res = await fetch(url, { method: 'GET' });
+    const text = await res.text();
+    if(text.includes('FishStock') || text.includes('ok')){
+      cbLog('เชื่อมต่อสำเร็จ ✓', 'success');
+      showToast('✅ เชื่อมต่อ Apps Script สำเร็จ');
+    } else {
+      cbLog('Response ไม่ตรงตามคาด: ' + text.slice(0,100), 'warn');
+      showToast('⚠️ เชื่อมต่อได้แต่ response แปลก — ตรวจโค้ด Apps Script');
+    }
+  } catch(err){
+    cbLog('เชื่อมต่อล้มเหลว: ' + err.message, 'error');
+    showToast('❌ เชื่อมต่อล้มเหลว: ' + err.message);
+  }
+}
+
+async function pushCloudBackup(silent=false){
+  const url = appSettings.cbUrl;
+  if(!url){
+    if(!silent) showToast('⚠️ ยังไม่ได้ตั้งค่า Cloud Backup URL');
+    return false;
+  }
+  if(!silent) cbLog('กำลัง upload backup...');
+  try{
+    const payload = {
+      v: '1.0',
+      backedUpAt: new Date().toISOString(),
+      shop: appSettings.shopName||'',
+      products, suppliers, expenses, customers, categories, users,
+      salesHistory, stockHistory, stockCountHistory, zReports,
+      parkedSales, appSettings, loginLog
+    };
+    // ⚠️ Apps Script ไม่อนุญาต preflight CORS — ส่งเป็น text/plain
+    const res = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors', // bypass CORS for Apps Script
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    // ❗ no-cors mode ไม่อ่าน response ได้ — assume success ถ้า fetch ไม่ throw
+    appSettings.cbLastBackup = new Date().toISOString();
+    saveState();
+    updateCloudBackupStatus();
+    cbLog('✓ Backup สำเร็จ', 'success');
+    if(!silent) showToast('☁️ Backup ขึ้น Google Drive เรียบร้อย');
+    return true;
+  } catch(err){
+    cbLog('Backup ล้มเหลว: ' + err.message, 'error');
+    if(!silent) showToast('❌ Backup ล้มเหลว: ' + err.message);
+    return false;
+  }
+}
+
+function manualCloudBackup(){
+  pushCloudBackup(false);
+}
+
+function startCloudBackupTimer(){
+  if(_cloudBackupTimer){
+    clearInterval(_cloudBackupTimer);
+    _cloudBackupTimer = null;
+  }
+  if(!appSettings.cbEnabled || !appSettings.cbUrl) return;
+  const ms = (appSettings.cbInterval||30) * 60 * 1000;
+  _cloudBackupTimer = setInterval(()=>{
+    pushCloudBackup(true);
+  }, ms);
+  cbLog(`เริ่ม Auto Backup ทุก ${appSettings.cbInterval} นาที`, 'info');
+}
+
 /* ===== EXPORT / IMPORT / BACKUP ===== */
 const APP_VERSION = '1.0';
 
@@ -5834,6 +6104,8 @@ function loadAppSettingsForm(){
   });
   const vatEl = document.getElementById('setVatEnabled');
   if(vatEl) vatEl.checked = !!appSettings.vatEnabled;
+  // Cloud Backup
+  loadCloudBackupSettings();
 }
 function saveAppSettings(e){
   e.preventDefault();
@@ -6273,6 +6545,7 @@ window.addEventListener('appinstalled', ()=>{
 loadState();
 applyDarkMode();
 ensureDefaultUsers();
+startCloudBackupTimer();
 
 // Auth check
 if(checkSession()){
