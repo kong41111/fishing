@@ -4960,11 +4960,28 @@ function recordLogin(username, success){
 }
 
 function ensureDefaultUsers(){
+  // Default Admin Account (production)
+  const DEFAULT_ADMIN_PWD = 'Fish@Stock2026';
+  const DEFAULT_STAFF_PWD = 'Staff@Fish2026';
+
   if(!users.length){
     users = [
-      { id: 1, username: 'admin', name: 'Admin', role: 'admin', passwordHash: hashPwd('admin1234'), createdAt: new Date().toISOString() },
-      { id: 2, username: 'staff', name: 'พนักงานขาย', role: 'staff', passwordHash: hashPwd('staff1234'), createdAt: new Date().toISOString() }
+      { id: 1, username: 'admin', name: 'Admin', role: 'admin', passwordHash: hashPwd(DEFAULT_ADMIN_PWD), createdAt: new Date().toISOString() },
+      { id: 2, username: 'staff', name: 'พนักงานขาย', role: 'staff', passwordHash: hashPwd(DEFAULT_STAFF_PWD), createdAt: new Date().toISOString() }
     ];
+    return;
+  }
+
+  // Migration: ถ้ายังใช้รหัสเก่าอยู่ (admin1234 / staff1234) → อัปเดตเป็นรหัสใหม่อัตโนมัติ
+  const adminUser = users.find(u => u.username === 'admin');
+  if(adminUser && adminUser.passwordHash === hashPwd('admin1234')){
+    adminUser.passwordHash = hashPwd(DEFAULT_ADMIN_PWD);
+    console.log('🔐 อัปเดตรหัส admin เป็นรหัสใหม่');
+  }
+  const staffUser = users.find(u => u.username === 'staff');
+  if(staffUser && staffUser.passwordHash === hashPwd('staff1234')){
+    staffUser.passwordHash = hashPwd(DEFAULT_STAFF_PWD);
+    console.log('🔐 อัปเดตรหัส staff เป็นรหัสใหม่');
   }
 }
 
