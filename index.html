@@ -1141,6 +1141,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a href="?view=catalog" style="display:block;text-align:center;margin-top:14px;color:#7A746A;font-size:12px;text-decoration:none">
       🛒 ดูรายการสินค้า (ไม่ต้องล็อกอิน) →
     </a>
+    <a href="products.json" download="fishstock-products.json" style="display:block;text-align:center;margin-top:6px;color:#7A746A;font-size:11px;text-decoration:none">
+      📥 ดาวน์โหลดไฟล์ข้อมูลสินค้า (JSON)
+    </a>
   </div>
 </div>
 
@@ -4331,12 +4334,32 @@ function isCatalogMode(){
   return new URLSearchParams(location.search).get('view') === 'catalog';
 }
 
-function openCatalog(){
+async function openCatalog(){
   document.getElementById('catalogScreen').classList.add('show');
   document.getElementById('loginScreen').style.display = 'none';
-  // ตั้งชื่อร้าน
   const sn = document.getElementById('catalogShopName');
   if(sn) sn.textContent = appSettings.shopName ? `🎣 ${appSettings.shopName}` : '🎣 FishStock';
+
+  // ถ้ายังไม่มีสินค้าใน localStorage → โหลดจาก products.json (public)
+  if(!products.length){
+    document.getElementById('catalogBody').innerHTML = '<div class="catalog-empty"><span class="emoji">⏳</span><div>กำลังโหลดสินค้า...</div></div>';
+    try{
+      const res = await fetch('products.json?v=' + Date.now());
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data.products) && data.products.length){
+          data.products.forEach(p => products.push(p));
+        }
+        if(Array.isArray(data.categories) && data.categories.length){
+          categories = data.categories;
+        }
+        // ⚠️ ไม่ saveState() ที่นี่ — ให้เป็น read-only public view
+      }
+    }catch(err){
+      console.warn('โหลด products.json ไม่ได้:', err);
+    }
+  }
+
   renderCatalogCats();
   renderCatalog();
 }
