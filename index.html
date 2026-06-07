@@ -81,6 +81,72 @@
   --shadow-lg:0 10px 30px rgba(184,74,46,.15);
 }
 html{overflow-x:hidden}
+/* ===== PUBLIC CATALOG ===== */
+.catalog-screen{position:fixed;inset:0;z-index:9000;background:#FAFAF7;overflow-y:auto;display:none;flex-direction:column}
+.catalog-screen.show{display:flex}
+.catalog-header{position:sticky;top:0;background:linear-gradient(135deg,#5C3D26 0%,#8F3621 55%,#B84A2E 100%);color:#fff;padding:16px 20px;box-shadow:0 4px 14px rgba(184,74,46,.2);z-index:10}
+.catalog-header-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.catalog-title{font-size:18px;font-weight:800;flex:1;min-width:200px}
+.catalog-subtitle{font-size:12px;opacity:.85;margin-top:2px}
+.catalog-search{flex:1;min-width:200px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.3);border-radius:99px;padding:8px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none}
+.catalog-search::placeholder{color:rgba(255,255,255,.7)}
+.catalog-search:focus{background:rgba(255,255,255,.25);border-color:#fff}
+.catalog-cats{display:flex;gap:8px;margin-top:12px;overflow-x:auto;padding-bottom:4px}
+.catalog-cat-btn{padding:6px 16px;border-radius:99px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;transition:all .15s}
+.catalog-cat-btn:hover{background:rgba(255,255,255,.25)}
+.catalog-cat-btn.active{background:#fff;color:#B84A2E;border-color:#fff}
+
+.catalog-body{flex:1;padding:18px 20px 120px;max-width:1100px;margin:0 auto;width:100%;box-sizing:border-box}
+.catalog-cat-group{margin-bottom:24px}
+.catalog-cat-label{font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--amber);display:flex;align-items:center;gap:6px}
+.catalog-cat-label .count{margin-left:auto;font-size:12px;color:var(--text-muted);font-weight:600}
+
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.catalog-item{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .15s;position:relative;user-select:none}
+.catalog-item:hover{border-color:var(--amber);box-shadow:0 4px 14px rgba(216,155,46,.15);transform:translateY(-1px)}
+.catalog-item.checked{border-color:var(--primary);background:linear-gradient(135deg,#FBEEE6,#FCF3DE);box-shadow:0 4px 14px rgba(184,74,46,.2)}
+.catalog-item.out-of-stock{opacity:.5;background:#f5f5f5}
+.catalog-item.out-of-stock:hover{transform:none;border-color:var(--border)}
+.catalog-item-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:grid;place-items:center;background:#fff;font-size:14px;color:#fff;transition:all .15s}
+.catalog-item.checked .catalog-item-checkbox{background:var(--primary);border-color:var(--primary)}
+.catalog-item.checked .catalog-item-checkbox::after{content:'✓';color:#fff;font-weight:800;font-size:14px}
+.catalog-item-thumb{width:60px;height:60px;border-radius:8px;object-fit:cover;background:#FAFAF7;flex-shrink:0}
+.catalog-item-info{flex:1;min-width:0}
+.catalog-item-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.catalog-item-meta{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.catalog-item-price{font-size:15px;font-weight:800;color:var(--primary)}
+.catalog-item-stock{font-size:11px;color:var(--green);font-weight:600;margin-top:2px}
+.catalog-item-stock.low{color:var(--orange)}
+.catalog-item-stock.out{color:var(--red)}
+.catalog-item-qty{display:flex;align-items:center;gap:4px;margin-top:6px}
+.catalog-item-qty button{width:24px;height:24px;border-radius:4px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:var(--text);display:grid;place-items:center}
+.catalog-item-qty button:hover{background:var(--amber-light);border-color:var(--amber)}
+.catalog-item-qty .qty-num{font-size:13px;font-weight:700;min-width:24px;text-align:center;color:var(--primary)}
+
+.catalog-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.catalog-empty .emoji{font-size:54px;display:block;margin-bottom:8px;opacity:.5}
+
+.catalog-footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--amber);padding:14px 20px;box-shadow:0 -8px 24px rgba(0,0,0,.1);z-index:100;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.catalog-footer-info{flex:1;min-width:180px}
+.catalog-footer-count{font-size:12px;color:var(--text-muted);font-weight:600}
+.catalog-footer-total{font-size:22px;font-weight:800;color:var(--primary)}
+.catalog-footer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.catalog-btn{padding:10px 18px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.catalog-btn-primary{background:linear-gradient(135deg,#D89B2E,#B84A2E);color:#fff;box-shadow:0 4px 12px rgba(184,74,46,.3)}
+.catalog-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(184,74,46,.4)}
+.catalog-btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.catalog-btn-outline:hover{background:var(--primary-light)}
+
+/* Login button on catalog header */
+.catalog-admin-btn{background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.catalog-admin-btn:hover{background:rgba(255,255,255,.3)}
+
+@media(max-width:600px){
+  .catalog-title{font-size:16px}
+  .catalog-grid{grid-template-columns:1fr;gap:10px}
+  .catalog-footer-total{font-size:18px}
+  .catalog-btn{padding:9px 14px;font-size:12px}
+}
 /* ===== LOGIN SCREEN ===== */
 .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#2E2A24 0%,#5C3D26 35%,#8F3621 65%,#D89B2E 100%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background-size:200% 200%;animation:loginGradient 12s ease infinite}
 @keyframes loginGradient{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
@@ -1015,6 +1081,35 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 </head>
 <body>
 
+<!-- PUBLIC CATALOG SCREEN (no login required) -->
+<div id="catalogScreen" class="catalog-screen">
+  <header class="catalog-header">
+    <div class="catalog-header-row">
+      <div style="flex:1;min-width:200px">
+        <div class="catalog-title" id="catalogShopName">🎣 FishStock</div>
+        <div class="catalog-subtitle">รายการสินค้า — เลือกของที่ต้องการ → ส่งให้ร้าน</div>
+      </div>
+      <input type="search" id="catalogSearch" class="catalog-search" placeholder="🔍 ค้นหาสินค้า..." oninput="renderCatalog()" />
+      <button class="catalog-admin-btn" onclick="closeCatalog()">🔐 เข้าระบบหลังร้าน</button>
+    </div>
+    <div class="catalog-cats" id="catalogCats"></div>
+  </header>
+
+  <div class="catalog-body" id="catalogBody"></div>
+
+  <div class="catalog-footer">
+    <div class="catalog-footer-info">
+      <div class="catalog-footer-count" id="catalogCount">เลือกแล้ว 0 รายการ</div>
+      <div class="catalog-footer-total" id="catalogTotal">฿0</div>
+    </div>
+    <div class="catalog-footer-actions">
+      <button class="catalog-btn catalog-btn-outline" onclick="clearCatalogSelection()">🗑 ล้าง</button>
+      <button class="catalog-btn catalog-btn-outline" onclick="shareCatalogList()">📋 คัดลอกรายการ</button>
+      <button class="catalog-btn catalog-btn-primary" onclick="sendCatalogList()">💬 ส่งให้ร้าน</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-screen" style="display:none">
   <div class="login-box">
@@ -1043,6 +1138,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <div id="loginError" class="login-error" style="display:none"></div>
       <button type="submit" class="login-btn" id="loginSubmitBtn">🚀 เข้าสู่ระบบ</button>
     </form>
+    <a href="?view=catalog" style="display:block;text-align:center;margin-top:14px;color:#7A746A;font-size:12px;text-decoration:none">
+      🛒 ดูรายการสินค้า (ไม่ต้องล็อกอิน) →
+    </a>
   </div>
 </div>
 
@@ -4225,6 +4323,215 @@ function loadState(){
   }
 }
 
+/* ===== PUBLIC CATALOG (no login) ===== */
+let catalogSelection = {}; // { code: qty }
+let catalogCurrentCat = 'all';
+
+function isCatalogMode(){
+  return new URLSearchParams(location.search).get('view') === 'catalog';
+}
+
+function openCatalog(){
+  document.getElementById('catalogScreen').classList.add('show');
+  document.getElementById('loginScreen').style.display = 'none';
+  // ตั้งชื่อร้าน
+  const sn = document.getElementById('catalogShopName');
+  if(sn) sn.textContent = appSettings.shopName ? `🎣 ${appSettings.shopName}` : '🎣 FishStock';
+  renderCatalogCats();
+  renderCatalog();
+}
+
+function closeCatalog(){
+  // ล้าง ?view=catalog ออก แล้วโหลดใหม่ → ไปหน้า login
+  const url = new URL(location.href);
+  url.searchParams.delete('view');
+  location.href = url.toString();
+}
+
+function renderCatalogCats(){
+  const wrap = document.getElementById('catalogCats');
+  if(!wrap) return;
+  const cats = [{name:'all', icon:'📦', label:'ทั้งหมด'}, ...categories.map(c=>({name:c.name, icon:c.icon, label:c.name}))];
+  wrap.innerHTML = cats.map(c=>{
+    const active = catalogCurrentCat === c.name ? 'active' : '';
+    return `<button class="catalog-cat-btn ${active}" onclick="setCatalogCat('${c.name}')">${c.icon} ${c.label}</button>`;
+  }).join('');
+}
+
+function setCatalogCat(name){
+  catalogCurrentCat = name;
+  renderCatalogCats();
+  renderCatalog();
+}
+
+function renderCatalog(){
+  const body = document.getElementById('catalogBody');
+  if(!body) return;
+
+  const search = (document.getElementById('catalogSearch')?.value||'').toLowerCase().trim();
+
+  // กรองสินค้า
+  let items = products.filter(p => {
+    if(catalogCurrentCat !== 'all' && p.cat !== catalogCurrentCat) return false;
+    if(search){
+      const hay = `${p.name} ${p.code||''} ${p.barcode||''} ${p.cat||''}`.toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if(!items.length){
+    body.innerHTML = `<div class="catalog-empty"><span class="emoji">🔍</span><div>ไม่พบสินค้าตามคำค้นหา</div></div>`;
+    updateCatalogFooter();
+    return;
+  }
+
+  // จัดกลุ่มตามหมวด (ถ้าเลือก "ทั้งหมด")
+  if(catalogCurrentCat === 'all'){
+    const groups = {};
+    items.forEach(p => {
+      const c = p.cat || 'อื่นๆ';
+      if(!groups[c]) groups[c] = [];
+      groups[c].push(p);
+    });
+    body.innerHTML = Object.entries(groups).map(([cat, list]) => {
+      const icon = getCatIcon(cat);
+      return `<div class="catalog-cat-group">
+        <div class="catalog-cat-label">${icon} ${cat} <span class="count">${list.length} รายการ</span></div>
+        <div class="catalog-grid">${list.map(renderCatalogItem).join('')}</div>
+      </div>`;
+    }).join('');
+  } else {
+    body.innerHTML = `<div class="catalog-grid">${items.map(renderCatalogItem).join('')}</div>`;
+  }
+
+  updateCatalogFooter();
+}
+
+function renderCatalogItem(p){
+  const checked = !!catalogSelection[p.code];
+  const qty = catalogSelection[p.code] || 0;
+  const out = p.qty <= 0;
+  const low = p.qty > 0 && p.qty <= 5;
+  const stockTxt = out ? '❌ หมดสต็อก' : low ? `⚠️ เหลือ ${p.qty} ชิ้น` : `✅ มี ${p.qty} ชิ้น`;
+  const stockCls = out ? 'out' : low ? 'low' : '';
+  const cls = `${checked?'checked':''} ${out?'out-of-stock':''}`.trim();
+  const safeCode = (p.code||'').replace(/'/g,"\\'");
+  const onClick = out ? '' : `onclick="toggleCatalogItem('${safeCode}',event)"`;
+  return `<div class="catalog-item ${cls}" data-code="${p.code}" ${onClick}>
+    <div class="catalog-item-checkbox"></div>
+    ${p.img?`<img src="${p.img}" class="catalog-item-thumb" onerror="this.style.display='none'" />`:''}
+    <div class="catalog-item-info">
+      <div class="catalog-item-name">${p.name}</div>
+      <div class="catalog-item-meta">${p.code||''} · ${p.cat||''}</div>
+      <div class="catalog-item-price">฿${(+p.price||0).toLocaleString()}</div>
+      <div class="catalog-item-stock ${stockCls}">${stockTxt}</div>
+      ${checked?`<div class="catalog-item-qty" onclick="event.stopPropagation()">
+        <button onclick="adjustCatalogQty('${safeCode}',-1)">−</button>
+        <span class="qty-num">${qty}</span>
+        <button onclick="adjustCatalogQty('${safeCode}',1)">+</button>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function toggleCatalogItem(code, event){
+  if(event) event.stopPropagation();
+  if(catalogSelection[code]){
+    delete catalogSelection[code];
+  } else {
+    catalogSelection[code] = 1;
+  }
+  renderCatalog();
+}
+
+function adjustCatalogQty(code, delta){
+  const cur = catalogSelection[code] || 0;
+  const prod = products.find(p=>p.code===code);
+  const max = prod ? prod.qty : 99;
+  const next = Math.max(0, Math.min(max, cur + delta));
+  if(next === 0){
+    delete catalogSelection[code];
+  } else {
+    catalogSelection[code] = next;
+  }
+  renderCatalog();
+}
+
+function updateCatalogFooter(){
+  const codes = Object.keys(catalogSelection);
+  const totalItems = codes.reduce((s,c)=>s + catalogSelection[c], 0);
+  const totalPrice = codes.reduce((s,c)=>{
+    const p = products.find(x=>x.code===c);
+    return s + (p ? (+p.price||0) * catalogSelection[c] : 0);
+  }, 0);
+  document.getElementById('catalogCount').textContent = `เลือกแล้ว ${codes.length} รายการ (${totalItems} ชิ้น)`;
+  document.getElementById('catalogTotal').textContent = '฿' + totalPrice.toLocaleString();
+}
+
+function clearCatalogSelection(){
+  if(!Object.keys(catalogSelection).length) return;
+  catalogSelection = {};
+  renderCatalog();
+}
+
+function buildCatalogListText(){
+  const codes = Object.keys(catalogSelection);
+  if(!codes.length) return '';
+  const shopName = appSettings.shopName || 'FishStock';
+  const lines = [`📋 รายการสั่งซื้อจาก ${shopName}`, ''];
+  let total = 0;
+  codes.forEach((c, i)=>{
+    const p = products.find(x=>x.code===c);
+    if(!p) return;
+    const qty = catalogSelection[c];
+    const subtotal = (+p.price||0) * qty;
+    total += subtotal;
+    lines.push(`${i+1}. ${p.name}`);
+    lines.push(`   จำนวน: ${qty} ชิ้น × ฿${(+p.price||0).toLocaleString()} = ฿${subtotal.toLocaleString()}`);
+  });
+  lines.push('');
+  lines.push(`💰 ยอดรวม: ฿${total.toLocaleString()}`);
+  lines.push('');
+  lines.push('---');
+  if(appSettings.shopPhone) lines.push(`📞 ${appSettings.shopPhone}`);
+  if(appSettings.shopAddress) lines.push(`📍 ${appSettings.shopAddress}`);
+  return lines.join('\n');
+}
+
+async function shareCatalogList(){
+  const text = buildCatalogListText();
+  if(!text){ alert('⚠️ กรุณาเลือกสินค้าก่อน'); return; }
+  try{
+    await navigator.clipboard.writeText(text);
+    alert('📋 คัดลอกรายการเรียบร้อย — วางใน LINE/แชต ส่งให้ร้านได้เลย');
+  } catch(e){
+    // Fallback: แสดง text ให้ copy เอง
+    const w = window.open('', '_blank');
+    w.document.write(`<pre style="font-family:sans-serif;padding:20px;white-space:pre-wrap">${text}</pre>`);
+  }
+}
+
+function sendCatalogList(){
+  const text = buildCatalogListText();
+  if(!text){ alert('⚠️ กรุณาเลือกสินค้าก่อน'); return; }
+
+  // ลองใช้ Web Share API (มือถือ)
+  if(navigator.share){
+    navigator.share({
+      title: (appSettings.shopName || 'FishStock') + ' — รายการสั่งซื้อ',
+      text: text
+    }).catch(()=>{
+      // ถ้า user cancel → no-op
+    });
+    return;
+  }
+
+  // Fallback: LINE share
+  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
 /* ===== CLOUD BACKUP (Google Apps Script) ===== */
 const APPS_SCRIPT_CODE = `/**
  * FishStock Cloud Backup — Apps Script
@@ -6547,15 +6854,20 @@ applyDarkMode();
 ensureDefaultUsers();
 startCloudBackupTimer();
 
-// Auth check
-if(checkSession()){
-  applyAuthUI();
-  hideLogin();
+// 🌐 Public Catalog Mode — bypass login if ?view=catalog
+if(isCatalogMode()){
+  refreshAllViews();
+  openCatalog();
 } else {
-  showLogin();
+  // Auth check
+  if(checkSession()){
+    applyAuthUI();
+    hideLogin();
+  } else {
+    showLogin();
+  }
+  refreshAllViews();
 }
-
-refreshAllViews();
 renderPOS(posItems);
 renderSalesTable();
 window.addEventListener('resize',()=>{updateCartFab();});
