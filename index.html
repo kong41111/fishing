@@ -81,6 +81,40 @@
   --shadow-lg:0 10px 30px rgba(184,74,46,.15);
 }
 html{overflow-x:hidden}
+/* ===== PREP CHECKLIST (เตรียมร้าน) ===== */
+.prep-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.prep-stat{background:#fff;border-radius:12px;padding:14px;border-left:4px solid var(--amber);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.prep-stat.done{border-left-color:var(--green)}
+.prep-stat.remain{border-left-color:var(--primary)}
+.prep-stat.budget{border-left-color:var(--text-muted)}
+.prep-stat-val{font-size:22px;font-weight:800;color:var(--text);line-height:1.1}
+.prep-stat-lbl{font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:600}
+.prep-stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.prep-progress-wrap{margin-bottom:18px}
+.prep-progress-bar{height:10px;background:#F0F0F2;border-radius:99px;overflow:hidden;margin-top:8px}
+.prep-progress-fill{height:100%;background:linear-gradient(90deg,#D89B2E,#B84A2E);border-radius:99px;transition:width .3s}
+.prep-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.prep-filter button{padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);font-family:inherit}
+.prep-filter button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.prep-filter button:hover:not(.active){border-color:var(--amber);color:var(--primary)}
+.prep-cat-group{margin-bottom:22px}
+.prep-cat-header{font-size:14px;font-weight:800;margin-bottom:10px;padding:6px 12px;background:linear-gradient(90deg,var(--amber-light),transparent);border-left:4px solid var(--amber);border-radius:0 8px 8px 0;display:flex;align-items:center;gap:6px}
+.prep-cat-header .pc-count{margin-left:auto;font-size:11px;color:var(--text-muted);font-weight:600}
+.prep-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1.5px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .15s;user-select:none}
+.prep-item:hover{border-color:var(--amber);box-shadow:0 2px 8px rgba(216,155,46,.1)}
+.prep-item.checked{background:linear-gradient(135deg,#EEF2E2,#F4F7E8);border-color:var(--green);opacity:.85}
+.prep-item.checked .prep-name{text-decoration:line-through;color:var(--text-muted)}
+.prep-checkbox{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:grid;place-items:center;background:#fff;transition:all .15s}
+.prep-item.checked .prep-checkbox{background:var(--green);border-color:var(--green)}
+.prep-item.checked .prep-checkbox::after{content:'✓';color:#fff;font-weight:800;font-size:15px}
+.prep-thumb{width:42px;height:42px;border-radius:8px;object-fit:cover;background:#FAFAF7;flex-shrink:0}
+.prep-info{flex:1;min-width:0}
+.prep-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px}
+.prep-meta{font-size:11px;color:var(--text-muted)}
+.prep-cost-cell{text-align:right;font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;min-width:90px}
+.prep-cost-cell .pc-qty{font-size:11px;color:var(--text-muted);font-weight:500;display:block}
+.prep-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1.5px dashed var(--border)}
+
 /* ===== PUBLIC CATALOG ===== */
 .catalog-screen{position:fixed;inset:0;z-index:9000;background:#FAFAF7;overflow-y:auto;display:none;flex-direction:column}
 .catalog-screen.show{display:flex}
@@ -1161,6 +1195,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
     <a class="nav-item" data-page="products"><i class="nav-icon bi bi-box-seam"></i><span>สินค้า</span></a>
     <a class="nav-item role-admin-only" data-page="stock"><i class="nav-icon bi bi-arrow-left-right"></i><span>รับ/จ่ายสินค้า</span></a>
     <a class="nav-item role-admin-only" data-page="stockcount"><i class="nav-icon bi bi-clipboard-check"></i><span>นับสต็อก</span></a>
+    <a class="nav-item role-admin-only" data-page="prepchecklist"><i class="nav-icon bi bi-list-check"></i><span>เตรียมร้าน</span></a>
     <a class="nav-item" data-page="sales"><i class="nav-icon bi bi-cart3"></i><span>การขาย (POS)</span></a>
     <div class="nav-group-label role-admin-only">รายงาน</div>
     <a class="nav-item role-admin-only" data-page="reports"><i class="nav-icon bi bi-graph-up"></i><span>รายงานสรุป</span></a>
@@ -1370,6 +1405,62 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
             <tbody id="stockHistoryBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">ยังไม่มีประวัติการเคลื่อนไหว</td></tr></tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- PREP CHECKLIST (เตรียมร้าน) -->
+    <section class="page" id="page-prepchecklist">
+      <div class="card" style="padding:14px 16px;margin-bottom:14px;background:linear-gradient(135deg,#FCF3DE,#FBEEE6);border-left:4px solid #D89B2E">
+        <div style="font-size:13px;line-height:1.7">
+          <strong>📋 รายการเตรียมร้าน</strong> — ติ๊กรายการที่ <strong>ซื้อ/สต๊อกเข้าร้าน</strong>แล้ว ระบบจะคำนวณงบที่เหลือต้องใช้ให้
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="prep-summary">
+        <div class="prep-stat">
+          <div class="prep-stat-val" id="prepTotal">0</div>
+          <div class="prep-stat-lbl">รายการทั้งหมด</div>
+        </div>
+        <div class="prep-stat done">
+          <div class="prep-stat-val" id="prepDone" style="color:var(--green)">0</div>
+          <div class="prep-stat-lbl">✅ เตรียมแล้ว</div>
+        </div>
+        <div class="prep-stat remain">
+          <div class="prep-stat-val" id="prepRemain" style="color:var(--primary)">0</div>
+          <div class="prep-stat-lbl">⏳ ยังไม่เตรียม</div>
+        </div>
+        <div class="prep-stat budget">
+          <div class="prep-stat-val" id="prepBudgetTotal">฿0</div>
+          <div class="prep-stat-lbl">งบรวม (ทุน × จำนวน)</div>
+          <div class="prep-stat-sub" id="prepBudgetSub">เหลือต้องใช้: ฿0</div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="prep-progress-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted)">
+          <span><strong style="color:var(--text)" id="prepProgressTxt">0%</strong> เตรียมเสร็จแล้ว</span>
+          <span id="prepDoneRatio">0 / 0 รายการ</span>
+        </div>
+        <div class="prep-progress-bar"><div class="prep-progress-fill" id="prepProgressFill" style="width:0%"></div></div>
+      </div>
+
+      <!-- Filter -->
+      <div class="prep-filter">
+        <button class="active" data-prep="all" onclick="setPrepFilter('all')">ทั้งหมด</button>
+        <button data-prep="todo" onclick="setPrepFilter('todo')">⏳ ยังไม่เตรียม</button>
+        <button data-prep="done" onclick="setPrepFilter('done')">✅ เตรียมแล้ว</button>
+      </div>
+
+      <!-- List by category -->
+      <div id="prepListBody"></div>
+
+      <!-- Actions -->
+      <div class="prep-actions">
+        <button class="btn btn-outline-primary" onclick="resetPrepChecklist()">🔄 ล้างการติ๊กทั้งหมด</button>
+        <button class="btn btn-outline-primary" onclick="copyPrepList()">📋 คัดลอกรายการ "ยังไม่เตรียม"</button>
+        <button class="btn btn-primary" onclick="printPrepList()">🖨 พิมพ์รายการ</button>
       </div>
     </section>
 
@@ -2974,6 +3065,7 @@ function refreshAllViews(){
   renderCategoriesList();
   refreshCategoryDropdowns();
   renderUsersList();
+  renderPrepChecklist();
   renderLoginSecurityPanel();
   updateBackupStats();
   saveState();
@@ -2983,7 +3075,7 @@ function refreshAllViews(){
   document.querySelectorAll('[data-stat="today-count"]').forEach(el=>el.textContent=stats.count);
   document.querySelectorAll('[data-stat="today-avg"]').forEach(el=>el.textContent='฿'+stats.avg.toLocaleString());
 }
-const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',zreport:'ปิดยอดประจำวัน (Z-Report)',customers:'ลูกค้า',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
+const pageTitles = {dashboard:'แดชบอร์ด',products:'สินค้า',stock:'รับ/จ่ายสินค้า',stockcount:'นับสต็อก',prepchecklist:'รายการเตรียมร้าน',sales:'บันทึกการขาย (POS)',reports:'รายงานสรุป',scHistoryReport:'ประวัติการนับสต็อก',accounting:'บัญชี กำไร/ขาดทุน',zreport:'ปิดยอดประจำวัน (Z-Report)',customers:'ลูกค้า',suppliers:'ซัพพลายเออร์',settings:'ตั้งค่าระบบ'};
 
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
@@ -4324,6 +4416,208 @@ function loadState(){
     console.warn('💾 โหลดข้อมูลไม่สำเร็จ:', e);
     return false;
   }
+}
+
+/* ===== PREP CHECKLIST (เตรียมร้าน) ===== */
+// prepChecked = { 'SKU-001': true, ... } — เก็บใน appSettings
+let prepFilter = 'all';
+
+function getPrepChecked(){
+  if(!appSettings.prepChecked) appSettings.prepChecked = {};
+  return appSettings.prepChecked;
+}
+
+function togglePrepItem(code){
+  const checked = getPrepChecked();
+  if(checked[code]) delete checked[code];
+  else checked[code] = true;
+  saveState();
+  renderPrepChecklist();
+}
+
+function setPrepFilter(mode){
+  prepFilter = mode;
+  document.querySelectorAll('[data-prep]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.prep === mode);
+  });
+  renderPrepChecklist();
+}
+
+function resetPrepChecklist(){
+  if(!confirm('ล้างการติ๊กทั้งหมด?')) return;
+  appSettings.prepChecked = {};
+  saveState();
+  renderPrepChecklist();
+  showToast('🔄 ล้างเรียบร้อย');
+}
+
+function getPrepGroupByGroupName(p){
+  // ดึง "กลุ่ม:" จาก note (เช่น "กลุ่ม: ชิงหลิว · ...")
+  const note = p.note || '';
+  const m = note.match(/กลุ่ม:\s*([^·•\n]+)/);
+  if(m) return m[1].trim();
+  return p.cat || 'อื่นๆ';
+}
+
+function renderPrepChecklist(){
+  if(!document.getElementById('prepListBody')) return;
+
+  const checked = getPrepChecked();
+  const total = products.length;
+  const done = products.filter(p => checked[p.code]).length;
+  const remain = total - done;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  const totalBudget = products.reduce((s,p) => s + (+p.cost||0) * (+p.qty||0), 0);
+  const remainBudget = products.filter(p => !checked[p.code]).reduce((s,p) => s + (+p.cost||0) * (+p.qty||0), 0);
+
+  // KPIs
+  document.getElementById('prepTotal').textContent = total;
+  document.getElementById('prepDone').textContent = done;
+  document.getElementById('prepRemain').textContent = remain;
+  document.getElementById('prepBudgetTotal').textContent = '฿' + totalBudget.toLocaleString();
+  document.getElementById('prepBudgetSub').textContent = `เหลือต้องใช้: ฿${remainBudget.toLocaleString()}`;
+  document.getElementById('prepProgressTxt').textContent = pct + '%';
+  document.getElementById('prepDoneRatio').textContent = `${done} / ${total} รายการ`;
+  document.getElementById('prepProgressFill').style.width = pct + '%';
+
+  // Filter items
+  let items = products.slice();
+  if(prepFilter === 'todo') items = items.filter(p => !checked[p.code]);
+  if(prepFilter === 'done') items = items.filter(p => checked[p.code]);
+
+  if(!items.length){
+    const msg = prepFilter==='done' ? 'ยังไม่มีรายการที่ติ๊กว่าเตรียมแล้ว'
+              : prepFilter==='todo' ? 'เตรียมครบทุกรายการแล้ว 🎉'
+              : 'ยังไม่มีสินค้าในระบบ';
+    document.getElementById('prepListBody').innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">${msg}</div>`;
+    return;
+  }
+
+  // จัดกลุ่มตามกลุ่ม (ชิงหลิว, ตกหน้าดิน, ฯลฯ) ถ้ามี, ไม่งั้นใช้ cat
+  const groups = {};
+  items.forEach(p => {
+    const g = getPrepGroupByGroupName(p);
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  document.getElementById('prepListBody').innerHTML = Object.entries(groups).map(([groupName, list]) => {
+    const groupDone = list.filter(p => checked[p.code]).length;
+    const groupBudget = list.reduce((s,p)=>s + (+p.cost||0) * (+p.qty||0), 0);
+    return `<div class="prep-cat-group">
+      <div class="prep-cat-header">
+        🏷 ${groupName}
+        <span class="pc-count">${groupDone}/${list.length} · ฿${groupBudget.toLocaleString()}</span>
+      </div>
+      ${list.map(p => renderPrepItem(p, !!checked[p.code])).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderPrepItem(p, isChecked){
+  const qty = +p.qty || 0;
+  const cost = +p.cost || 0;
+  const subtotal = cost * qty;
+  const safeCode = (p.code||'').replace(/'/g,"\\'");
+  return `<div class="prep-item ${isChecked?'checked':''}" onclick="togglePrepItem('${safeCode}')">
+    <div class="prep-checkbox"></div>
+    ${p.img?`<img class="prep-thumb" src="${p.img}" onerror="this.style.display='none'" />`:''}
+    <div class="prep-info">
+      <div class="prep-name">${p.name}</div>
+      <div class="prep-meta">${p.code} · ${p.cat} · ทุน ฿${cost.toLocaleString()}/ชิ้น</div>
+    </div>
+    <div class="prep-cost-cell">
+      ฿${subtotal.toLocaleString()}
+      <span class="pc-qty">${qty} ชิ้น</span>
+    </div>
+  </div>`;
+}
+
+function copyPrepList(){
+  const checked = getPrepChecked();
+  const todo = products.filter(p => !checked[p.code]);
+  if(!todo.length){ showToast('🎉 ไม่มีรายการที่ต้องเตรียมเพิ่ม'); return; }
+
+  const shopName = appSettings.shopName || 'FishStock';
+  const lines = [`📋 รายการที่ต้องเตรียม — ${shopName}`, ''];
+  let total = 0;
+
+  // จัดกลุ่มในผลลัพธ์
+  const groups = {};
+  todo.forEach(p => {
+    const g = getPrepGroupByGroupName(p);
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  Object.entries(groups).forEach(([groupName, list])=>{
+    lines.push(`【 ${groupName} 】`);
+    list.forEach((p, i)=>{
+      const qty = +p.qty||0;
+      const cost = +p.cost||0;
+      const subtotal = cost * qty;
+      total += subtotal;
+      lines.push(`${i+1}. ${p.name}`);
+      lines.push(`   ${qty} ชิ้น × ฿${cost.toLocaleString()} = ฿${subtotal.toLocaleString()}`);
+    });
+    lines.push('');
+  });
+
+  lines.push(`💰 รวมงบที่ต้องใช้: ฿${total.toLocaleString()}`);
+  lines.push(`📊 จำนวนรายการ: ${todo.length} รายการ`);
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast(`📋 คัดลอก ${todo.length} รายการเรียบร้อย`);
+  }).catch(()=>{
+    showToast('⚠️ คัดลอกไม่ได้ ลองใช้ "พิมพ์รายการ" แทน');
+  });
+}
+
+function printPrepList(){
+  const checked = getPrepChecked();
+  const shopName = appSettings.shopName || 'FishStock';
+  const groups = {};
+  products.forEach(p=>{
+    const g = getPrepGroupByGroupName(p);
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>รายการเตรียมร้าน</title>
+  <style>
+    body{font-family:sans-serif;padding:20px;font-size:13px}
+    h1{font-size:18px;margin-bottom:4px}
+    h2{font-size:14px;margin-top:16px;padding:4px 8px;background:#FCF3DE;border-left:3px solid #D89B2E}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left}
+    th{background:#FAFAF7;font-weight:700}
+    .check{width:24px;text-align:center;font-size:14px}
+    .num{text-align:right;font-family:monospace}
+    .done{text-decoration:line-through;color:#888}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h1>📋 รายการเตรียมร้าน — ${shopName}</h1>
+  <div style="color:#666;font-size:11px;margin-bottom:14px">พิมพ์เมื่อ ${new Date().toLocaleString('th-TH')}</div>
+  ${Object.entries(groups).map(([gName, list])=>{
+    const gBudget = list.reduce((s,p)=>s+(+p.cost||0)*(+p.qty||0),0);
+    return `<h2>${gName} <span style="float:right;font-weight:normal">฿${gBudget.toLocaleString()}</span></h2>
+    <table><thead><tr><th class="check">✓</th><th>#</th><th>สินค้า</th><th>รหัส</th><th class="num">จำนวน</th><th class="num">ทุน/ชิ้น</th><th class="num">รวม</th></tr></thead><tbody>
+    ${list.map((p,i)=>{
+      const isC = checked[p.code];
+      const qty = +p.qty||0, cost = +p.cost||0, sub = qty*cost;
+      return `<tr class="${isC?'done':''}"><td class="check">${isC?'☑':'☐'}</td><td>${i+1}</td><td>${p.name}</td><td>${p.code}</td><td class="num">${qty}</td><td class="num">฿${cost.toLocaleString()}</td><td class="num">฿${sub.toLocaleString()}</td></tr>`;
+    }).join('')}
+    </tbody></table>`;
+  }).join('')}
+  <div style="margin-top:20px;padding:10px;background:#FCF3DE;border-radius:6px;font-weight:700">
+    รวมทั้งสิ้น: ${products.length} รายการ · งบ ฿${products.reduce((s,p)=>s+(+p.cost||0)*(+p.qty||0),0).toLocaleString()}
+  </div>
+  <script>window.print()</script>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
 }
 
 /* ===== PUBLIC CATALOG (no login) ===== */
