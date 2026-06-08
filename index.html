@@ -81,6 +81,30 @@
   --shadow-lg:0 10px 30px rgba(184,74,46,.15);
 }
 html{overflow-x:hidden}
+/* ===== PUBLIC PREP MODE ===== */
+body.prep-public .sidebar,
+body.prep-public .topbar,
+body.prep-public .mobile-nav,
+body.prep-public .theme-toggle{display:none!important}
+body.prep-public .main-wrap{margin-left:0!important;width:100%!important;max-width:100%!important}
+body.prep-public .content{padding:0!important}
+body.prep-public .page:not(#page-prepchecklist){display:none!important}
+body.prep-public #page-prepchecklist{display:block!important;padding:0;min-height:100vh}
+.prep-public-header{background:linear-gradient(135deg,#5C3D26 0%,#8F3621 55%,#B84A2E 100%);color:#fff;padding:16px 22px;box-shadow:0 4px 14px rgba(184,74,46,.2);position:sticky;top:0;z-index:10;display:none}
+body.prep-public .prep-public-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prep-public-header .ph-title{flex:1;min-width:200px}
+.prep-public-header h1{font-size:18px;font-weight:800;margin:0}
+.prep-public-header .ph-sub{font-size:12px;opacity:.85;margin-top:2px}
+.prep-public-header button{background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.prep-public-header button:hover{background:rgba(255,255,255,.3)}
+body.prep-public .prep-summary,
+body.prep-public .prep-progress-wrap,
+body.prep-public .prep-filter,
+body.prep-public #prepListBody,
+body.prep-public .prep-actions{padding-left:22px;padding-right:22px}
+body.prep-public .prep-summary{padding-top:18px}
+body.prep-public .prep-actions{padding-bottom:80px}
+
 /* ===== PREP CHECKLIST (เตรียมร้าน) ===== */
 .prep-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
 .prep-stat{background:#fff;border-radius:12px;padding:14px;border-left:4px solid var(--amber);box-shadow:var(--shadow);position:relative;overflow:hidden}
@@ -1173,7 +1197,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
       <button type="submit" class="login-btn" id="loginSubmitBtn">🚀 เข้าสู่ระบบ</button>
     </form>
     <a href="?view=catalog" style="display:block;text-align:center;margin-top:14px;color:#7A746A;font-size:12px;text-decoration:none">
-      🛒 ดูรายการสินค้า (ไม่ต้องล็อกอิน) →
+      🛒 ดูรายการสินค้า (สำหรับลูกค้า) →
+    </a>
+    <a href="?view=prep" style="display:block;text-align:center;margin-top:6px;color:#7A746A;font-size:12px;text-decoration:none">
+      📋 รายการเตรียมร้าน (Checklist) →
     </a>
     <a href="products.json" download="fishstock-products.json" style="display:block;text-align:center;margin-top:6px;color:#7A746A;font-size:11px;text-decoration:none">
       📥 ดาวน์โหลดไฟล์ข้อมูลสินค้า (JSON)
@@ -1410,6 +1437,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
 
     <!-- PREP CHECKLIST (เตรียมร้าน) -->
     <section class="page" id="page-prepchecklist">
+      <!-- Public header (only visible when ?view=prep) -->
+      <div class="prep-public-header">
+        <div class="ph-title">
+          <h1 id="prepPublicTitle">📋 รายการเตรียมร้าน</h1>
+          <div class="ph-sub">ติ๊กรายการที่เตรียม/ซื้อ/สต๊อกแล้ว — ระบบจะคำนวณงบที่เหลือให้</div>
+        </div>
+        <button onclick="closePrepPublic()">🔐 เข้าระบบหลังร้าน</button>
+      </div>
       <div class="card" style="padding:14px 16px;margin-bottom:14px;background:linear-gradient(135deg,#FCF3DE,#FBEEE6);border-left:4px solid #D89B2E">
         <div style="font-size:13px;line-height:1.7">
           <strong>📋 รายการเตรียมร้าน</strong> — ติ๊กรายการที่ <strong>ซื้อ/สต๊อกเข้าร้าน</strong>แล้ว ระบบจะคำนวณงบที่เหลือต้องใช้ให้
@@ -4627,6 +4662,49 @@ let catalogCurrentCat = 'all';
 function isCatalogMode(){
   return new URLSearchParams(location.search).get('view') === 'catalog';
 }
+function isPrepMode(){
+  return new URLSearchParams(location.search).get('view') === 'prep';
+}
+
+async function openPrepPublic(){
+  document.body.classList.add('prep-public');
+  document.getElementById('loginScreen').style.display = 'none';
+  // ตั้งชื่อจาก settings
+  const sn = document.getElementById('prepPublicTitle');
+  if(sn) sn.textContent = `📋 รายการเตรียมร้าน — ${appSettings.shopName || 'FishStock'}`;
+
+  // ถ้ายังไม่มีสินค้า → โหลดจาก products.json
+  if(!products.length){
+    document.getElementById('prepListBody').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ กำลังโหลดสินค้า...</div>';
+    try{
+      const res = await fetch('products.json?v=' + Date.now());
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data.products) && data.products.length){
+          data.products.forEach(p => products.push(p));
+        }
+        if(Array.isArray(data.categories) && data.categories.length){
+          categories = data.categories;
+        }
+      }
+    }catch(err){
+      console.warn('โหลด products.json ไม่ได้:', err);
+    }
+  }
+
+  // นำทางไปหน้า prep
+  const sec = document.getElementById('page-prepchecklist');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  if(sec) sec.classList.add('active');
+
+  renderPrepChecklist();
+}
+
+function closePrepPublic(){
+  const url = new URL(location.href);
+  url.searchParams.delete('view');
+  location.href = url.toString();
+}
 
 async function openCatalog(){
   document.getElementById('catalogScreen').classList.add('show');
@@ -7171,10 +7249,13 @@ applyDarkMode();
 ensureDefaultUsers();
 startCloudBackupTimer();
 
-// 🌐 Public Catalog Mode — bypass login if ?view=catalog
+// 🌐 Public Modes — bypass login if ?view=catalog or ?view=prep
 if(isCatalogMode()){
   refreshAllViews();
   openCatalog();
+} else if(isPrepMode()){
+  refreshAllViews();
+  openPrepPublic();
 } else {
   // Auth check
   if(checkSession()){
