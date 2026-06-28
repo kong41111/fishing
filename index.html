@@ -3117,6 +3117,8 @@ document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',e=>{
     e.preventDefault();
     const page = item.dataset.page;
+    // จำหน้าล่าสุดเพื่อกลับมาตอน refresh
+    try{ localStorage.setItem('fs-last-page', page); }catch(_){}
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
     document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
@@ -7296,6 +7298,21 @@ if(isCatalogMode()){
     showLogin();
   }
   refreshAllViews();
+  // Restore หน้าล่าสุดที่ user เปิดอยู่ (ก่อน refresh) — เฉพาะถ้า login แล้ว
+  if(currentUser){
+    try{
+      const lastPage = localStorage.getItem('fs-last-page');
+      if(lastPage && document.getElementById('page-'+lastPage)){
+        // ตรวจสิทธิ์ — ถ้า staff อยู่หน้าที่ไม่มีสิทธิ์ ข้าม
+        const restricted = ['stock','stockcount','prepchecklist','reports','scHistoryReport','accounting','zreport','suppliers','settings'];
+        const isRestricted = restricted.includes(lastPage);
+        if(currentUser.role==='admin' || !isRestricted){
+          const navEl = document.querySelector(`.nav-item[data-page="${lastPage}"]`);
+          if(navEl) navEl.click();
+        }
+      }
+    }catch(_){}
+  }
 }
 renderPOS(posItems);
 renderSalesTable();
