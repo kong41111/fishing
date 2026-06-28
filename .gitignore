@@ -9,3 +9,14 @@ Thumbs.db
 .idea/
 dist/
 build/
+# Local backup/import files — don't commit
+_stock_raw.json
+fishstock-import.json
+fishstock-backup-*.json
+backup-*.json
+# SSH keys — don't commit
+*.ppk
+keyputty.txt
+# Excel source files (use products.json on server)
+*.xlsx
+*.xls
