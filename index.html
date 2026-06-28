@@ -1343,6 +1343,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;ba
           <option value="999">ทั้งหมด</option>
         </select>
         <button class="btn btn-primary" onclick="openModal('addProductModal')">+ เพิ่มสินค้าใหม่</button>
+        <button class="btn btn-danger" onclick="clearAllProducts()" title="ลบสินค้าทั้งหมด (ไม่กระทบบิล/ลูกค้า)">🗑 ลบสินค้าทั้งหมด</button>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -5184,6 +5185,19 @@ async function importAll(input){
     input.value = '';
   };
   reader.readAsText(file);
+}
+
+async function clearAllProducts(){
+  if(!products.length){ showToast('ℹ️ ไม่มีสินค้าให้ลบ'); return; }
+  const count = products.length;
+  if(!await dialogConfirm(`จะลบสินค้าทั้งหมด <strong>${count}</strong> รายการ<br>(บิลขาย/ลูกค้า/ซัพพลายเออร์/ค่าใช้จ่าย — ไม่ถูกลบ)<br><br><strong>ยืนยัน?</strong>`, {level:'danger', title:'🗑 ลบสินค้าทั้งหมด', okText:'🗑️ ลบสินค้า'})) return;
+  products.length = 0;
+  cart = [];
+  parkedSales = [];
+  // เคลียร์ prep checklist ด้วย (ไม่งั้นจะเก็บ check ของสินค้าที่ไม่มีอยู่แล้ว)
+  if(appSettings) appSettings.prepChecked = {};
+  refreshAllViews();
+  showToast(`🗑 ลบสินค้า ${count} รายการเรียบร้อย`);
 }
 
 async function clearAllData(){
