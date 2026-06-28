@@ -5191,12 +5191,28 @@ async function clearAllProducts(){
   if(!products.length){ showToast('ℹ️ ไม่มีสินค้าให้ลบ'); return; }
   const count = products.length;
   if(!await dialogConfirm(`จะลบสินค้าทั้งหมด <strong>${count}</strong> รายการ<br>(บิลขาย/ลูกค้า/ซัพพลายเออร์/ค่าใช้จ่าย — ไม่ถูกลบ)<br><br><strong>ยืนยัน?</strong>`, {level:'danger', title:'🗑 ลบสินค้าทั้งหมด', okText:'🗑️ ลบสินค้า'})) return;
+
+  // จำหน้าปัจจุบันก่อน reset
+  const currentPageId = document.querySelector('.page.active')?.id;
+
   products.length = 0;
   cart = [];
   parkedSales = [];
   // เคลียร์ prep checklist ด้วย (ไม่งั้นจะเก็บ check ของสินค้าที่ไม่มีอยู่แล้ว)
   if(appSettings) appSettings.prepChecked = {};
   refreshAllViews();
+
+  // คืนค่าหน้าเดิม (เผื่อ refresh เปลี่ยน active page)
+  if(currentPageId){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const el = document.getElementById(currentPageId);
+    if(el) el.classList.add('active');
+    // sync sidebar nav highlight
+    const pageName = currentPageId.replace(/^page-/, '');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===pageName));
+    document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===pageName));
+  }
+
   showToast(`🗑 ลบสินค้า ${count} รายการเรียบร้อย`);
 }
 
