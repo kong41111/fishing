@@ -4432,7 +4432,8 @@ function loadState(){
     if(!raw) return false;
     const d = JSON.parse(raw);
     if(!d || typeof d !== 'object') return false;
-    if(Array.isArray(d.products) && d.products.length){
+    // ⚠️ Replace even if empty — user can intentionally clear all products
+    if(Array.isArray(d.products) && d._productsExplicit !== false){
       products.splice(0, products.length, ...d.products);
     }
     if(Array.isArray(d.suppliers))         suppliers = d.suppliers;
