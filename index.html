@@ -3344,9 +3344,17 @@ document.getElementById('stockFilter').addEventListener('change',()=>{prodPage=1
 document.getElementById('pageSize').addEventListener('change',()=>{prodPage=1;renderProducts();});
 
 async function delProduct(i){
-  if(await dialogConfirm(`คุณต้องการลบสินค้า<br><strong>"${products[i].name}"</strong> ใช่หรือไม่?`,{level:'danger',title:'ลบสินค้า',okText:'🗑️ ลบ'})){
-    products.splice(i,1); refreshAllViews(); showToast('🗑️ ลบเรียบร้อย');
+  const p = products[i];
+  if(!p) return;
+  if(!await dialogConfirm(`คุณต้องการลบสินค้า<br><strong>"${p.name}"</strong> ใช่หรือไม่?`,{level:'danger',title:'ลบสินค้า',okText:'🗑️ ลบ'})) return;
+  if(isAPIMode()){
+    try{ await API.products.remove(p.code); await loadFromAPI(); }
+    catch(err){ showToast('❌ ลบไม่สำเร็จ: '+err.message); return; }
+  } else {
+    products.splice(i,1);
   }
+  refreshAllViews();
+  showToast('🗑️ ลบเรียบร้อย');
 }
 
 const CAT_IMG_MAP = {
@@ -3414,14 +3422,28 @@ function handleImgUpload(input, previewId, hiddenId, fnameId){
   reader.readAsDataURL(file);
 }
 
-function addProduct(e){
+async function addProduct(e){
   e.preventDefault();
   const name=document.getElementById('newName').value.trim();
   const code=document.getElementById('newCode').value.trim()||`SKU-${String(products.length+1).padStart(3,'0')}`;
   if(products.some(p=>p.code===code)){showToast(`⚠️ รหัส ${code} ซ้ำ`);return;}
   const img=document.getElementById('newImg').value||FALLBACK_IMG;
   const barcode='885'+Date.now().toString().slice(-10);
-  products.unshift({code,barcode,name,cat:document.getElementById('newCategory').value,qty:+document.getElementById('newQty').value||0,cost:+document.getElementById('newCost').value||0,price:+document.getElementById('newPrice').value||0,img});
+  const newProd = {code,barcode,name,cat:document.getElementById('newCategory').value,qty:+document.getElementById('newQty').value||0,cost:+document.getElementById('newCost').value||0,price:+document.getElementById('newPrice').value||0,img};
+
+  // 🗄 API mode → POST to MySQL
+  if(isAPIMode()){
+    try{
+      await API.products.create({...newProd, category: newProd.cat});
+      await loadFromAPI();
+    } catch(err){
+      showToast('❌ เพิ่มไม่สำเร็จ: ' + err.message);
+      return;
+    }
+  } else {
+    products.unshift(newProd);
+  }
+
   refreshAllViews();
   closeModal('addProductModal');showToast('✅ เพิ่มสินค้าเรียบร้อย');
   e.target.reset();
@@ -3449,21 +3471,31 @@ function openEditProduct(idx){
   }
   openModal('editProductModal');
 }
-function saveEditProduct(e){
+async function saveEditProduct(e){
   e.preventDefault();
   const idx = +document.getElementById('editIdx').value;
   const p = products[idx];
   if(!p) return;
+  const oldCode = p.code;
   const newCode = document.getElementById('editCode').value.trim()||p.code;
-  // check duplicate code (exclude self)
   if(products.some((x,i)=>x.code===newCode && i!==idx)){showToast(`⚠️ รหัส ${newCode} ซ้ำกับสินค้าอื่น`);return;}
-  p.name = document.getElementById('editName').value.trim();
-  p.code = newCode;
-  p.cat = document.getElementById('editCategory').value;
-  p.qty = +document.getElementById('editQty').value||0;
-  p.cost = +document.getElementById('editCost').value||0;
-  p.price = +document.getElementById('editPrice').value||0;
-  p.img = document.getElementById('editImg').value.trim()||FALLBACK_IMG;
+  const updates = {
+    barcode: p.barcode,
+    name: document.getElementById('editName').value.trim(),
+    category: document.getElementById('editCategory').value,
+    qty: +document.getElementById('editQty').value||0,
+    cost: +document.getElementById('editCost').value||0,
+    price: +document.getElementById('editPrice').value||0,
+    img: document.getElementById('editImg').value.trim()||FALLBACK_IMG,
+    note: p.note||''
+  };
+  if(isAPIMode()){
+    try{ await API.products.update(oldCode, updates); await loadFromAPI(); }
+    catch(err){ showToast('❌ แก้ไขไม่สำเร็จ: '+err.message); return; }
+  } else {
+    p.name = updates.name; p.code = newCode; p.cat = updates.category;
+    p.qty = updates.qty; p.cost = updates.cost; p.price = updates.price; p.img = updates.img;
+  }
   refreshAllViews();
   closeModal('editProductModal');
   showToast('✅ แก้ไขสินค้าเรียบร้อย');
@@ -4056,7 +4088,7 @@ function voidLastBill(){
   voidBill(_lastBillNo);
   _lastBillNo = null;
 }
-function checkout(){
+async function checkout(){
   if(cart.length===0){showToast('⚠️ ตะกร้าว่างเปล่า');return;}
 
   const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
@@ -4074,42 +4106,55 @@ function checkout(){
   // 1) deduct stock + record each item to stockHistory as 'sale' type
   const today = new Date().toISOString().slice(0,10);
   const billNo = 'B'+Date.now().toString().slice(-8);
-  cart.forEach(c=>{
-    const prod = products.find(p=>p.code===c.code);
-    if(!prod) return;
-    const before = prod.qty;
-    prod.qty = Math.max(0, prod.qty - c.qty);
-    stockHistory.unshift({
-      date: today,
-      code: c.code,
-      name: c.name,
-      type: 'sale',
-      qty: -c.qty,
-      after: prod.qty,
-      note: `ขายผ่าน POS · บิล ${billNo} · ราคา ฿${(+c.price||0).toLocaleString()}`
-    });
-  });
 
-  // Customer info
-  const custId = +document.getElementById('cartCustomer')?.value || 0;
-  const customer = custId ? customers.find(c=>c.id===custId) : null;
-  const tierPct = customer ? (TIER_DISCOUNT[customer.tier||'ทั่วไป']||0) : 0;
+  // Customer info (compute early for API)
+  const custIdEl = document.getElementById('cartCustomer');
+  const custId = +custIdEl?.value || 0;
+  const customerObj = custId ? customers.find(c=>c.id===custId) : null;
+  const tierPct = customerObj ? (TIER_DISCOUNT[customerObj.tier||'ทั่วไป']||0) : 0;
   const memberDc = Math.round(total * tierPct / 100);
   const vat = appSettings.vatEnabled ? Math.round(net * 7 / 107) : 0;
 
-  salesHistory.push({
-    billNo, items: cart.map(c=>({...c})), total, discount: disc, memberDiscount: memberDc, vat, net,
-    payMethod: selectedPay, received, change: Math.max(0,received-net),
-    customerId: custId||null, customerName: customer?customer.name:null,
-    date: new Date().toISOString()
-  });
+  // 🗄 API mode → POST to MySQL (atomic transaction in backend)
+  if(isAPIMode()){
+    try{
+      await API.sales.checkout({
+        bill_no: billNo,
+        customer_id: custId||null,
+        items: cart.map(c=>({code:c.code, name:c.name, price:c.price, qty:c.qty})),
+        total, discount: disc, member_discount: memberDc, vat, net,
+        pay_method: selectedPay, received
+      });
+      await loadFromAPI();
+    } catch(err){
+      showToast('❌ ชำระเงินล้มเหลว: '+err.message);
+      return;
+    }
+  } else {
+    cart.forEach(c=>{
+      const prod = products.find(p=>p.code===c.code);
+      if(!prod) return;
+      prod.qty = Math.max(0, prod.qty - c.qty);
+      stockHistory.unshift({
+        date: today, code: c.code, name: c.name, type: 'sale',
+        qty: -c.qty, after: prod.qty,
+        note: `ขายผ่าน POS · บิล ${billNo} · ราคา ฿${(+c.price||0).toLocaleString()}`
+      });
+    });
 
-  // อัปเดตยอดซื้อลูกค้า + เพิ่มแต้ม (1 แต้ม / ฿20)
-  if(customer){
-    customer.totalSpent = (+customer.totalSpent||0) + net;
-    customer.totalBills = (+customer.totalBills||0) + 1;
-    customer.points    = (+customer.points||0) + Math.floor(net/20);
-  }
+    salesHistory.push({
+      billNo, items: cart.map(c=>({...c})), total, discount: disc, memberDiscount: memberDc, vat, net,
+      payMethod: selectedPay, received, change: Math.max(0,received-net),
+      customerId: custId||null, customerName: customerObj?customerObj.name:null,
+      date: new Date().toISOString()
+    });
+
+    if(customerObj){
+      customerObj.totalSpent = (+customerObj.totalSpent||0) + net;
+      customerObj.totalBills = (+customerObj.totalBills||0) + 1;
+      customerObj.points    = (+customerObj.points||0) + Math.floor(net/20);
+    }
+  } // end localStorage branch
 
   // 3) build + show receipt BEFORE clearing cart
   document.getElementById('receiptContent').innerHTML = buildReceipt(billNo, received);
@@ -4456,6 +4501,55 @@ function loadState(){
     console.warn('💾 โหลดข้อมูลไม่สำเร็จ:', e);
     return false;
   }
+}
+
+// ===== API SYNC LAYER (MySQL) =====
+let _apiMode = false;
+let _apiSyncTimer = null;
+
+async function detectAPI(){
+  // ถ้ายังไม่ได้ตั้ง API URL ใช้ same-origin
+  if(!window.API) return false;
+  if(!API.getBaseUrl()) API.setBaseUrl(location.origin);
+  return await API.checkAvailable();
+}
+
+function isAPIMode(){ return _apiMode && window.API && API.available() && API.isLoggedIn(); }
+
+async function loadFromAPI(){
+  if(!window.API || !API.isLoggedIn()) return false;
+  try{
+    const d = await API.sync.pull();
+    // Replace in-memory data with API data (MySQL = source of truth)
+    if(Array.isArray(d.products))     products.splice(0, products.length, ...d.products);
+    if(Array.isArray(d.categories) && d.categories.length) categories = d.categories;
+    if(Array.isArray(d.suppliers))    suppliers = d.suppliers;
+    if(Array.isArray(d.customers))    customers = d.customers;
+    if(Array.isArray(d.expenses))     expenses = d.expenses;
+    if(Array.isArray(d.salesHistory)) { salesHistory.length=0; d.salesHistory.forEach(x=>salesHistory.push(x)); }
+    if(Array.isArray(d.stockHistory)) { stockHistory.length=0; d.stockHistory.forEach(x=>stockHistory.push(x)); }
+    if(Array.isArray(d.zReports))     zReports = d.zReports;
+    if(Array.isArray(d.parkedSales))  parkedSales = d.parkedSales;
+    if(d.appSettings && typeof d.appSettings === 'object') {
+      // Merge but keep local-only settings (like cbUrl, darkMode, etc.)
+      const localOnly = { cbUrl: appSettings.cbUrl, cbEnabled: appSettings.cbEnabled, darkMode: appSettings.darkMode };
+      appSettings = { ...appSettings, ...d.appSettings, ...localOnly };
+    }
+    console.log('🗄 โหลดจาก MySQL:', { products: products.length, sales: salesHistory.length });
+    return true;
+  } catch(e){
+    console.warn('🗄 โหลดจาก MySQL ไม่สำเร็จ:', e.message);
+    return false;
+  }
+}
+
+async function pushChangesToAPI(){
+  if(!isAPIMode()) return;
+  // Sync only "leaf" entities that we own — categories + appSettings
+  // Other entities use specific endpoints (e.g., products via API.products.*)
+  try{
+    await API.sync.push({ categories, appSettings });
+  } catch(e){ console.warn('Sync push fail:', e.message); }
 }
 
 /* ===== PREP CHECKLIST (เตรียมร้าน) ===== */
@@ -6005,7 +6099,7 @@ function ensureDefaultUsers(){
   }
 }
 
-function doLogin(e){
+async function doLogin(e){
   e.preventDefault();
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
@@ -6031,8 +6125,19 @@ function doLogin(e){
     }
   }
 
-  // 3. Check credentials
-  const user = users.find(x=>x.username===u && x.passwordHash===hashPwd(p));
+  // 3a. Try API login first (MySQL backend)
+  let apiUser = null;
+  if(window.API && await detectAPI()){
+    try{
+      apiUser = await API.login(u, p);
+      console.log('🗄 Login via MySQL API:', apiUser.username);
+    } catch(apiErr){
+      console.log('API login failed, fallback to localStorage:', apiErr.message);
+    }
+  }
+
+  // 3b. Fallback to localStorage check
+  const user = apiUser || users.find(x=>x.username===u && x.passwordHash===hashPwd(p));
   if(!user){
     recordLogin(u, false);
     document.getElementById('loginPass').value='';
@@ -6070,9 +6175,25 @@ function doLogin(e){
   err.style.display='none';
   currentUser = { id:user.id, username:user.username, name:user.name, role:user.role };
   try{ sessionStorage.setItem('fs-session', JSON.stringify(currentUser)); }catch(e){}
+
+  // 5. If API login worked → enable API mode + pull data from MySQL
+  if(apiUser){
+    _apiMode = true;
+    showToast(`🗄 กำลังโหลดข้อมูลจาก MySQL...`);
+    try{
+      await loadFromAPI();
+      refreshAllViews();
+      showToast(`👋 ยินดีต้อนรับ ${user.name} (MySQL Mode)`);
+    } catch(e){
+      console.warn('Initial API load failed:', e);
+      showToast(`👋 ยินดีต้อนรับ ${user.name}`);
+    }
+  } else {
+    _apiMode = false;
+    showToast(`👋 ยินดีต้อนรับ ${user.name} (localStorage Mode)`);
+  }
   applyAuthUI();
   hideLogin();
-  showToast(`👋 ยินดีต้อนรับ ${user.name}`);
 }
 
 function openChangePasswordModal(){
@@ -7296,6 +7417,17 @@ if(isCatalogMode()){
   if(checkSession()){
     applyAuthUI();
     hideLogin();
+    // ⚡ Try API mode if backend available + token present
+    (async () => {
+      try{
+        if(window.API && API.isLoggedIn() && await detectAPI()){
+          _apiMode = true;
+          await loadFromAPI();
+          refreshAllViews();
+          console.log('🗄 API Mode enabled — data from MySQL');
+        }
+      } catch(e){ console.warn('API restore failed:', e); }
+    })();
   } else {
     showLogin();
   }
