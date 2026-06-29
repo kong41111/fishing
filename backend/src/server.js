@@ -6,24 +6,36 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // big to fit base64 images
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '20mb' })); // big to fit base64 images + sync payloads
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-// Serve frontend (index.html, etc.) from parent dir
+// Serve frontend (index.html, products.json, etc.) from parent dir
 app.use(express.static(path.join(__dirname, '../../')));
 
-// API health check
+// Health check
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // Routes
-app.use('/api', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-// TODO: เพิ่ม /api/sales, /api/customers, /api/suppliers, /api/expenses, /api/stock, /api/categories ...
+app.use('/api',            require('./routes/auth'));
+app.use('/api/products',   require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/suppliers',  require('./routes/suppliers'));
+app.use('/api/customers',  require('./routes/customers'));
+app.use('/api/expenses',   require('./routes/expenses'));
+app.use('/api/stock',      require('./routes/stock'));
+app.use('/api/sales',      require('./routes/sales'));
+app.use('/api/sync',       require('./routes/sync'));
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: err.message });
+});
+
+// SPA fallback
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, '../../index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

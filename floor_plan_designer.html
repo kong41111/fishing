@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floor Plan Designer — โปรแกรมออกแบบผังร้าน</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+:root {
+  --bg: #f4f1ea; --panel: #fff; --ink: #1a1a1a;
+  --line: #d4cfc2; --muted: #7a7a7a;
+  --accent: #c2410c; --accent-light: #fed7aa;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'IBM Plex Sans Thai', sans-serif; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+
+header {
+  background: var(--ink); color: #fff; padding: 9px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 2px solid var(--accent); flex-shrink: 0; gap: 12px;
+}
+header h1 { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; white-space: nowrap; }
+header h1 span { color: var(--accent-light); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.toolbar { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.btn {
+  background: transparent; color: #fff; border: 1px solid #444;
+  padding: 5px 10px; font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; cursor: pointer; transition: all 0.15s; border-radius: 2px; white-space: nowrap;
+}
+.btn:hover { background: var(--accent); border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); }
+.btn.primary:hover { background: #9a3412; }
+.btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+.sep { width: 1px; height: 18px; background: #555; margin: 0 2px; }
+
+.main { flex: 1; display: flex; overflow: hidden; }
+
+.sidebar {
+  width: 268px; min-width: 268px; background: var(--panel);
+  border-right: 1px solid var(--line); padding: 10px;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+}
+.sidebar-sec h2 {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px;
+  padding-bottom: 4px; border-bottom: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+}
+.shape-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.shape-btn {
+  background: #fafaf5; border: 1px solid var(--line); padding: 7px 3px;
+  font-size: 10px; cursor: pointer; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-family: 'IBM Plex Sans Thai', sans-serif; border-radius: 2px;
+}
+.shape-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+.shape-btn svg { width: 18px; height: 18px; stroke: var(--ink); stroke-width: 1.5; fill: none; }
+
+.props { display: flex; flex-direction: column; gap: 7px; }
+.prop-row { display: flex; flex-direction: column; gap: 2px; }
+.prop-row label { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.prop-row input[type="text"],
+.prop-row input[type="number"],
+.prop-row select {
+  background: #fafaf5; border: 1px solid var(--line); padding: 5px 7px;
+  font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 12px;
+  color: var(--ink); border-radius: 2px; width: 100%;
+}
+.prop-row input:focus, .prop-row select:focus { outline: none; border-color: var(--accent); }
+.prop-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.color-row { display: grid; grid-template-columns: repeat(6,1fr); gap: 3px; }
+.color-swatch {
+  aspect-ratio: 1; border: 2px solid transparent; cursor: pointer;
+  border-radius: 2px; transition: transform 0.1s;
+}
+.color-swatch:hover { transform: scale(1.12); }
+.color-swatch.active { border-color: var(--ink) !important; }
+.hex-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.hex-input {
+  background: #fafaf5; border: 1px solid var(--line); padding: 4px 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--ink); border-radius: 2px; width: 100%;
+}
+.hex-input:focus { outline: none; border-color: var(--accent); }
+.layer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.layer-btn {
+  background: #fafaf5; border: 1px solid var(--line); padding: 4px;
+  font-size: 9px; font-family: 'JetBrains Mono', monospace;
+  cursor: pointer; border-radius: 2px; text-align: center;
+}
+.layer-btn:hover { background: var(--accent-light); }
+.delete-btn {
+  background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
+  padding: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  cursor: pointer; border-radius: 2px; width: 100%;
+}
+.delete-btn:hover { background: #fca5a5; }
+.empty-state {
+  padding: 12px; text-align: center; color: var(--muted); font-size: 11px;
+  background: #fafaf5; border: 1px dashed var(--line); border-radius: 2px;
+}
+details summary {
+  cursor: pointer; font-size: 9px; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 4px 0; list-style: none;
+}
+details summary::before { content: '▶ '; font-size: 8px; }
+details[open] summary { color: var(--ink); }
+details[open] summary::before { content: '▼ '; }
+.obj-list { display: flex; flex-direction: column; gap: 2px; max-height: 130px; overflow-y: auto; margin-top: 5px; }
+.obj-item {
+  display: flex; align-items: center; gap: 5px; padding: 3px 5px;
+  font-size: 11px; cursor: pointer; border-radius: 2px; border: 1px solid transparent;
+}
+.obj-item:hover { background: #f5f0e8; }
+.obj-item.active { background: var(--accent-light); border-color: #f97316; }
+.obj-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+.obj-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obj-type { font-size: 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+
+.canvas-area { flex: 1; background: var(--bg); overflow: auto; padding: 30px; }
+.canvas-wrapper {
+  background: #fff; border: 1px solid var(--line);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08); display: inline-block;
+}
+#canvas { display: block; cursor: crosshair; }
+#canvas.grabbing { cursor: grabbing; }
+
+.info-bar {
+  background: var(--panel); border-top: 1px solid var(--line);
+  padding: 6px 14px; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-shrink: 0;
+}
+.info-right { display: flex; align-items: center; gap: 10px; }
+.zoom-controls { display: flex; align-items: center; gap: 3px; }
+.zoom-btn {
+  background: transparent; border: 1px solid var(--line);
+  width: 20px; height: 20px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 2px; color: var(--ink);
+}
+.zoom-btn:hover { background: var(--accent-light); }
+#zoomLabel { min-width: 38px; text-align: center; color: var(--ink); }
+kbd {
+  background: #333; color: #fff; padding: 1px 4px; border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+}
+.file-input { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FLOOR PLAN <span>· DESIGNER</span></h1>
+  <div class="toolbar">
+    <button class="btn" id="undoBtn" disabled>↩ Undo</button>
+    <button class="btn" id="redoBtn" disabled>↪ Redo</button>
+    <div class="sep"></div>
+    <button class="btn" id="saveBtn">บันทึก JSON</button>
+    <button class="btn" id="loadBtn">โหลด JSON</button>
+    <button class="btn" id="exportBtn">ส่งออก PNG</button>
+    <button class="btn primary" id="clearBtn">เริ่มใหม่</button>
+    <input type="file" id="fileInput" class="file-input" accept=".json">
+  </div>
+</header>
+
+<div class="main">
+<aside class="sidebar">
+
+  <div class="sidebar-sec">
+    <h2>เพิ่มวัตถุ</h2>
+    <div class="shape-grid">
+      <button class="shape-btn" data-shape="rect">
+        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10"/></svg>สี่เหลี่ยม
+      </button>
+      <button class="shape-btn" data-shape="circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/></svg>วงกลม
+      </button>
+      <button class="shape-btn" data-shape="wall">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12" stroke-width="3"/></svg>ผนัง
+      </button>
+      <button class="shape-btn" data-shape="door">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="20" x2="5" y2="6" stroke-dasharray="4 2"/><path d="M5 6 A13 13 0 0 1 18 19"/><line x1="5" y1="20" x2="19" y2="20"/></svg>ประตู
+      </button>
+      <button class="shape-btn" data-shape="window">
+        <svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="4"/><line x1="12" y1="10" x2="12" y2="14"/></svg>หน้าต่าง
+      </button>
+      <button class="shape-btn" data-shape="text">
+        <svg viewBox="0 0 24 24"><text x="12" y="17" font-size="15" text-anchor="middle" stroke="none" fill="currentColor" font-weight="bold">T</text></svg>ข้อความ
+      </button>
+      <button class="shape-btn" data-shape="table-round">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="20" r="2"/></svg>โต๊ะกลม
+      </button>
+      <button class="shape-btn" data-shape="chair">
+        <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10"/><rect x="5" y="5" width="14" height="6"/></svg>เก้าอี้
+      </button>
+      <button class="shape-btn" data-shape="bed">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15"/><rect x="3" y="5" width="18" height="5"/><line x1="3" y1="10" x2="21" y2="10"/></svg>เตียง
+      </button>
+      <button class="shape-btn" data-shape="toilet">
+        <svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="5"/><ellipse cx="12" cy="15" rx="7" ry="6"/></svg>ชักโครก
+      </button>
+      <button class="shape-btn" data-shape="sink">
+        <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><ellipse cx="12" cy="13" rx="4" ry="3"/></svg>อ่างล้าง
+      </button>
+      <button class="shape-btn" data-shape="stairs">
+        <svg viewBox="0 0 24 24"><polyline points="3,21 3,15 9,15 9,9 15,9 15,3 21,3"/></svg>บันได
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-sec">
+    <h2>คุณสมบัติ</h2>
+    <div id="propsPanel"><div class="empty-state">เลือกวัตถุเพื่อแก้ไข</div></div>
+  </div>
+
+  <details>
+    <summary>รายการวัตถุ</summary>
+    <div id="objectList" class="obj-list"></div>
+  </details>
+
+  <details>
+    <summary>ตั้งค่าผัง</summary>
+    <div class="props" style="margin-top:7px">
+      <div class="prop-pair">
+        <div class="prop-row"><label>กว้าง (ม.)</label><input type="number" id="roomW" value="4.5" step="0.1" min="1"></div>
+        <div class="prop-row"><label>ยาว (ม.)</label><input type="number" id="roomH" value="8" step="0.1" min="1"></div>
+      </div>
+      <div class="prop-row"><label>มาตราส่วน (px/ม.)</label><input type="number" id="scale" value="60" step="10" min="20" max="200"></div>
+      <div class="prop-row"><label style="display:flex;align-items:center;gap:5px"><input type="checkbox" id="showGrid" checked> แสดงตาราง</label></div>
+      <div class="prop-row"><label style="display:flex;align-items:center;gap:5px"><input type="checkbox" id="snapGrid" checked> Snap to grid</label></div>
+    </div>
+  </details>
+
+</aside>
+
+<div class="canvas-area" id="canvasArea">
+  <div class="canvas-wrapper" id="canvasWrapper">
+    <canvas id="canvas"></canvas>
+  </div>
+</div>
+</div>
+
+<div class="info-bar">
+  <div>
+    <span style="color:var(--ink)">คลิก</span>เลือก ·
+    <span style="color:var(--ink)">ลาก</span>ย้าย ·
+    <span style="color:var(--ink)">มุมขวาล่าง</span>ปรับขนาด ·
+    <kbd>Del</kbd>ลบ · <kbd>D</kbd>ทำซ้ำ · <kbd>R</kbd>หมุน90° · <kbd>↑↓←→</kbd>เลื่อน ·
+    <kbd>Ctrl+Z/Y</kbd>Undo/Redo · <kbd>Ctrl+C/V</kbd>Copy/Paste · <kbd>Wheel</kbd>Zoom
+  </div>
+  <div class="info-right">
+    <span id="coordInfo" style="color:var(--ink)">—</span>
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomOut">−</button>
+      <span id="zoomLabel">100%</span>
+      <button class="zoom-btn" id="zoomIn">+</button>
+      <button class="zoom-btn" id="zoomReset" title="Reset zoom" style="font-size:11px">⊡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  room: { w: 4.5, h: 8 },
+  scale: 60,
+  showGrid: true,
+  snapGrid: true,
+  objects: [],
+  selectedId: null,
+  nextId: 1,
+  drag: null,
+  zoom: 1,
+  history: [],
+  histIdx: -1,
+  clipboard: null,
+};
+
+const PALETTE = [
+  { bg: '#fef3c7', stroke: '#92400e' },
+  { bg: '#dbeafe', stroke: '#1e40af' },
+  { bg: '#ede9fe', stroke: '#5b21b6' },
+  { bg: '#dcfce7', stroke: '#166534' },
+  { bg: '#fce7f3', stroke: '#9d174d' },
+  { bg: '#fed7aa', stroke: '#9a3412' },
+  { bg: '#fef9c3', stroke: '#713f12' },
+  { bg: '#fdf4ff', stroke: '#86198f' },
+  { bg: '#e0f2fe', stroke: '#075985' },
+  { bg: '#f5f5f4', stroke: '#57534e' },
+  { bg: '#1a1a1a', stroke: '#1a1a1a' },
+  { bg: '#ffffff', stroke: '#1a1a1a' },
+];
+
+const SHAPE_NAME = {
+  rect:'สี่เหลี่ยม', circle:'วงกลม', wall:'ผนัง', door:'ประตู',
+  window:'หน้าต่าง', text:'ข้อความ', 'table-round':'โต๊ะกลม',
+  chair:'เก้าอี้', bed:'เตียง', toilet:'ชักโครก', sink:'อ่างล้าง', stairs:'บันได',
+};
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// ===== HISTORY =====
+function saveHist() {
+  state.history = state.history.slice(0, state.histIdx + 1);
+  state.history.push(JSON.stringify(state.objects));
+  if (state.history.length > 60) state.history.shift(); else state.histIdx++;
+  syncUndoRedo();
+}
+function undo() {
+  if (state.histIdx <= 0) return;
+  state.histIdx--;
+  state.objects = JSON.parse(state.history[state.histIdx]);
+  state.selectedId = null;
+  render(); renderProps(); renderObjList(); syncUndoRedo();
+}
+function redo() {
+  if (state.histIdx >= state.history.length - 1) return;
+  state.histIdx++;
+  state.objects = JSON.parse(state.history[state.histIdx]);
+  state.selectedId = null;
+  render(); renderProps(); renderObjList(); syncUndoRedo();
+}
+function syncUndoRedo() {
+  document.getElementById('undoBtn').disabled = state.histIdx <= 0;
+  document.getElementById('redoBtn').disabled = state.histIdx >= state.history.length - 1;
+}
+
+// ===== HELPERS =====
+function uid() { return state.nextId++; }
+function pxW() { return state.room.w * state.scale + 80; }
+function pxH() { return state.room.h * state.scale + 80; }
+function OX() { return 40; }
+function OY() { return 40; }
+function snap(v) {
+  if (!state.snapGrid) return v;
+  const g = state.scale / 4;
+  return Math.round(v / g) * g;
+}
+function canvasXY(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / state.zoom, y: (e.clientY - r.top) / state.zoom };
+}
+function setZoom(z) {
+  state.zoom = Math.max(0.2, Math.min(5, z));
+  render();
+  document.getElementById('zoomLabel').textContent = Math.round(state.zoom * 100) + '%';
+}
+
+// ===== FACTORY =====
+function makeObj(shape, cx, cy) {
+  const s = state.scale;
+  const base = {
+    id: uid(), shape,
+    x: snap(cx - s * 0.75), y: snap(cy - s * 0.4),
+    rotation: 0, label: '', sublabel: '',
+    bg: '#dbeafe', stroke: '#1e40af', fontSize: 12,
+  };
+  switch (shape) {
+    case 'rect':        return { ...base, w: s*1.5, h: s*0.8,  label: 'วัตถุใหม่' };
+    case 'circle':      return { ...base, w: s*0.8, h: s*0.8 };
+    case 'wall':        return { ...base, w: s*2,   h: 8,      bg:'#1a1a1a', stroke:'#1a1a1a' };
+    case 'text':        return { ...base, w: s*1.5, h: s*0.45, bg:'transparent', stroke:'transparent', label:'ข้อความ', fontSize:14 };
+    case 'door':        return { ...base, w: s*1.2, h: s*1.2,  bg:'transparent', stroke:'#1a1a1a', label:'ประตู' };
+    case 'window':      return { ...base, w: s*2,   h: 10,     bg:'#9ec5d4', stroke:'#1a1a1a' };
+    case 'table-round': return { ...base, w: s*1.2, h: s*1.2,  bg:'#fef9c3', stroke:'#713f12', label:'โต๊ะ' };
+    case 'chair':       return { ...base, w: s*0.5, h: s*0.55, bg:'#fef3c7', stroke:'#92400e' };
+    case 'bed':         return { ...base, w: s*1.2, h: s*2.0,  bg:'#e0f2fe', stroke:'#075985', label:'เตียง' };
+    case 'toilet':      return { ...base, w: s*0.7, h: s*1.1,  bg:'#f5f5f4', stroke:'#57534e' };
+    case 'sink':        return { ...base, w: s*0.6, h: s*0.6,  bg:'#e0f2fe', stroke:'#075985' };
+    case 'stairs':      return { ...base, w: s*1.5, h: s*1.5,  bg:'#f5f5f4', stroke:'#57534e', label:'บันได' };
+  }
+}
+
+// ===== RENDER =====
+function render() {
+  const z = state.zoom;
+  const W = Math.round(pxW() * z), H = Math.round(pxH() * z);
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.scale(z, z);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, pxW(), pxH());
+
+  if (state.showGrid) {
+    const g = state.scale / 4;
+    ctx.strokeStyle = '#ede8da'; ctx.lineWidth = 0.5;
+    for (let x = OX(); x <= OX() + state.room.w * state.scale + 0.5; x += g) {
+      ctx.beginPath(); ctx.moveTo(x, OY()); ctx.lineTo(x, OY() + state.room.h * state.scale); ctx.stroke();
+    }
+    for (let y = OY(); y <= OY() + state.room.h * state.scale + 0.5; y += g) {
+      ctx.beginPath(); ctx.moveTo(OX(), y); ctx.lineTo(OX() + state.room.w * state.scale, y); ctx.stroke();
+    }
+    ctx.strokeStyle = '#d4cfc2'; ctx.lineWidth = 0.8;
+    for (let x = OX(); x <= OX() + state.room.w * state.scale + 0.5; x += state.scale) {
+      ctx.beginPath(); ctx.moveTo(x, OY()); ctx.lineTo(x, OY() + state.room.h * state.scale); ctx.stroke();
+    }
+    for (let y = OY(); y <= OY() + state.room.h * state.scale + 0.5; y += state.scale) {
+      ctx.beginPath(); ctx.moveTo(OX(), y); ctx.lineTo(OX() + state.room.w * state.scale, y); ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
+  ctx.strokeRect(OX(), OY(), state.room.w * state.scale, state.room.h * state.scale);
+
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '600 11px "JetBrains Mono",monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(state.room.w.toFixed(2) + ' ม.', OX() + state.room.w * state.scale / 2, OY() - 12);
+  ctx.save();
+  ctx.translate(OX() - 18, OY() + state.room.h * state.scale / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(state.room.h.toFixed(2) + ' ม.', 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(OX(), OY());
+  for (const o of state.objects) drawObj(o);
+  ctx.restore();
+}
+
+function drawObj(o) {
+  ctx.save();
+  ctx.translate(o.x + o.w / 2, o.y + o.h / 2);
+  if (o.rotation) ctx.rotate(o.rotation * Math.PI / 180);
+  ctx.translate(-o.w / 2, -o.h / 2);
+
+  switch (o.shape) {
+    case 'door':        drawDoor(o); break;
+    case 'circle':      drawCircle(o); break;
+    case 'table-round': drawTableRound(o); break;
+    case 'chair':       drawChair(o); break;
+    case 'bed':         drawBed(o); break;
+    case 'toilet':      drawToilet(o); break;
+    case 'sink':        drawSink(o); break;
+    case 'stairs':      drawStairs(o); break;
+    case 'text': break;
+    default:
+      ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+      if (o.bg !== 'transparent') ctx.fillRect(0, 0, o.w, o.h);
+      if (o.stroke !== 'transparent') ctx.strokeRect(0, 0, o.w, o.h);
+  }
+
+  if (o.label) {
+    ctx.fillStyle = o.bg === '#1a1a1a' ? '#fff' : '#1a1a1a';
+    ctx.font = `600 ${o.fontSize}px "IBM Plex Sans Thai",sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(o.label, o.w / 2, o.sublabel ? o.h / 2 - 7 : o.h / 2);
+  }
+  if (o.sublabel) {
+    ctx.fillStyle = o.bg === '#1a1a1a' ? '#ccc' : '#555';
+    ctx.font = `400 ${Math.max(9, o.fontSize - 3)}px "IBM Plex Sans Thai",sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(o.sublabel, o.w / 2, o.h / 2 + 8);
+  }
+
+  if (o.id === state.selectedId) {
+    ctx.strokeStyle = '#c2410c'; ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(-3, -3, o.w + 6, o.h + 6);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c2410c';
+    ctx.fillRect(o.w - 5, o.h - 5, 10, 10);
+  }
+  ctx.restore();
+}
+
+function drawDoor(o) {
+  ctx.strokeStyle = o.stroke; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, o.h);
+  ctx.moveTo(0, o.h); ctx.lineTo(o.w, o.h);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0, o.h, o.w, -Math.PI / 2, 0); ctx.stroke();
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(o.w, o.h); ctx.stroke();
+  ctx.setLineDash([]);
+}
+function drawCircle(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(o.w/2, o.h/2, o.w/2, o.h/2, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+}
+function drawTableRound(o) {
+  const cx = o.w/2, cy = o.h/2;
+  const tr = Math.min(o.w, o.h) * 0.33;
+  const sr = Math.min(o.w, o.h) * 0.12;
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, tr, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    const sx = cx + Math.cos(a) * (tr + sr * 1.5);
+    const sy = cy + Math.sin(a) * (tr + sr * 1.5);
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI*2);
+    ctx.fillStyle = o.bg; ctx.fill(); ctx.stroke();
+  }
+}
+function drawChair(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.fillRect(0, o.h*0.35, o.w, o.h*0.65); ctx.strokeRect(0, o.h*0.35, o.w, o.h*0.65);
+  ctx.fillRect(o.w*0.08, 0, o.w*0.84, o.h*0.32); ctx.strokeRect(o.w*0.08, 0, o.w*0.84, o.h*0.32);
+}
+function drawBed(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.fillRect(0, 0, o.w, o.h); ctx.strokeRect(0, 0, o.w, o.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.fillRect(o.w*0.1, o.h*0.04, o.w*0.8, o.h*0.2);
+  ctx.strokeStyle = o.stroke; ctx.lineWidth = 1;
+  ctx.strokeRect(o.w*0.1, o.h*0.04, o.w*0.8, o.h*0.2);
+  ctx.beginPath(); ctx.moveTo(0, o.h*0.27); ctx.lineTo(o.w, o.h*0.27); ctx.stroke();
+}
+function drawToilet(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.fillRect(o.w*0.1, 0, o.w*0.8, o.h*0.28); ctx.strokeRect(o.w*0.1, 0, o.w*0.8, o.h*0.28);
+  ctx.beginPath(); ctx.ellipse(o.w/2, o.h*0.64, o.w*0.46, o.h*0.34, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(o.w/2, o.h*0.64, o.w*0.35, o.h*0.25, 0, 0, Math.PI*2); ctx.stroke();
+}
+function drawSink(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1.5;
+  ctx.fillRect(0, 0, o.w, o.h); ctx.strokeRect(0, 0, o.w, o.h);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(o.w/2, o.h/2, o.w*0.35, o.h*0.33, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(o.w/2, o.h/2, o.w*0.07, 0, Math.PI*2);
+  ctx.fillStyle = o.stroke; ctx.fill();
+}
+function drawStairs(o) {
+  ctx.fillStyle = o.bg; ctx.strokeStyle = o.stroke; ctx.lineWidth = 1;
+  ctx.fillRect(0, 0, o.w, o.h); ctx.strokeRect(0, 0, o.w, o.h);
+  const steps = Math.max(3, Math.min(10, Math.floor(o.h / 10)));
+  for (let i = 1; i < steps; i++) {
+    const y = o.h * i / steps;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(o.w, y); ctx.stroke();
+  }
+  ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5;
+  const mx = o.w * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(mx, o.h * 0.75); ctx.lineTo(mx, o.h * 0.12);
+  ctx.moveTo(mx - o.w*0.12, o.h*0.28); ctx.lineTo(mx, o.h*0.12); ctx.lineTo(mx + o.w*0.12, o.h*0.28);
+  ctx.stroke();
+}
+
+// ===== HIT TEST =====
+function hitTest(px, py) {
+  const lx = px - OX(), ly = py - OY();
+  for (let i = state.objects.length - 1; i >= 0; i--) {
+    const o = state.objects[i];
+    if (lx >= o.x && lx <= o.x + o.w && ly >= o.y && ly <= o.y + o.h) {
+      if (o.id === state.selectedId && lx >= o.x + o.w - 8 && ly >= o.y + o.h - 8)
+        return { obj: o, handle: 'resize' };
+      return { obj: o, handle: 'move' };
+    }
+  }
+  return null;
+}
+
+// ===== MOUSE =====
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  const { x: px, y: py } = canvasXY(e);
+  const hit = hitTest(px, py);
+  if (hit) {
+    state.selectedId = hit.obj.id;
+    state.drag = { id: hit.obj.id, mode: hit.handle, sx: px, sy: py,
+      ox: hit.obj.x, oy: hit.obj.y, ow: hit.obj.w, oh: hit.obj.h };
+  } else {
+    state.selectedId = null;
+  }
+  render(); renderProps(); renderObjList();
+});
+
+canvas.addEventListener('mousemove', e => {
+  const { x: px, y: py } = canvasXY(e);
+  const lx = px - OX(), ly = py - OY();
+  document.getElementById('coordInfo').textContent =
+    `X:${(lx / state.scale).toFixed(2)}  Y:${(ly / state.scale).toFixed(2)} ม.`;
+  if (!state.drag) return;
+  const o = state.objects.find(o => o.id === state.drag.id);
+  if (!o) return;
+  const dx = px - state.drag.sx, dy = py - state.drag.sy;
+  if (state.drag.mode === 'move') {
+    o.x = snap(state.drag.ox + dx);
+    o.y = snap(state.drag.oy + dy);
+  } else {
+    o.w = Math.max(10, snap(state.drag.ow + dx));
+    o.h = Math.max(10, snap(state.drag.oh + dy));
+  }
+  render(); renderProps();
+});
+
+window.addEventListener('mouseup', () => {
+  if (state.drag) { saveHist(); state.drag = null; }
+});
+
+// ===== ZOOM =====
+document.getElementById('canvasArea').addEventListener('wheel', e => {
+  e.preventDefault();
+  setZoom(state.zoom * (e.deltaY < 0 ? 1.1 : 0.9));
+}, { passive: false });
+document.getElementById('zoomIn').addEventListener('click', () => setZoom(state.zoom * 1.25));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(state.zoom / 1.25));
+document.getElementById('zoomReset').addEventListener('click', () => setZoom(1));
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('redoBtn').addEventListener('click', redo);
+
+// ===== KEYBOARD =====
+let arrowTimer = null;
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+    const o = state.objects.find(o => o.id === state.selectedId);
+    if (o) state.clipboard = JSON.parse(JSON.stringify(o));
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+    if (!state.clipboard) return;
+    const copy = { ...JSON.parse(JSON.stringify(state.clipboard)), id: uid(), x: state.clipboard.x + 20, y: state.clipboard.y + 20 };
+    state.objects.push(copy);
+    state.selectedId = copy.id;
+    saveHist(); render(); renderProps(); renderObjList(); return;
+  }
+
+  if (e.key === 'Escape') { state.selectedId = null; render(); renderProps(); renderObjList(); return; }
+
+  if (!state.selectedId) return;
+  const o = state.objects.find(o => o.id === state.selectedId);
+  if (!o) return;
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    state.objects = state.objects.filter(x => x.id !== state.selectedId);
+    state.selectedId = null;
+    saveHist(); render(); renderProps(); renderObjList();
+  } else if (e.key === 'd' || e.key === 'D') {
+    const copy = { ...JSON.parse(JSON.stringify(o)), id: uid(), x: o.x + 20, y: o.y + 20 };
+    state.objects.push(copy); state.selectedId = copy.id;
+    saveHist(); render(); renderProps(); renderObjList();
+  } else if (e.key === 'r' || e.key === 'R') {
+    o.rotation = (o.rotation + 90) % 360;
+    saveHist(); render(); renderProps();
+  } else if (e.key === ']') {
+    const idx = state.objects.findIndex(x => x.id === state.selectedId);
+    if (idx < state.objects.length - 1) {
+      [state.objects[idx], state.objects[idx+1]] = [state.objects[idx+1], state.objects[idx]];
+      saveHist(); render(); renderObjList();
+    }
+  } else if (e.key === '[') {
+    const idx = state.objects.findIndex(x => x.id === state.selectedId);
+    if (idx > 0) {
+      [state.objects[idx], state.objects[idx-1]] = [state.objects[idx-1], state.objects[idx]];
+      saveHist(); render(); renderObjList();
+    }
+  } else if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
+    e.preventDefault();
+    const step = e.shiftKey ? snap(state.scale / 4) : 1;
+    if (e.key === 'ArrowLeft')  o.x -= step;
+    if (e.key === 'ArrowRight') o.x += step;
+    if (e.key === 'ArrowUp')    o.y -= step;
+    if (e.key === 'ArrowDown')  o.y += step;
+    render(); renderProps();
+    clearTimeout(arrowTimer); arrowTimer = setTimeout(saveHist, 400);
+  }
+});
+
+// ===== SHAPE BUTTONS =====
+document.querySelectorAll('.shape-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const shape = btn.dataset.shape;
+    const cx = state.room.w * state.scale / 2, cy = state.room.h * state.scale / 2;
+    const obj = makeObj(shape, cx, cy);
+    state.objects.push(obj); state.selectedId = obj.id;
+    saveHist(); render(); renderProps(); renderObjList();
+  });
+});
+
+// ===== ROOM SETTINGS =====
+document.getElementById('roomW').addEventListener('input', e => { state.room.w = parseFloat(e.target.value)||4.5; render(); });
+document.getElementById('roomH').addEventListener('input', e => { state.room.h = parseFloat(e.target.value)||8; render(); });
+document.getElementById('scale').addEventListener('input', e => { state.scale = parseInt(e.target.value)||60; render(); });
+document.getElementById('showGrid').addEventListener('change', e => { state.showGrid = e.target.checked; render(); });
+document.getElementById('snapGrid').addEventListener('change', e => { state.snapGrid = e.target.checked; });
+
+// ===== PROPS PANEL =====
+function renderProps() {
+  const panel = document.getElementById('propsPanel');
+  const o = state.objects.find(x => x.id === state.selectedId);
+  if (!o) { panel.innerHTML = '<div class="empty-state">เลือกวัตถุเพื่อแก้ไข</div>'; return; }
+
+  const swatches = PALETTE.map(p =>
+    `<div class="color-swatch ${o.bg===p.bg?'active':''}" style="background:${p.bg};border-color:${p.stroke}" data-bg="${p.bg}" data-st="${p.stroke}"></div>`
+  ).join('');
+
+  panel.innerHTML = `<div class="props">
+    <div class="prop-row"><label>ข้อความหลัก</label><input type="text" id="pLbl" value="${esc(o.label)}"></div>
+    <div class="prop-row"><label>ข้อความรอง</label><input type="text" id="pSub" value="${esc(o.sublabel)}"></div>
+    <div class="prop-pair">
+      <div class="prop-row"><label>กว้าง (ม.)</label><input type="number" id="pW" value="${(o.w/state.scale).toFixed(2)}" step="0.05" min="0.05"></div>
+      <div class="prop-row"><label>สูง (ม.)</label><input type="number" id="pH" value="${(o.h/state.scale).toFixed(2)}" step="0.05" min="0.05"></div>
+    </div>
+    <div class="prop-pair">
+      <div class="prop-row"><label>X (ม.)</label><input type="number" id="pX" value="${(o.x/state.scale).toFixed(2)}" step="0.05"></div>
+      <div class="prop-row"><label>Y (ม.)</label><input type="number" id="pY" value="${(o.y/state.scale).toFixed(2)}" step="0.05"></div>
+    </div>
+    <div class="prop-pair">
+      <div class="prop-row"><label>หมุน (°)</label><input type="number" id="pRot" value="${o.rotation}" step="15"></div>
+      <div class="prop-row"><label>ตัวอักษร</label><input type="number" id="pFont" value="${o.fontSize}" min="8" max="36"></div>
+    </div>
+    <div class="prop-row"><label>สี</label><div class="color-row">${swatches}</div></div>
+    <div class="hex-pair">
+      <div class="prop-row"><label>พื้น</label><input class="hex-input" id="pBg" value="${o.bg}" placeholder="#hex"></div>
+      <div class="prop-row"><label>เส้น</label><input class="hex-input" id="pSt" value="${o.stroke}" placeholder="#hex"></div>
+    </div>
+    <div class="layer-btns">
+      <button class="layer-btn" id="pFwd">▲ ขึ้นหน้า</button>
+      <button class="layer-btn" id="pBwd">▼ ลงหลัง</button>
+    </div>
+    <button class="delete-btn" id="pDel">ลบวัตถุนี้</button>
+  </div>`;
+
+  function on(id, ev, fn) { document.getElementById(id)?.addEventListener(ev, fn); }
+  on('pLbl','input', e => { o.label = e.target.value; render(); });
+  on('pSub','input', e => { o.sublabel = e.target.value; render(); });
+  on('pW','input',   e => { o.w = Math.max(5,(parseFloat(e.target.value)||0.05)*state.scale); render(); });
+  on('pH','input',   e => { o.h = Math.max(5,(parseFloat(e.target.value)||0.05)*state.scale); render(); });
+  on('pX','input',   e => { o.x = (parseFloat(e.target.value)||0)*state.scale; render(); });
+  on('pY','input',   e => { o.y = (parseFloat(e.target.value)||0)*state.scale; render(); });
+  on('pRot','input', e => { o.rotation = parseFloat(e.target.value)||0; render(); });
+  on('pFont','input',e => { o.fontSize = parseInt(e.target.value)||12; render(); });
+  on('pBg','change', e => { const v=e.target.value; if(/^(#[0-9a-fA-F]{3,6}|transparent)$/.test(v)){o.bg=v;saveHist();render();renderProps();} });
+  on('pSt','change', e => { const v=e.target.value; if(/^(#[0-9a-fA-F]{3,6}|transparent)$/.test(v)){o.stroke=v;saveHist();render();renderProps();} });
+  on('pDel','click', () => {
+    state.objects = state.objects.filter(x => x.id !== o.id);
+    state.selectedId = null; saveHist(); render(); renderProps(); renderObjList();
+  });
+  on('pFwd','click', () => {
+    const i = state.objects.findIndex(x => x.id===o.id);
+    if (i < state.objects.length-1) { [state.objects[i],state.objects[i+1]]=[state.objects[i+1],state.objects[i]]; saveHist(); render(); renderObjList(); }
+  });
+  on('pBwd','click', () => {
+    const i = state.objects.findIndex(x => x.id===o.id);
+    if (i > 0) { [state.objects[i],state.objects[i-1]]=[state.objects[i-1],state.objects[i]]; saveHist(); render(); renderObjList(); }
+  });
+  ['pLbl','pSub','pW','pH','pX','pY','pRot','pFont'].forEach(id =>
+    document.getElementById(id)?.addEventListener('blur', saveHist)
+  );
+  panel.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      o.bg = sw.dataset.bg; o.stroke = sw.dataset.st;
+      saveHist(); render(); renderProps();
+    });
+  });
+}
+
+function esc(s) {
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ===== OBJECT LIST =====
+function renderObjList() {
+  const el = document.getElementById('objectList');
+  if (!el) return;
+  if (!state.objects.length) { el.innerHTML = '<div class="empty-state" style="font-size:10px">ยังไม่มีวัตถุ</div>'; return; }
+  el.innerHTML = [...state.objects].reverse().map(o =>
+    `<div class="obj-item ${o.id===state.selectedId?'active':''}" data-id="${o.id}">
+      <div class="obj-dot" style="background:${o.bg==='transparent'?'#fff':o.bg};border:1px solid ${o.stroke==='transparent'?'#ccc':o.stroke}"></div>
+      <span class="obj-name">${esc(o.label || SHAPE_NAME[o.shape] || o.shape)}</span>
+      <span class="obj-type">${SHAPE_NAME[o.shape]||o.shape}</span>
+    </div>`
+  ).join('');
+  el.querySelectorAll('.obj-item').forEach(item => {
+    item.addEventListener('click', () => {
+      state.selectedId = parseInt(item.dataset.id);
+      render(); renderProps(); renderObjList();
+    });
+  });
+}
+
+// ===== SAVE / LOAD / EXPORT =====
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({room:state.room,scale:state.scale,objects:state.objects},null,2)],{type:'application/json'});
+  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`floorplan_${Date.now()}.json`});
+  a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById('loadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      Object.assign(state, {room:d.room, scale:d.scale, objects:d.objects,
+        nextId: Math.max(0,...d.objects.map(o=>o.id))+1, selectedId:null});
+      document.getElementById('roomW').value = state.room.w;
+      document.getElementById('roomH').value = state.room.h;
+      document.getElementById('scale').value = state.scale;
+      saveHist(); render(); renderProps(); renderObjList();
+    } catch(err) { alert('ไฟล์ไม่ถูกต้อง: '+err.message); }
+  };
+  r.readAsText(file); e.target.value = '';
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const prev = state.selectedId; state.selectedId = null; render();
+  const a = Object.assign(document.createElement('a'),{href:canvas.toDataURL('image/png'),download:`floorplan_${Date.now()}.png`});
+  a.click(); state.selectedId = prev; render();
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (!confirm('ล้างผังทั้งหมด?')) return;
+  state.objects = []; state.selectedId = null;
+  saveHist(); render(); renderProps(); renderObjList();
+});
+
+// ===== SAMPLE =====
+function loadSample() {
+  const s = state.scale;
+  state.objects = [
+    { id:uid(), shape:'window',  x:1.5*s, y:-5,     w:3*s,   h:10,    rotation:0, label:'',                    sublabel:'',                              bg:'#9ec5d4', stroke:'#1a1a1a', fontSize:10 },
+    { id:uid(), shape:'door',    x:0,     y:0,       w:1.5*s, h:1.5*s, rotation:0, label:'ประตู',               sublabel:'',                              bg:'transparent',stroke:'#1a1a1a',fontSize:10 },
+    { id:uid(), shape:'rect',    x:1.5*s, y:0,       w:3*s,   h:0.5*s, rotation:0, label:'D · ตู้โชว์รอก',     sublabel:'3.00 × 0.50 ม.',                bg:'#ede9fe', stroke:'#5b21b6', fontSize:11 },
+    { id:uid(), shape:'rect',    x:1.5*s, y:0.6*s,   w:3*s,   h:0.7*s, rotation:0, label:'H · ตู้กระจกทรงยาว', sublabel:'ของเบ็ดเตล็ด · 3.00 × 0.70 ม.', bg:'#fdf4ff', stroke:'#86198f', fontSize:11 },
+    { id:uid(), shape:'rect',    x:2.4*s, y:1.8*s,   w:0.7*s, h:1.6*s, rotation:0, label:'W',                   sublabel:'โต๊ะทำงาน',                     bg:'#fef9c3', stroke:'#713f12', fontSize:11 },
+    { id:uid(), shape:'rect',    x:0,     y:1.7*s,   w:0.4*s, h:2*s,   rotation:0, label:'B1',                  sublabel:'สปินนิ่ง',                      bg:'#dbeafe', stroke:'#1e40af', fontSize:11 },
+    { id:uid(), shape:'rect',    x:0,     y:3.8*s,   w:0.4*s, h:1.5*s, rotation:0, label:'B2',                  sublabel:'เบทคาสติ้ง',                    bg:'#c7d2fe', stroke:'#3730a3', fontSize:11 },
+    { id:uid(), shape:'rect',    x:0,     y:5.4*s,   w:0.4*s, h:1.5*s, rotation:0, label:'B3',                  sublabel:'ชิงหลิว',                       bg:'#a5b4fc', stroke:'#312e81', fontSize:11 },
+    { id:uid(), shape:'rect',    x:1*s,   y:4.5*s,   w:2.7*s, h:1*s,   rotation:0, label:'E · โต๊ะเหยื่อ',    sublabel:'เหยื่อปลอม / หน้าดิน / ชิงหลิว', bg:'#dcfce7', stroke:'#166534', fontSize:11 },
+  ];
+}
+
+loadSample();
+saveHist();
+render();
+renderProps();
+renderObjList();
+</script>
+</body>
+</html>
